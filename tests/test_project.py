@@ -1,0 +1,454 @@
+from __future__ import annotations
+
+import contextlib
+import importlib.util
+import io
+import json
+import os
+import shutil
+import struct
+import subprocess
+import sys
+import tempfile
+import unittest
+from collections import Counter
+from pathlib import Path
+from unittest import mock
+
+
+sys.dont_write_bytecode = True
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def load_module(name: str, relative: str):
+    spec = importlib.util.spec_from_file_location(name, ROOT / relative)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"cannot load {relative}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+BUILDER = load_module("fixture_builder", "labs/build_fixtures.py")
+WORKBENCHES = {
+    "module1": load_module(
+        "module1_workbench",
+        "modules/module-01-operational-networking/workbench/module1_workbench.py",
+    ),
+    "module2": load_module(
+        "module2_workbench",
+        "modules/module-02-network-architecture/workbench/module2_workbench.py",
+    ),
+    "module3": load_module(
+        "module3_workbench",
+        "modules/module-03-incident-response-and-integration/workbench/module3_workbench.py",
+    ),
+}
+QUESTION_COUNTS = {"module1": 21, "module2": 30, "module3": 28}
+
+
+class FixtureBuilderTests(unittest.TestCase):
+    def test_packet_helpers_build_valid_structures(self):
+        source_mac = "02:00:00:00:00:01"
+        destination_mac = "02:00:00:00:00:02"
+        source_ip = "192.0.2.1"
+        destination_ip = "198.51.100.2"
+
+        self.assertEqual(BUILDER.mac(source_mac), bytes.fromhex("020000000001"))
+        self.assertEqual(BUILDER.ip(source_ip), bytes([192, 0, 2, 1]))
+
+        frame = BUILDER.ethernet(source_mac, destination_mac, 0x0800, b"data")
+        self.assertEqual(frame[:6], BUILDER.mac(destination_mac))
+        self.assertEqual(frame[6:12], BUILDER.mac(source_mac))
+        self.assertEqual(struct.unpack("!H", frame[12:14])[0], 0x0800)
+
+        tagged = BUILDER.ethernet(
+            source_mac, destination_mac, 0x0800, b"data", vlan=42
+        )
+        self.assertEqual(struct.unpack("!HHH", tagged[12:18]), (0x8100, 42, 0x0800))
+
+        arp = BUILDER.arp(1, source_mac, source_ip, destination_mac, destination_ip)
+        self.assertEqual(len(arp), 28)
+        self.assertEqual(struct.unpack("!HHBBH", arp[:8]), (1, 0x0800, 6, 4, 1))
+
+        ip_packet = BUILDER.ipv4(source_ip, destination_ip, 17, b"payload", 7, ttl=9)
+        self.assertEqual(ip_packet[0], 0x45)
+        self.assertEqual(ip_packet[8:10], bytes([9, 17]))
+        self.assertEqual(struct.unpack("!H", ip_packet[2:4])[0], len(ip_packet))
+        self.assertEqual(BUILDER.checksum(ip_packet[:20]), 0)
+
+        udp = BUILDER.udp(source_ip, destination_ip, 1234, 53, b"query")
+        self.assertEqual(struct.unpack("!HHH", udp[:6]), (1234, 53, len(udp)))
+        udp_pseudo = (
+            BUILDER.ip(source_ip)
+            + BUILDER.ip(destination_ip)
+            + struct.pack("!BBH", 0, 17, len(udp))
+        )
+        self.assertEqual(BUILDER.checksum(udp_pseudo + udp), 0)
+
+        tcp = BUILDER.tcp(
+            source_ip,
+            destination_ip,
+            1234,
+            443,
+            10,
+            20,
+            0x18,
+            b"hello",
+            b"\x02\x04\x05",
+        )
+        self.assertEqual(tcp[12] >> 4, 6)
+        tcp_pseudo = (
+            BUILDER.ip(source_ip)
+            + BUILDER.ip(destination_ip)
+            + struct.pack("!BBH", 0, 6, len(tcp))
+        )
+        self.assertEqual(BUILDER.checksum(tcp_pseudo + tcp), 0)
+
+        query = BUILDER.dns_query(12, "example.test")
+        response = BUILDER.dns_response(12, "example.test", destination_ip)
+        self.assertEqual(struct.unpack("!H", query[:2])[0], 12)
+        self.assertEqual(struct.unpack("!HH", response[4:8]), (1, 1))
+        self.assertIn(BUILDER.dns_name("example.test"), response)
+        self.assertIn(b"service.example.test", BUILDER.tls_client_hello("service.example.test"))
+
+        icmp = BUILDER.icmp_fragmentation_needed(ip_packet, 1200)
+        self.assertEqual(icmp[:2], b"\x03\x04")
+        self.assertEqual(struct.unpack("!H", icmp[6:8])[0], 1200)
+        self.assertEqual(BUILDER.checksum(icmp), 0)
+
+        wrapped = BUILDER.ip_frame(
+            source_mac,
+            destination_mac,
+            source_ip,
+            destination_ip,
+            17,
+            udp,
+            8,
+            vlan=42,
+        )
+        self.assertEqual(struct.unpack("!HHH", wrapped[12:18]), (0x8100, 42, 0x0800))
+        self.assertEqual(wrapped[18], 0x45)
+
+    def test_capture_writes_pcap_headers_and_records(self):
+        capture = BUILDER.Capture()
+        capture.add(1.25, b"abc")
+        capture.add(2.5, b"defg")
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "capture.pcap"
+            capture.write(path)
+            data = path.read_bytes()
+
+        self.assertEqual(
+            struct.unpack("<IHHIIII", data[:24]),
+            (0xA1B2C3D4, 2, 4, 0, 0, 65535, 1),
+        )
+        self.assertEqual(struct.unpack("<IIII", data[24:40]), (1, 250000, 3, 3))
+        self.assertEqual(data[40:43], b"abc")
+        self.assertEqual(struct.unpack("<IIII", data[43:59]), (2, 500000, 4, 4))
+        self.assertEqual(data[59:], b"defg")
+
+    def test_build_creates_the_complete_valid_dataset(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            fixtures = Path(temporary) / "fixtures"
+            with mock.patch.object(BUILDER, "FIXTURES", fixtures):
+                BUILDER.build()
+                self.assertEqual(BUILDER.check(), [])
+                manifest = json.loads((fixtures / "manifest.json").read_text())
+
+        entries = manifest["files"]
+        self.assertEqual(len(entries), 29)
+        self.assertEqual(
+            Counter(Path(entry["path"]).parts[0] for entry in entries),
+            {
+                "architecture": 6,
+                "incident": 10,
+                "network": 3,
+                "pcaps": 3,
+                "routing": 7,
+            },
+        )
+        self.assertTrue(all(len(entry["sha256"]) == 64 for entry in entries))
+
+    def test_check_reports_every_fixture_failure_class(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            fixtures = Path(temporary) / "fixtures"
+            with mock.patch.object(BUILDER, "FIXTURES", fixtures):
+                self.assertIn("missing labs/fixtures/manifest.json", BUILDER.check()[0])
+                BUILDER.build()
+
+                stray = fixtures / "stray.txt"
+                stray.write_text("unexpected")
+                self.assertIn("untracked fixture stray.txt", BUILDER.check())
+                stray.unlink()
+
+                missing = fixtures / "network" / "ipv6.json"
+                missing.unlink()
+                self.assertIn("missing network/ipv6.json", BUILDER.check())
+                BUILDER.build()
+
+                invalid_json = fixtures / "architecture" / "components.json"
+                invalid_json.write_text("{")
+                errors = BUILDER.check()
+                self.assertTrue(any("checksum mismatch" in error for error in errors))
+                self.assertTrue(any("invalid JSON architecture/components.json" in error for error in errors))
+                BUILDER.build()
+
+                invalid_jsonl = fixtures / "architecture" / "failures.jsonl"
+                invalid_jsonl.write_text("not-json\n")
+                self.assertTrue(
+                    any("invalid JSON failures.jsonl:1" in error for error in BUILDER.check())
+                )
+                BUILDER.build()
+
+                invalid_pcap = fixtures / "pcaps" / "incident.pcap"
+                invalid_pcap.write_bytes(b"bad")
+                self.assertIn("invalid PCAP incident.pcap", BUILDER.check())
+
+    def test_main_builds_checks_and_reports_corruption(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            fixtures = Path(temporary) / "fixtures"
+            with mock.patch.object(BUILDER, "FIXTURES", fixtures):
+                stdout = io.StringIO()
+                with mock.patch.object(sys, "argv", ["build_fixtures.py"]), contextlib.redirect_stdout(stdout):
+                    self.assertEqual(BUILDER.main(), 0)
+                self.assertIn("fixtures ready: 29 files", stdout.getvalue())
+
+                with mock.patch.object(sys, "argv", ["build_fixtures.py", "--check"]):
+                    with contextlib.redirect_stdout(io.StringIO()):
+                        self.assertEqual(BUILDER.main(), 0)
+
+                (fixtures / "network" / "dhcp.jsonl").write_text("not-json\n")
+                stderr = io.StringIO()
+                with mock.patch.object(sys, "argv", ["build_fixtures.py", "--check"]), contextlib.redirect_stderr(stderr):
+                    self.assertEqual(BUILDER.main(), 1)
+                self.assertIn("invalid JSON dhcp.jsonl:1", stderr.getvalue())
+
+
+class WorkbenchTests(unittest.TestCase):
+    def test_existing_self_tests_and_question_contracts(self):
+        for name, workbench in WORKBENCHES.items():
+            with self.subTest(workbench=name):
+                stdout = io.StringIO()
+                with contextlib.redirect_stdout(stdout):
+                    self.assertEqual(workbench.self_test(), 0)
+                self.assertIn(
+                    f"self-test passed: {QUESTION_COUNTS[name]} questions",
+                    stdout.getvalue(),
+                )
+
+                groups = workbench.all_questions()
+                self.assertEqual(set(groups), set(workbench.ACTIVITIES))
+                self.assertEqual(sum(map(len, groups.values())), QUESTION_COUNTS[name])
+                for activity, questions in groups.items():
+                    for item in questions:
+                        self.assertEqual(item["activity"], activity)
+                        self.assertEqual(
+                            set(item),
+                            {
+                                "activity",
+                                "prompt",
+                                "answer",
+                                "answers",
+                                "explanation",
+                                "evidence",
+                            },
+                        )
+                        self.assertIn(workbench.normalize(item["answer"]), item["answers"])
+                        self.assertTrue(item["evidence"])
+
+    def test_question_selection_is_seeded_scoped_and_limited(self):
+        for name, workbench in WORKBENCHES.items():
+            with self.subTest(workbench=name):
+                first = workbench.choose_questions("all", 17, 4)
+                second = workbench.choose_questions("all", 17, 4)
+                self.assertEqual(first, second)
+                self.assertEqual(len(first), 4)
+
+                activity = next(iter(workbench.ACTIVITIES))
+                scoped = workbench.choose_questions(activity, 4, None)
+                self.assertTrue(scoped)
+                self.assertTrue(all(item["activity"] == activity for item in scoped))
+
+                item = workbench.question(
+                    activity,
+                    "Prompt",
+                    "YES, NOW",
+                    "Explanation",
+                    "fixture",
+                    ("y -> now",),
+                )
+                self.assertEqual(item["answers"], {"yes now", "y now"})
+
+    def test_answer_display_handles_reveal_correct_wrong_and_eof(self):
+        for name, workbench in WORKBENCHES.items():
+            item = workbench.question("test", "Prompt", "yes", "Because", "fixture", ("y",))
+            with self.subTest(workbench=name, mode="reveal"):
+                with mock.patch("builtins.input", side_effect=AssertionError("input called")):
+                    with contextlib.redirect_stdout(io.StringIO()):
+                        self.assertTrue(workbench.show_question(item, 1, True))
+            with self.subTest(workbench=name, mode="correct"):
+                with mock.patch("builtins.input", return_value=" Y "):
+                    with contextlib.redirect_stdout(io.StringIO()):
+                        self.assertTrue(workbench.show_question(item, 1, False))
+            with self.subTest(workbench=name, mode="wrong"):
+                with mock.patch("builtins.input", return_value="no"):
+                    with contextlib.redirect_stdout(io.StringIO()):
+                        self.assertFalse(workbench.show_question(item, 1, False))
+            with self.subTest(workbench=name, mode="eof"):
+                with mock.patch("builtins.input", side_effect=EOFError):
+                    with contextlib.redirect_stdout(io.StringIO()):
+                        with self.assertRaisesRegex(SystemExit, "input ended"):
+                            workbench.show_question(item, 1, False)
+
+    def test_main_dispatches_all_common_cli_paths(self):
+        for name, workbench in WORKBENCHES.items():
+            activity = next(iter(workbench.ACTIVITIES))
+            question = workbench.all_questions()[activity][0]
+            with self.subTest(workbench=name, command="list"):
+                with contextlib.redirect_stdout(io.StringIO()):
+                    self.assertEqual(workbench.main(["list"]), 0)
+            with self.subTest(workbench=name, command="demo"):
+                with contextlib.redirect_stdout(io.StringIO()):
+                    self.assertEqual(
+                        workbench.main(["demo", activity, "--seed", "3", "--limit", "1"]),
+                        0,
+                    )
+            with self.subTest(workbench=name, command="run"):
+                with mock.patch.object(workbench, "choose_questions", return_value=[question]):
+                    with mock.patch("builtins.input", return_value=question["answer"]):
+                        with contextlib.redirect_stdout(io.StringIO()):
+                            self.assertEqual(workbench.main(["run", activity, "--limit", "1"]), 0)
+            with self.subTest(workbench=name, command="self-test"):
+                with contextlib.redirect_stdout(io.StringIO()):
+                    self.assertEqual(workbench.main(["self-test"]), 0)
+            with self.subTest(workbench=name, command="bad-limit"):
+                with self.assertRaisesRegex(SystemExit, "limit must be at least 1"):
+                    workbench.main(["demo", activity, "--limit", "0"])
+            with self.subTest(workbench=name, command="required"):
+                with contextlib.redirect_stderr(io.StringIO()):
+                    with self.assertRaises(SystemExit) as raised:
+                        workbench.main([])
+                self.assertEqual(raised.exception.code, 2)
+
+    def test_manifest_verification_rejects_changed_dependencies(self):
+        dependencies = {
+            "module1": "network/l2-control.json",
+            "module2": "architecture/components.json",
+            "module3": "incident/assets.json",
+        }
+        for name, workbench in WORKBENCHES.items():
+            with self.subTest(workbench=name):
+                with tempfile.TemporaryDirectory() as temporary:
+                    fixtures = Path(temporary) / "fixtures"
+                    shutil.copytree(ROOT / "labs" / "fixtures", fixtures)
+                    with mock.patch.object(workbench, "FIXTURES", fixtures):
+                        workbench.verify_manifest()
+                        path = fixtures / dependencies[name]
+                        path.write_bytes(path.read_bytes() + b"changed")
+                        with self.assertRaisesRegex(AssertionError, "checksum mismatch"):
+                            workbench.verify_manifest()
+
+    def test_module1_route_and_vrf_selection_boundaries(self):
+        workbench = WORKBENCHES["module1"]
+        rows = [
+            {"prefix": "0.0.0.0/0", "preference": "1", "metric": "1", "next_hop": "default"},
+            {"prefix": "10.0.0.0/24", "preference": "20", "metric": "1", "next_hop": "a"},
+            {"prefix": "10.0.0.0/24", "preference": "10", "metric": "20", "next_hop": "b"},
+            {"prefix": "10.0.0.0/24", "preference": "10", "metric": "5", "next_hop": "c"},
+            {"prefix": "10.0.0.0/24", "preference": "10", "metric": "5", "next_hop": "d"},
+        ]
+        selected = workbench.select_routes("10.0.0.8", rows)
+        self.assertEqual([row["next_hop"] for row in selected], ["c", "d"])
+        self.assertEqual(workbench.select_routes("203.0.113.1", rows)[0]["next_hop"], "default")
+        self.assertEqual(workbench.select_routes("203.0.113.1", rows[1:]), [])
+
+        tables = {
+            "TEST": [
+                {"prefix": "0.0.0.0/0", "next_hop": "default"},
+                {"prefix": "10.0.0.0/24", "next_hop": "specific"},
+            ],
+            "EMPTY": [],
+        }
+        self.assertEqual(
+            workbench.best_vrf_route("TEST", "10.0.0.8", tables)["next_hop"],
+            "specific",
+        )
+        self.assertIsNone(workbench.best_vrf_route("EMPTY", "10.0.0.8", tables))
+
+    def test_module2_cloud_route_selection_boundaries(self):
+        workbench = WORKBENCHES["module2"]
+        data = {
+            "attachments": {"app": "app-routes"},
+            "routes": {
+                "app-routes": [
+                    {"prefix": "0.0.0.0/0", "target": "default"},
+                    {"prefix": "10.0.0.0/24", "target": "specific"},
+                ]
+            },
+        }
+        table, route = workbench.cloud_route("app", "10.0.0.8", data)
+        self.assertEqual(table, "app-routes")
+        self.assertEqual(route["target"], "specific")
+        data["routes"]["app-routes"] = []
+        self.assertEqual(workbench.cloud_route("app", "10.0.0.8", data), ("app-routes", None))
+
+    def test_module3_transforms_and_filters_every_timeline_source(self):
+        workbench = WORKBENCHES["module3"]
+        logs = workbench.load_logs()
+        events = workbench.build_timeline(logs)
+        self.assertEqual(len(events), 17)
+        self.assertEqual({event["source"] for event in events}, set(workbench.LOGS))
+        self.assertEqual(
+            events,
+            sorted(events, key=lambda event: (workbench.parse_time(event["time"]), event["source"])),
+        )
+        for source, records in logs.items():
+            with self.subTest(source=source):
+                record = records[0]
+                expected_time = record["start"] if source in {"flow", "vpn"} else record["time"]
+                self.assertEqual(workbench.event_time(source, record), expected_time)
+                self.assertTrue(workbench.event_entity(source, record))
+                self.assertTrue(workbench.event_observation(source, record))
+
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            self.assertEqual(workbench.print_timeline("dns"), 0)
+        self.assertIn(f"Events: {len(logs['dns'])} | Source: dns", stdout.getvalue())
+        self.assertNotIn(" firewall ", stdout.getvalue())
+
+    def test_python_entry_points_run_as_subprocesses(self):
+        commands = [
+            [sys.executable, "labs/build_fixtures.py", "--check"],
+            [
+                sys.executable,
+                "modules/module-01-operational-networking/workbench/module1_workbench.py",
+                "list",
+            ],
+            [
+                sys.executable,
+                "modules/module-02-network-architecture/workbench/module2_workbench.py",
+                "list",
+            ],
+            [
+                sys.executable,
+                "modules/module-03-incident-response-and-integration/workbench/module3_workbench.py",
+                "list",
+            ],
+        ]
+        environment = {**os.environ, "PYTHONDONTWRITEBYTECODE": "1"}
+        for command in commands:
+            with self.subTest(command=command[1]):
+                result = subprocess.run(
+                    command,
+                    cwd=ROOT,
+                    env=environment,
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
+                self.assertEqual(result.returncode, 0, result.stderr)
+
+
+if __name__ == "__main__":
+    unittest.main()
