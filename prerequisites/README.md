@@ -6,19 +6,19 @@ access is required.
 
 ## Requirements
 
-* macOS on Apple silicon or Intel
-* A local administrator account for initial installation and optional packet
+- macOS on Apple silicon or Intel
+- a local administrator account for initial installation and optional packet
   capture
-* Homebrew
-* Internet access during initial installation
+- Homebrew
+- internet access during initial installation
 
-The course uses saved evidence whenever elevated access would otherwise be
-required. Live exercises generate traffic only on the laptop's loopback
-interface (`lo0`).
+The core course reads local, saved evidence. It does not require `sudo`, create
+connections to lab targets, or depend on another machine. Optional live
+observations generate traffic only on the laptop's loopback interface (`lo0`).
 
 ## Install
 
-If Homebrew is not installed, install it using the instructions at
+If Homebrew is not installed, follow the instructions at
 [brew.sh](https://brew.sh/). Then run:
 
 ```sh
@@ -27,46 +27,65 @@ cd /path/to/network_bootcamp
 ```
 
 The script is idempotent: it installs only missing packages and builds the
-[local lab dataset](../labs/README.md). Verify the tools and fixture checksums
-at any time with:
+[local lab dataset](../labs/README.md). It can be run again safely after an
+interrupted or partial installation.
+
+## Tool Roles
+
+| Tool | Course role | Requirement | License |
+| --- | --- | --- | --- |
+| Python | Builds fixtures and runs all three workbenches | Core | Python-2.0 |
+| TShark | Decodes saved packet captures and optional local captures | Core | GPL-2.0-or-later |
+| Zeek | Produces and interprets network-security telemetry | Core | BSD-3-Clause |
+| jq | Filters JSON fixtures and structured logs | Core | MIT |
+| iperf3 | Generates TCP or UDP traffic for optional local experiments | Optional practice | BSD-3-Clause |
+| macOS BSD tools | Inspect routes, neighbors, sockets, paths, and packet captures | Core and optional practice | Open source, included with macOS |
+
+Homebrew installs the command-line Wireshark formula for TShark; no GUI is
+required. The setup script also checks the macOS-provided `tcpdump`, `netstat`,
+`route`, `arp`, `traceroute`, and `nc` commands.
+
+## Verify the Current Project
+
+From the repository root, check the tools, fixtures, and every interactive
+workbench:
 
 ```sh
 ./prerequisites/setup.sh --check
+python3 labs/build_fixtures.py --check
+python3 modules/module-01-operational-networking/workbench/module1_workbench.py self-test
+python3 modules/module-02-network-architecture/workbench/module2_workbench.py self-test
+python3 modules/module-03-incident-response-and-integration/workbench/module3_workbench.py self-test
 ```
 
-## Installed Tools
+All five commands must exit successfully. The fixture check should report 29
+files, and each workbench should report that its self-test passed. See the
+[lab dataset guide](../labs/README.md) if a checksum or fixture path fails.
 
-| Tool | Course use | License |
-| --- | --- | --- |
-| Python | Local clients, servers, and fixture processing | Python-2.0 |
-| TShark | Packet inspection and protocol decoding | GPL-2.0-or-later |
-| Zeek | Protocol logs and network-security analysis | BSD-3-Clause |
-| jq | JSON and structured-log analysis | MIT |
-| iperf3 | Local TCP and UDP traffic generation | BSD-3-Clause |
+`markdownlint-cli2` is a maintainer convenience, not a course prerequisite and
+is not installed by `setup.sh`.
 
-Homebrew installs the command-line Wireshark formula for TShark; no GUI is
-required. macOS already supplies open-source BSD networking utilities used by
-the course, including `tcpdump`, `netstat`, `route`, `arp`, `traceroute`, and
-`nc`.
+## Optional Live Packet Capture
 
-## Packet Capture
-
-Saved packet captures are the default and require no special permissions. When
-a live loopback capture is useful, start it in one terminal:
+The saved packet captures are the reference evidence and require no special
+permissions. If a guide calls for a live loopback observation, start a capture
+in one terminal:
 
 ```sh
 sudo tcpdump -i lo0 -w /tmp/network-bootcamp.pcap
 ```
 
-Generate the local traffic in another terminal, then press Control-C in the
-capture terminal. Analyze the result without elevated privileges:
+Generate only the guide's local traffic in another terminal, then press
+Control-C in the capture terminal. Analyze the result without elevated
+privileges:
 
 ```sh
 tshark -r /tmp/network-bootcamp.pcap
 ```
 
 Never capture traffic belonging to other users or direct course traffic at a
-system you do not control.
+system you do not control. Skip the live observation when capture is not
+authorized; the saved fixture supports the same core learning objective.
 
 ## Deliberate Exclusions
 
