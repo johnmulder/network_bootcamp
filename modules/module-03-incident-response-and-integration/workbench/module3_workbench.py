@@ -385,7 +385,7 @@ def scope_questions(logs: dict[str, list[dict]]) -> list[dict]:
             "Which host is directly tied to process, DNS, external flow, SMB, and SIEM evidence?",
             workstation["host"],
             "The sources repeatedly identify ws-23 or its address 10.0.10.23.",
-            "incident/assets.json and incident/*.jsonl",
+            "incident/assets.json, incident/endpoint.jsonl, incident/dns.jsonl, incident/flows.jsonl, and incident/siem.jsonl",
         ),
         question(
             "scope",
