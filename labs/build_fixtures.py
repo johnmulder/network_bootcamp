@@ -673,7 +673,7 @@ F5,10.0.99.10,10.0.40.10,tcp,22,allow,jump-host-policy
     )
     write_text(
         "incident/evidence-ledger-template.csv",
-        "evidence_id,source,raw_time,normalized_time,entity,observation,limitation,classification\n",
+        "evidence_id,source,collection_point,raw_time,normalized_time,entity,observation,classification,limitation,confidence\n",
     )
 
 

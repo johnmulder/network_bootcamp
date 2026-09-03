@@ -1,1 +1,1 @@
-evidence_id,source,raw_time,normalized_time,entity,observation,limitation,classification
+evidence_id,source,collection_point,raw_time,normalized_time,entity,observation,classification,limitation,confidence

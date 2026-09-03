@@ -71,9 +71,10 @@ mere connectivity.
    Process in order. Tie every claim to a frame or log record and label it
    observed, inferred, hypothesized, or unknown.
 
-5. Add an evidence-ledger table with the columns `source`, `raw time`,
-   `normalized time`, `entity`, `observation`, `classification`, `limitation`,
-   and `confidence`. Cite exact frames or records.
+5. Add an evidence-ledger table with the columns `evidence ID`, `source`,
+   `collection point`, `raw time`, `normalized time`, `entity`, `observation`,
+   `classification`, `limitation`, and `confidence`. Cite exact frames or
+   records.
 
 6. Apply every step in the Reasoning Process, answer all Check Your
    Understanding questions, and keep at least one plausible alternative
