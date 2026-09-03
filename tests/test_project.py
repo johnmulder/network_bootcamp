@@ -18,6 +18,7 @@ from unittest import mock
 
 sys.dont_write_bytecode = True
 ROOT = Path(__file__).resolve().parents[1]
+SETUP = ROOT / "prerequisites" / "setup.sh"
 
 
 def load_module(name: str, relative: str):
@@ -448,6 +449,151 @@ class WorkbenchTests(unittest.TestCase):
                     check=False,
                 )
                 self.assertEqual(result.returncode, 0, result.stderr)
+
+
+class SetupScriptTests(unittest.TestCase):
+    formulae = ("python", "wireshark", "zeek", "jq", "iperf3")
+    commands = (
+        "python3",
+        "tshark",
+        "zeek",
+        "jq",
+        "iperf3",
+        "tcpdump",
+        "netstat",
+        "route",
+        "arp",
+        "traceroute",
+        "nc",
+    )
+
+    @staticmethod
+    def write_executable(path: Path, content: str) -> None:
+        path.write_text(content)
+        path.chmod(0o755)
+
+    def run_setup(
+        self,
+        *arguments: str,
+        platform: str = "Darwin",
+        installed: tuple[str, ...] | None = None,
+        missing_commands: tuple[str, ...] = (),
+    ) -> tuple[subprocess.CompletedProcess[str], str, str]:
+        installed = self.formulae if installed is None else installed
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            binaries = directory / "bin"
+            binaries.mkdir()
+            brew_log = directory / "brew.log"
+            python_log = directory / "python.log"
+            brew_state = directory / "brew.state"
+            brew_state.write_text("".join(f"{formula}\n" for formula in installed))
+
+            self.write_executable(
+                binaries / "uname",
+                f"#!/bin/sh\nprintf '%s\\n' '{platform}'\n",
+            )
+            self.write_executable(
+                binaries / "dirname",
+                "#!/bin/sh\n/usr/bin/dirname \"$@\"\n",
+            )
+            self.write_executable(
+                binaries / "brew",
+                """#!/bin/sh
+printf '%s\n' "$*" >> "$FAKE_BREW_LOG"
+case "$1" in
+    list)
+        [ "$2" = "--versions" ] || exit 2
+        /usr/bin/grep -qx "$3" "$FAKE_BREW_STATE" || exit 1
+        printf '%s 1.0\n' "$3"
+        ;;
+    install)
+        shift
+        for formula do
+            printf '%s\n' "$formula" >> "$FAKE_BREW_STATE"
+        done
+        ;;
+    *) exit 2 ;;
+esac
+""",
+            )
+            for command in self.commands:
+                if command in missing_commands:
+                    continue
+                content = "#!/bin/sh\n"
+                if command == "python3":
+                    content += "printf '%s\\n' \"$*\" >> \"$FAKE_PYTHON_LOG\"\n"
+                self.write_executable(binaries / command, content)
+
+            environment = {
+                **os.environ,
+                "PATH": str(binaries),
+                "FAKE_BREW_LOG": str(brew_log),
+                "FAKE_BREW_STATE": str(brew_state),
+                "FAKE_PYTHON_LOG": str(python_log),
+            }
+            result = subprocess.run(
+                ["/bin/sh", str(SETUP), *arguments],
+                cwd=ROOT,
+                env=environment,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            return (
+                result,
+                brew_log.read_text() if brew_log.exists() else "",
+                python_log.read_text() if python_log.exists() else "",
+            )
+
+    def test_shell_syntax(self):
+        result = subprocess.run(
+            ["/bin/sh", "-n", str(SETUP)],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_rejects_unknown_arguments_and_non_macos_hosts(self):
+        result, _, _ = self.run_setup("--unknown")
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("usage:", result.stderr)
+
+        result, _, _ = self.run_setup(platform="Linux")
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("requires macOS", result.stderr)
+
+    def test_check_reports_missing_formula_or_command_without_building(self):
+        cases = (
+            ({"installed": tuple(item for item in self.formulae if item != "zeek")}, "zeek"),
+            ({"missing_commands": ("tshark",)}, "wireshark"),
+            ({"missing_commands": ("nc",)}, "nc"),
+        )
+        for options, missing in cases:
+            with self.subTest(missing=missing):
+                result, _, python_log = self.run_setup("--check", **options)
+                self.assertEqual(result.returncode, 1)
+                self.assertIn(f"{missing}", result.stdout)
+                self.assertIn("prerequisites incomplete", result.stderr)
+                self.assertEqual(python_log, "")
+
+    def test_successful_check_verifies_fixtures(self):
+        result, brew_log, python_log = self.run_setup("--check")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("prerequisites ready", result.stdout)
+        self.assertNotIn("install ", brew_log)
+        self.assertEqual(
+            python_log.strip(),
+            f"{ROOT}/labs/build_fixtures.py --check",
+        )
+
+    def test_install_adds_only_missing_formulae_then_builds_fixtures(self):
+        result, brew_log, python_log = self.run_setup(installed=("python", "jq"))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("install wireshark zeek iperf3", brew_log.splitlines())
+        self.assertEqual(python_log.strip(), f"{ROOT}/labs/build_fixtures.py")
+        self.assertIn("prerequisites ready", result.stdout)
 
 
 if __name__ == "__main__":

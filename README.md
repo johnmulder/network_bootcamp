@@ -19,6 +19,7 @@ enterprise hardware, or proprietary analyzers are required.
 | Workbench questions | 79 |
 | Evidence fixtures | 29 manifest-tracked files plus the manifest |
 | Incident timeline | 17 normalized events across 8 sources |
+| Automated tests | 19 tests across all 5 executable sources |
 | Supported environment | One Mac laptop with local, open-source tools |
 
 The [course agenda](agenda.md) is the authoritative curriculum specification.
@@ -72,7 +73,8 @@ combining each guide, its saved evidence, and the interactive workbench.
 ├── agenda.md          # Authoritative curriculum and completion standards
 ├── prerequisites/    # Mac setup, tool roles, and readiness checks
 ├── labs/             # Fixture builder and reproducible saved evidence
-└── modules/          # Guides, section directories, and workbenches
+├── modules/          # Guides, section directories, and workbenches
+└── tests/            # Standard-library project test suite
 ```
 
 Learner-created diagrams, notes, command output, ledgers, and assessments go
@@ -90,6 +92,24 @@ Some guides also show optional live observations with macOS networking tools.
 Only packet capture requires `sudo`; capture only traffic on the learner's own
 Mac or on a network where capture is explicitly authorized. The saved fixtures
 remain the reference evidence when live capture is unavailable or inappropriate.
+
+## Automated Tests
+
+Run the complete project test suite from the repository root:
+
+```bash
+python3 -B -m unittest discover -s tests -v
+```
+
+The suite exercises the fixture builder, all three workbenches, and the setup
+script. It covers protocol construction, fixture generation and corruption,
+routing decisions, architecture decisions, incident timeline correlation,
+question and CLI behavior, and setup success and failure paths.
+
+Tests build fixtures only in temporary directories. Setup tests use simulated
+macOS and Homebrew commands, so they never install software or depend on the
+host's current package state. Python's `-B` option prevents bytecode cache files
+from being written into the course tree.
 
 ## Documentation Guide
 
