@@ -1,0 +1,2 @@
+{"answer": "198.51.100.77", "client": "10.0.10.23", "query": "cdn-update.example.test", "rcode": "NOERROR", "time": "2026-08-15T16:00:00.000Z", "type": "A"}
+{"answer": "10.0.30.50", "client": "10.0.20.40", "query": "historian.ot.example.test", "rcode": "NOERROR", "time": "2026-08-15T16:10:00.000Z", "type": "A"}

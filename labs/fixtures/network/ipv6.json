@@ -1,0 +1,25 @@
+{
+  "addresses": [
+    "fe80::23%en0",
+    "2001:db8:10::23/64"
+  ],
+  "default_router": "fe80::1%en0",
+  "host": "ws-23",
+  "neighbors": [
+    {
+      "address": "fe80::1%en0",
+      "mac": "02:00:00:00:10:01",
+      "state": "REACHABLE"
+    },
+    {
+      "address": "2001:db8:10::53",
+      "mac": "02:00:00:00:10:53",
+      "state": "STALE"
+    }
+  ],
+  "router_advertisement": {
+    "managed": false,
+    "prefix": "2001:db8:10::/64",
+    "router_lifetime": 1800
+  }
+}

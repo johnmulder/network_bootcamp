@@ -1,0 +1,4 @@
+{"event": "link_down", "neighbor": "10.255.0.2", "router": "R1", "time": "2026-08-15T15:20:00.000Z"}
+{"action": "withdraw-via-10.255.0.2", "event": "ospf_lsa", "prefix": "10.0.20.0/24", "router": "R1", "time": "2026-08-15T15:20:00.050Z"}
+{"event": "fib_install", "next_hop": "10.255.0.3", "prefix": "10.0.20.0/24", "router": "R1", "time": "2026-08-15T15:20:00.080Z"}
+{"event": "flow_rehash", "prefix": "10.0.20.0/24", "router": "R1", "time": "2026-08-15T15:20:00.120Z"}

@@ -1,0 +1,53 @@
+{
+  "circuits": [
+    {
+      "capacity_mbps": 500,
+      "loss_percent": 20,
+      "name": "private-1",
+      "preference": 10,
+      "provider": "A",
+      "state": "degraded"
+    },
+    {
+      "capacity_mbps": 200,
+      "encrypted": true,
+      "name": "internet-vpn-1",
+      "preference": 20,
+      "provider": "B",
+      "state": "up"
+    }
+  ],
+  "mpls": {
+    "encrypted": false,
+    "routing": "provider-managed-l3vpn"
+  },
+  "routes": [
+    {
+      "circuit": "private-1",
+      "next_hop": "hq",
+      "prefix": "0.0.0.0/0",
+      "site": "branch"
+    },
+    {
+      "circuit": "internet-vpn-1",
+      "next_hop": "hq",
+      "prefix": "10.0.0.0/16",
+      "site": "branch"
+    }
+  ],
+  "sdwan_policy": {
+    "bulk": "lowest-cost",
+    "business": "private-preferred",
+    "voice": "lowest-loss"
+  },
+  "sites": {
+    "branch": {
+      "internet_exit": false,
+      "prefix": "10.10.0.0/16"
+    },
+    "hq": {
+      "internet_exit": true,
+      "prefix": "10.0.0.0/16"
+    }
+  }
+}

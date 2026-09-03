@@ -1,0 +1,4 @@
+{"client_mac": "02:00:00:00:10:23", "message": "DISCOVER", "time": "2026-08-15T14:59:50Z", "transaction": "0x1023"}
+{"address": "10.0.10.23", "dns": ["10.0.10.53"], "gateway": "10.0.10.1", "lease_seconds": 3600, "message": "OFFER", "prefix": 24, "time": "2026-08-15T14:59:50.020Z", "transaction": "0x1023"}
+{"address": "10.0.10.23", "message": "REQUEST", "time": "2026-08-15T14:59:50.040Z", "transaction": "0x1023"}
+{"address": "10.0.10.23", "dns": ["10.0.10.53"], "gateway": "10.0.10.1", "lease_seconds": 3600, "message": "ACK", "prefix": 24, "time": "2026-08-15T14:59:50.060Z", "transaction": "0x1023"}

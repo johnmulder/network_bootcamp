@@ -1,0 +1,35 @@
+{
+  "attachments": {
+    "corp-vpc": "rt-corp",
+    "on-prem": "rt-hybrid",
+    "security-vpc": "rt-security"
+  },
+  "routes": {
+    "rt-corp": [
+      {
+        "prefix": "0.0.0.0/0",
+        "target": "security-vpc"
+      },
+      {
+        "prefix": "10.0.0.0/8",
+        "target": "on-prem"
+      }
+    ],
+    "rt-hybrid": [
+      {
+        "prefix": "10.20.0.0/16",
+        "target": "corp-vpc"
+      }
+    ],
+    "rt-security": [
+      {
+        "prefix": "0.0.0.0/0",
+        "target": "internet"
+      },
+      {
+        "prefix": "10.20.0.0/16",
+        "target": "corp-vpc"
+      }
+    ]
+  }
+}

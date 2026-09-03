@@ -1,0 +1,4 @@
+{"affected": ["ws-23"], "component": "access-sw-1", "condition": "power-loss", "time": "2026-08-15T15:30:00Z"}
+{"affected": ["established-nat-sessions"], "component": "enterprise-fw-a", "condition": "session-sync-stale", "time": "2026-08-15T15:40:00Z"}
+{"affected": ["branch-applications"], "component": "wan-1", "condition": "20-percent-loss", "time": "2026-08-15T15:50:00Z"}
+{"affected": ["app.example.test"], "component": "dns-1", "condition": "stale-answer", "time": "2026-08-15T15:55:00Z"}

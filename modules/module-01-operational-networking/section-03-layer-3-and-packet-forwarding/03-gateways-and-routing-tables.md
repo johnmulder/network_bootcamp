@@ -1,0 +1,102 @@
+# Default Gateways and Routing Tables
+
+> **Module 1 · Section 3**
+
+## Why It Matters
+
+A routing table is the central data structure for choosing an IP packet's next
+forwarding action. Hosts and routers use the same basic logic, though routers
+usually hold more routes.
+
+## Core Model
+
+* A route contains a destination prefix plus an action such as a next hop,
+  egress interface, reject, blackhole, or local delivery.
+
+* A connected route represents a prefix directly reachable through an
+  interface.
+
+* A default route matches destinations not covered by a more-specific entry.
+
+* A next hop must itself be reachable, often through a connected or recursively
+  resolved route.
+
+* Multiple routing tables can exist for separate contexts, so the correct table
+  must be identified before interpreting entries.
+
+## Reasoning Process
+
+1. Choose the routing context used by the packet.
+
+2. Collect every route whose prefix contains the destination.
+
+3. Select the most-specific route, then resolve its next hop and egress
+   interface.
+
+4. Check whether source selection, scope, or policy routing changes the result.
+
+## Teaching Instructions
+
+1. From the repository root, verify the lab dataset and create the output
+   file:
+
+   ```sh
+   python3 labs/build_fixtures.py --check
+   mkdir -p work/module-01-operational-networking/section-03-layer-3-and-packet-forwarding
+   touch work/module-01-operational-networking/section-03-layer-3-and-packet-forwarding/03-gateways-and-routing-tables.md
+   ```
+
+2. Before examining the evidence, write one falsifiable prediction about
+   **Default Gateways and Routing Tables** in
+   `work/module-01-operational-networking/section-03-layer-3-and-packet-forwarding/03-gateways-and-routing-tables.md`.
+   State the exact fixture field, packet, or log record that would support or
+   contradict it.
+
+3. Run the evidence commands exactly as shown:
+
+   ```sh
+   sed -n '1,120p' labs/fixtures/routing/macos-routes.txt
+   column -s, -t labs/fixtures/routing/route-candidates.csv
+   jq '.' labs/fixtures/network/ipv6.json
+   jq '.' labs/fixtures/routing/traceroute.json
+   tshark -r labs/fixtures/pcaps/mtu-failure.pcap -Y 'tcp.options.mss || icmp' -T fields -E header=y -E separator=, -e frame.number -e ip.src -e ip.dst -e tcp.options.mss_val -e icmp.type -e icmp.code -e icmp.mtu
+   ```
+
+4. In the output file, add a `## Analysis` section for **Default Gateways and
+   Routing Tables**. Apply the numbered Reasoning Process in order. For each
+   step, cite at least one exact command result and label the statement as an
+   observation or interpretation.
+
+5. Add an evidence table with the columns `source`, `observation`,
+   `interpretation`, and `uncertainty`. Cite exact frame numbers, prefixes,
+   JSON fields, or log records.
+
+6. Apply every step in the Reasoning Process, then answer all Check Your
+   Understanding questions in the same output file.
+
+## Expected Evidence
+
+* `10.0.20.40/32` wins for `10.0.20.40`, while the two equal OSPF `/24` routes
+  are candidates for other addresses in `10.0.20.0/24`.
+
+* The IPv6 host uses `fe80::1%en0` as its default router, and traceroute hop 3
+  is unknown rather than proven absent from the path.
+
+* The MTU capture advertises MSS 1460, sends a 1400-byte TCP payload, receives
+  ICMP type 3 code 4 with MTU 1200, and retransmits the oversized segment.
+
+## Completion Standard
+
+Submit
+`work/module-01-operational-networking/section-03-layer-3-and-packet-forwarding/03-gateways-and-routing-tables.md`.
+It is complete when it contains the prediction, exact commands used, at least
+three cited observations, a decision explanation tied to this subsection, all
+knowledge-check answers, and one explicitly labeled uncertainty.
+
+## Check Your Understanding
+
+1. What makes a connected route different from a static next-hop route?
+
+2. Why must the next-hop address be reachable?
+
+3. Does a default route override a more-specific route?

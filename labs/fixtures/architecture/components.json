@@ -1,0 +1,49 @@
+{
+  "enterprise-firewall": {
+    "modifies": true,
+    "policy": true,
+    "routes": true,
+    "state": true,
+    "telemetry": [
+      "sessions",
+      "nat",
+      "deny"
+    ],
+    "tls_termination": false
+  },
+  "ids": {
+    "modifies": false,
+    "policy": false,
+    "routes": false,
+    "state": true,
+    "telemetry": [
+      "alert",
+      "protocol"
+    ],
+    "tls_termination": false
+  },
+  "load-balancer": {
+    "modifies": true,
+    "policy": true,
+    "routes": true,
+    "state": true,
+    "telemetry": [
+      "client",
+      "backend",
+      "health"
+    ],
+    "tls_termination": true
+  },
+  "reverse-proxy": {
+    "modifies": true,
+    "policy": true,
+    "routes": false,
+    "state": true,
+    "telemetry": [
+      "request",
+      "response",
+      "backend"
+    ],
+    "tls_termination": true
+  }
+}

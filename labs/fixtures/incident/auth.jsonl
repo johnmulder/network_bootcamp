@@ -1,0 +1,2 @@
+{"host": "ws-23", "method": "console", "result": "success", "time": "2026-08-15T15:59:40Z", "user": "alex"}
+{"host": "file-01", "method": "network", "result": "success", "source": "10.0.10.23", "time": "2026-08-15T16:04:01Z", "user": "svc-backup"}

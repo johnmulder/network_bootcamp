@@ -1,0 +1,7 @@
+
+id,source,destination,protocol,port,intended,policy_point
+F1,10.0.10.23,10.0.20.40,tcp,80,allow,core-acl
+F2,10.0.10.23,198.51.100.77,tcp,443,deny,enterprise-firewall
+F3,10.0.20.40,10.0.30.50,tcp,443,allow,ot-firewall-a
+F4,10.0.10.23,10.0.30.50,tcp,443,deny,ot-firewall-a
+F5,10.0.99.10,10.0.40.10,tcp,22,allow,jump-host-policy

@@ -1,0 +1,151 @@
+{
+  "case": "network-bootcamp-reference",
+  "files": [
+    {
+      "bytes": 604,
+      "path": "architecture/cloud-routes.json",
+      "sha256": "d9bd43cf1d0ded4ba31dfd9169b68db23aec4a09d2f2e55c1e7e717c90f19aae"
+    },
+    {
+      "bytes": 824,
+      "path": "architecture/components.json",
+      "sha256": "abade8436f26ac522abdc23b9b0b96f7f2a854a906586a66a375b992a32676c9"
+    },
+    {
+      "bytes": 942,
+      "path": "architecture/enterprise.md",
+      "sha256": "e30fdd12cbb23c5bbfeb192929840413bcaf1f3c9c8779d57a31af7982350cba"
+    },
+    {
+      "bytes": 495,
+      "path": "architecture/failures.jsonl",
+      "sha256": "e51c103c18a2c3d59ac5b510fd48090e513697dbec6cb4780b408810d3efb7d5"
+    },
+    {
+      "bytes": 327,
+      "path": "architecture/traffic-flows.csv",
+      "sha256": "8cd41815401acebc67672d09cb30a1bc518c89e93d3b3d917ee306df17d3a869"
+    },
+    {
+      "bytes": 994,
+      "path": "architecture/wan.json",
+      "sha256": "56fe3ba96dcda3fb23b7da1f380c695ad4406de51f275cd37bd21db8fc5d69f1"
+    },
+    {
+      "bytes": 490,
+      "path": "incident/assets.json",
+      "sha256": "b7bf323198874229e9a7e37f656c08447f07de18079f6fb5df829615d5859065"
+    },
+    {
+      "bytes": 248,
+      "path": "incident/auth.jsonl",
+      "sha256": "06258abb9977d9f3c76161230424b4f96ddb22ced6a1773663d61ee245bb8e74"
+    },
+    {
+      "bytes": 313,
+      "path": "incident/dns.jsonl",
+      "sha256": "b488eff6f871a8c0924a8b3ebe037fe7c53313115a2ecd710d9ef255e20a1aeb"
+    },
+    {
+      "bytes": 480,
+      "path": "incident/endpoint.jsonl",
+      "sha256": "21646e712731fb61d574a4df8834741c9ace0ec46ec57a322096451cc87ab946"
+    },
+    {
+      "bytes": 89,
+      "path": "incident/evidence-ledger-template.csv",
+      "sha256": "3ca90c2166c78d10fc5a978e240a43498be8cbe0077043a00fac5488c6673fe7"
+    },
+    {
+      "bytes": 495,
+      "path": "incident/firewall.jsonl",
+      "sha256": "260bf99c357213a45824b454e5b69e357ebd7ca9388340987ebced1bbe141fa0"
+    },
+    {
+      "bytes": 690,
+      "path": "incident/flows.jsonl",
+      "sha256": "9941d4c724e58d621783b064b40b0e182cf02e27d838521f79d1b5ab804ba537"
+    },
+    {
+      "bytes": 174,
+      "path": "incident/proxy.jsonl",
+      "sha256": "068a59d1a5d9be5f66993ea499b675e9293209068e56db425d94dd1ecdbe0328"
+    },
+    {
+      "bytes": 162,
+      "path": "incident/siem.jsonl",
+      "sha256": "7d78948292edc4615d4e0b3cd78dfd7d2ae291881941e5c30a3c0ae29b4336dd"
+    },
+    {
+      "bytes": 167,
+      "path": "incident/vpn.jsonl",
+      "sha256": "cdd1ee1994ce9f19d640628537a55eee5b79374faf2e9242f4573502f42d16f2"
+    },
+    {
+      "bytes": 605,
+      "path": "network/dhcp.jsonl",
+      "sha256": "3d3db2d1527c49f748839c45b0e91af8805e9650db7d664e5de9bdd14534b758"
+    },
+    {
+      "bytes": 474,
+      "path": "network/ipv6.json",
+      "sha256": "1360cdd9eea3a5b26d5b96a310706135dbfc1abe1c11a0dc71c6645d77dda2b6"
+    },
+    {
+      "bytes": 1372,
+      "path": "network/l2-control.json",
+      "sha256": "bd3edea3ca28b8214a1a0b9d2d3171f4f1366b88fdbd0e0c833a8cbd19097f5b"
+    },
+    {
+      "bytes": 1008,
+      "path": "pcaps/foundations.pcap",
+      "sha256": "e892f077a3a64315202c665cd49fe36365eab1491aa9368a0847742f0e8d5812"
+    },
+    {
+      "bytes": 1703,
+      "path": "pcaps/incident.pcap",
+      "sha256": "b6ae752ae86010b380ea1a5055157de272ecf9874b192ef2c50c7c6d69b6a550"
+    },
+    {
+      "bytes": 3292,
+      "path": "pcaps/mtu-failure.pcap",
+      "sha256": "fdcb74c3c04c253361fa3461cc19f8f46f00da9f3f8a12448d8dfea372b70356"
+    },
+    {
+      "bytes": 645,
+      "path": "routing/bgp.json",
+      "sha256": "f933f074aa7ada7be87a3bbebf93751d5abae9e56c1ae409b83894a86bea07a2"
+    },
+    {
+      "bytes": 483,
+      "path": "routing/macos-routes.txt",
+      "sha256": "fabe2558f6693d44ac31bbfd0e74a34718014da8195a8af8101a18ea584e209d"
+    },
+    {
+      "bytes": 487,
+      "path": "routing/ospf.json",
+      "sha256": "08804776503a75f35e0c67622dae7a33318ac1a5ce7b25abffcd7bb27dc477a2"
+    },
+    {
+      "bytes": 332,
+      "path": "routing/route-candidates.csv",
+      "sha256": "d91effe3feeae4d8c68d15204adc0a8531bd32ee19d64849e4dbbabde62e560a"
+    },
+    {
+      "bytes": 470,
+      "path": "routing/route-events.jsonl",
+      "sha256": "719afe9b4c425ea03a53fe63fe15b80125d8fe37e107f1852f5b46b95cf990d1"
+    },
+    {
+      "bytes": 534,
+      "path": "routing/traceroute.json",
+      "sha256": "1162806d5dc3c6db9789944e9dbc41e39be19d5f432701b88af81d77f7c443ca"
+    },
+    {
+      "bytes": 648,
+      "path": "routing/vrfs.json",
+      "sha256": "f08e17145f576e6dd65b4417e7245ccf61189858dc425d02edad6d667f5ee2bd"
+    }
+  ],
+  "generated_at": "2026-08-15T00:00:00Z"
+}

@@ -1,0 +1,12 @@
+
+Routing tables
+
+Internet:
+Destination        Gateway            Flags        Netif
+default            10.0.10.1          UGScg          en0
+10.0.10/24         link#14            UCS            en0
+10.0.10.1/32       link#14            UCS            en0
+10.0.20/24         10.0.10.254        UGSc           en0
+10.0.30/24         10.0.10.253        UGSc           en0
+127                127.0.0.1          UCS            lo0
+198.51.100.77/32   10.0.10.252        UGSc           en0

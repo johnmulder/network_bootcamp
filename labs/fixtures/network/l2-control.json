@@ -1,0 +1,74 @@
+{
+  "lacp": {
+    "flows": [
+      {
+        "member": "en1",
+        "tuple": "10.0.10.23:51514-10.0.20.40:80-tcp"
+      },
+      {
+        "member": "en2",
+        "tuple": "10.0.10.24:51515-10.0.20.40:80-tcp"
+      },
+      {
+        "member": "en1",
+        "tuple": "10.0.10.25:51516-10.0.20.40:80-tcp"
+      }
+    ],
+    "group": "ae1",
+    "members": [
+      "en1",
+      "en2"
+    ],
+    "minimum_links": 1
+  },
+  "stp": {
+    "bridges": [
+      {
+        "mac": "02:00:00:00:00:01",
+        "name": "sw-dist-1",
+        "priority": 24576
+      },
+      {
+        "mac": "02:00:00:00:00:11",
+        "name": "sw-access-1",
+        "priority": 32768
+      },
+      {
+        "mac": "02:00:00:00:00:12",
+        "name": "sw-access-2",
+        "priority": 32768
+      }
+    ],
+    "links": [
+      {
+        "a": "sw-dist-1",
+        "b": "sw-access-1",
+        "cost": 4,
+        "state": "forwarding"
+      },
+      {
+        "a": "sw-dist-1",
+        "b": "sw-access-2",
+        "cost": 4,
+        "state": "forwarding"
+      },
+      {
+        "a": "sw-access-1",
+        "b": "sw-access-2",
+        "cost": 4,
+        "state": "discarding-on-access-2"
+      }
+    ],
+    "root": "sw-dist-1"
+  },
+  "vlans": {
+    "10": {
+      "name": "USERS",
+      "subnet": "10.0.10.0/24"
+    },
+    "20": {
+      "name": "SERVERS",
+      "subnet": "10.0.20.0/24"
+    }
+  }
+}

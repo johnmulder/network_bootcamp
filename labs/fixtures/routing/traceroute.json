@@ -1,0 +1,31 @@
+{
+  "hops": [
+    {
+      "response": "10.0.10.1",
+      "rtt_ms": 0.8,
+      "ttl": 1
+    },
+    {
+      "response": "192.0.2.1",
+      "rtt_ms": 5.1,
+      "ttl": 2
+    },
+    {
+      "response": null,
+      "rtt_ms": null,
+      "ttl": 3
+    },
+    {
+      "response": "203.0.113.20",
+      "rtt_ms": 18.4,
+      "ttl": 4
+    }
+  ],
+  "note": "TTL 3 forwarded the probe but did not return an ICMP response.",
+  "probe": {
+    "destination": "203.0.113.20",
+    "first_ttl": 1,
+    "method": "udp",
+    "source": "10.0.10.23"
+  }
+}

@@ -1,0 +1,3 @@
+{"action": "allow", "dport": 443, "dst": "198.51.100.77", "rule": "TEMP-EGRESS-17", "session": "fw-9001", "src": "10.0.10.23", "time": "2026-08-15T16:01:00Z", "translated_src": "192.0.2.44"}
+{"action": "allow", "dport": 445, "dst": "10.0.20.40", "rule": "USER-TO-SERVER", "session": "fw-9010", "src": "10.0.10.23", "time": "2026-08-15T16:04:02Z"}
+{"action": "deny", "dport": 443, "dst": "10.0.30.50", "rule": "DENY-USER-OT", "session": null, "src": "10.0.10.23", "time": "2026-08-15T16:08:00Z"}
