@@ -87,6 +87,9 @@ All exercises use the checksum-verified [local lab dataset](labs/README.md).
 
 > **Theme:** How packets actually get from A to B.
 
+Use the [Module 1 Workbench](modules/module-01-operational-networking/workbench/README.md)
+for immediate feedback and repeatable, scored fixture exercises.
+
 ### Section 1 — Introduction and Mental Model
 
 * Course objectives

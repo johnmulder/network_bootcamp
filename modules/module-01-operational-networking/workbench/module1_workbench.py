@@ -71,6 +71,10 @@ def l2_questions() -> list[dict]:
     data = read_json("network/l2-control.json")
     stp = data["stp"]
     discarded = next(link for link in stp["links"] if "discarding" in link["state"])
+    discarded_suffix = discarded["state"].removeprefix("discarding-on-")
+    discarded_bridge = next(
+        endpoint for endpoint in (discarded["a"], discarded["b"]) if endpoint.endswith(discarded_suffix)
+    )
     flow = next(item for item in data["lacp"]["flows"] if "10.0.10.24" in item["tuple"])
     return [
         question(
@@ -83,7 +87,7 @@ def l2_questions() -> list[dict]:
         question(
             "l2",
             "Which endpoint discards on the redundant access-to-access link?",
-            discarded["state"].removeprefix("discarding-on-"),
+            discarded_bridge,
             "One side discards so the redundant triangle does not form a forwarding loop.",
             "network/l2-control.json: .stp.links[]",
         ),
@@ -351,6 +355,7 @@ def self_test() -> int:
     groups = all_questions()
     assert set(groups) == set(ACTIVITIES)
     assert all(len(items) >= 4 for items in groups.values())
+    assert groups["l2"][1]["answer"] == "sw-access-2"
     assert all(normalize(item["answer"]) in item["answers"] for items in groups.values() for item in items)
     print(f"self-test passed: {sum(map(len, groups.values()))} questions, 7 fixtures verified")
     return 0
