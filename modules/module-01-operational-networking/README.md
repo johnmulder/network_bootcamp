@@ -5,6 +5,16 @@
 Each subsection guide explains the technical model, then provides exact local
 commands, expected evidence, a submission path, and a completion standard.
 
+## Dynamic Practice
+
+Use the [Module 1 Workbench](workbench/README.md) for immediate, scored practice
+with the same fixtures used by the subsection guides:
+
+```sh
+python3 modules/module-01-operational-networking/workbench/module1_workbench.py demo --seed 7 --limit 6
+python3 modules/module-01-operational-networking/workbench/module1_workbench.py run all --seed 23 --limit 10
+```
+
 ## Section 1 — Introduction and Mental Model
 
 * [Course Objectives and Shared Language](section-01-introduction-and-mental-model/01-course-objectives-and-shared-language.md)

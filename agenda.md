@@ -207,7 +207,7 @@ and what must converge.
 * VRFs vs. VLANs
 * Segmentation use cases
 
-**Exercise:** Use `labs/fixtures/routing/vrfs.json` to explain why `CORP` has no
+**Exercise:** Use `labs/fixtures/routing/vrfs.json` to explain why `MGMT` has no
 route to `10.0.30.50` while `OT` does, even though both routing contexts exist
 on the same modeled router.
 
