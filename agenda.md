@@ -422,6 +422,9 @@ design facts from assumptions and unresolved questions.
 
 > **Theme:** Determine what actually happened on the network.
 
+Use the [Module 3 Workbench](modules/module-03-incident-response-and-integration/workbench/README.md)
+to merge the evidence timeline and practice scored investigation decisions.
+
 ### Section 1 — Architecture-to-Evidence Bridge
 
 * Select a critical traffic flow from an architecture diagram

@@ -5,6 +5,16 @@
 Each subsection guide explains the technical model, then provides exact local
 commands, expected evidence, a submission path, and a completion standard.
 
+## Dynamic Practice
+
+Use the [Module 3 Workbench](workbench/README.md) to build the merged timeline
+and practice scored evidence decisions with the same case fixtures:
+
+```sh
+python3 modules/module-03-incident-response-and-integration/workbench/module3_workbench.py timeline
+python3 modules/module-03-incident-response-and-integration/workbench/module3_workbench.py run all --seed 23 --limit 10
+```
+
 ## Section 1 — Architecture-to-Evidence Bridge
 
 * [Predicting Path, Policy, State, and Telemetry](section-01-architecture-to-evidence-bridge/01-predicting-path-policy-state-and-telemetry.md)
