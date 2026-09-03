@@ -8,6 +8,10 @@ Each guide contains exact commands, named fixture paths, expected evidence, a
 unique submission path under `work/`, and an explicit completion standard. The
 shared evidence is documented in the [local lab dataset](../labs/README.md).
 
+For immediate feedback, use the terminal workbenches for
+[Module 1](module-01-operational-networking/workbench/README.md) and
+[Module 2](module-02-network-architecture/workbench/README.md).
+
 * [Module 1 — Operational Networking](module-01-operational-networking/README.md)
 * [Module 2 — Network Architecture](module-02-network-architecture/README.md)
 * [Module 3 — Incident Response and Integration](module-03-incident-response-and-integration/README.md)
