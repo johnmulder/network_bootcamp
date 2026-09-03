@@ -265,6 +265,9 @@ failure points.
 
 > **Theme:** Why networks are designed the way they are.
 
+Use the [Module 2 Workbench](modules/module-02-network-architecture/workbench/README.md)
+for repeatable, scored architecture and failure decisions.
+
 Use `labs/fixtures/architecture/`, `labs/fixtures/routing/vrfs.json`, and
 `labs/fixtures/network/l2-control.json` as the authoritative design evidence
 for this module.

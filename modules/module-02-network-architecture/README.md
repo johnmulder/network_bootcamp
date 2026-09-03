@@ -5,6 +5,16 @@
 Each subsection guide explains the technical model, then provides exact local
 commands, expected evidence, a submission path, and a completion standard.
 
+## Dynamic Practice
+
+Use the [Module 2 Workbench](workbench/README.md) for immediate, scored
+architecture decisions using the same fixtures as the subsection guides:
+
+```sh
+python3 modules/module-02-network-architecture/workbench/module2_workbench.py demo --seed 7 --limit 8
+python3 modules/module-02-network-architecture/workbench/module2_workbench.py run all --seed 23 --limit 10
+```
+
 ## Section 1 — Architecture Foundation Check
 
 * [Packet-Path Foundation Check](section-01-architecture-foundation-check/01-packet-path-foundation-check.md)
