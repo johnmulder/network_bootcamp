@@ -9,6 +9,9 @@ only inferred or hypothesized.
 
 Run every command from the repository root.
 
+For a guided five-question session, run `./course` and choose **Practice a
+topic**. The commands below support repeatable or facilitated sessions.
+
 List the activities:
 
 ```sh

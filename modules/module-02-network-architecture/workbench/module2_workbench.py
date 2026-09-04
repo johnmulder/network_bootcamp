@@ -292,12 +292,29 @@ def show_question(item: dict, number: int, reveal: bool) -> bool:
     if reveal:
         correct = True
     else:
-        try:
-            response = input("   Your answer: ")
-        except EOFError:
-            raise SystemExit("\nerror: input ended before the activity was complete") from None
-        correct = normalize(response) in item["answers"]
-        print("   Correct." if correct else f"   Not yet. Expected: {item['answer']}")
+        correct = False
+        attempts = 0
+        while attempts < 2:
+            try:
+                response = input("   Your answer (? for help, show to reveal): ")
+            except EOFError:
+                raise SystemExit("\nerror: input ended before the activity was complete") from None
+            response = normalize(response)
+            if response in {"?", "help"}:
+                print("   Enter a short answer; capitalization is ignored.")
+                continue
+            if response in {"s", "show"}:
+                print("   Answer revealed.")
+                break
+            if response in item["answers"]:
+                correct = True
+                print("   Correct.")
+                break
+            attempts += 1
+            if attempts < 2:
+                print("   Not yet. Try once more or type show.")
+            else:
+                print(f"   Not yet. Expected: {item['answer']}")
     print(f"   Answer: {item['answer']}")
     print(f"   Why: {item['explanation']}")
     return correct
@@ -313,6 +330,27 @@ def run_session(activity: str, seed: int, limit: int | None, reveal: bool) -> in
         print(f"\nScore: {score}/{len(selected)}")
         print("Review each cited fixture before retrying with the same seed.")
     return 0
+
+
+def practice_menu() -> int:
+    activities = (("all", "mixed review"), *ACTIVITIES.items())
+    print("Module 2 Practice")
+    print("Choose a five-question session:")
+    for number, (_, description) in enumerate(activities, 1):
+        print(f"  {number}. {description}")
+    while True:
+        try:
+            answer = input(f"Choose [1] (1-{len(activities)} or q): ").strip().lower()
+        except (EOFError, KeyboardInterrupt):
+            print()
+            return 0
+        if not answer:
+            answer = "1"
+        if answer in {"q", "quit"}:
+            return 0
+        if answer.isdigit() and 1 <= int(answer) <= len(activities):
+            return run_session(activities[int(answer) - 1][0], 1, 5, False)
+        print(f"Enter 1-{len(activities)} or q.")
 
 
 def verify_manifest() -> None:
@@ -360,6 +398,7 @@ def self_test() -> int:
 def parser() -> argparse.ArgumentParser:
     result = argparse.ArgumentParser(description=__doc__)
     subcommands = result.add_subparsers(dest="command", required=True)
+    subcommands.add_parser("menu", help="choose a short guided practice session")
     subcommands.add_parser("list", help="list available activities")
     subcommands.add_parser("self-test", help="verify fixtures and workbench logic")
     for name, help_text in (("demo", "reveal worked answers"), ("run", "start scored practice")):
@@ -372,6 +411,8 @@ def parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(argv)
+    if args.command == "menu":
+        return practice_menu()
     if args.command == "list":
         print("Module 2 Workbench activities:")
         for name, description in ACTIVITIES.items():

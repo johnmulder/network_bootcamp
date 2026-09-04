@@ -28,7 +28,8 @@ cd /path/to/network_bootcamp
 
 The script is idempotent: it installs only missing packages and builds the
 [local lab dataset](../labs/README.md). It can be run again safely after an
-interrupted or partial installation.
+interrupted or partial installation. When setup succeeds, start with
+`./course`.
 
 ## Tool Roles
 
@@ -52,15 +53,12 @@ workbench:
 
 ```sh
 ./prerequisites/setup.sh --check
-python3 labs/build_fixtures.py --check
-python3 modules/module-01-operational-networking/workbench/module1_workbench.py self-test
-python3 modules/module-02-network-architecture/workbench/module2_workbench.py self-test
-python3 modules/module-03-incident-response-and-integration/workbench/module3_workbench.py self-test
+./course verify
 ```
 
-All five commands must exit successfully. The fixture check should report 29
-files, and each workbench should report that its self-test passed. See the
-[lab dataset guide](../labs/README.md) if a checksum or fixture path fails.
+Both commands must exit successfully. The course check should report 29 fixture
+files and a passing self-test for each workbench. See the [lab dataset
+guide](../labs/README.md) if a checksum or fixture path fails.
 
 `markdownlint-cli2` is a maintainer convenience, not a course prerequisite and
 is not installed by `setup.sh`.

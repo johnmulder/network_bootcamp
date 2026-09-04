@@ -8,6 +8,9 @@ fixture, and calls out missing evidence instead of silently filling gaps.
 
 Run every command from the repository root.
 
+For a guided five-question session, run `./course` and choose **Practice a
+topic**. The commands below support repeatable or facilitated sessions.
+
 List the activities:
 
 ```sh

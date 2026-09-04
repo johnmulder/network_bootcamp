@@ -19,7 +19,7 @@ enterprise hardware, or proprietary analyzers are required.
 | Workbench questions | 79 |
 | Evidence fixtures | 29 manifest-tracked files plus the manifest |
 | Incident timeline | 17 normalized events across 8 sources |
-| Automated tests | 29 tests across all 6 executable sources |
+| Automated tests | 31 tests across all 7 executable sources |
 | Supported environment | One Mac laptop with local, open-source tools |
 
 The [course agenda](agenda.md) is the authoritative curriculum specification.
@@ -34,17 +34,17 @@ evidence fixtures:
 ./prerequisites/setup.sh
 ```
 
-Open the course dashboard:
+Open the guided course:
 
 ```bash
-python3 course.py
+./course
 ```
 
 Confirm that the installed tools and course evidence are ready:
 
 ```bash
 ./prerequisites/setup.sh --check
-python3 course.py verify
+./course verify
 ```
 
 The setup process and each command are explained in the
@@ -53,25 +53,30 @@ The setup process and each command are explained in the
 
 ## Course Navigator
 
-`course.py` presents the existing curriculum without copying or replacing it.
-Use short numbers to move from a module to a section and then to a guide:
+`./course` opens a numbered menu when run in a terminal. Press Enter to follow
+the recommended path through Module 1, or choose a module, short practice
+session, incident timeline, or verification. Long guides use the terminal
+pager, so they can be read without losing your place.
+
+Direct commands remain available for repeatable facilitation and scripting:
 
 | Goal | Command |
 | --- | --- |
-| Show the course dashboard | `python3 course.py` |
-| List a module's sections | `python3 course.py module 1` |
-| List a section's guides | `python3 course.py section 1 2` |
-| Read a guide | `python3 course.py guide 1 2 3` |
-| List a module's practice activities | `python3 course.py practice 1` |
-| Preview a short worked activity | `python3 course.py practice 1 routes --demo --limit 4` |
-| Start scored practice | `python3 course.py practice 2 cloud --seed 7` |
-| Show the incident timeline | `python3 course.py timeline` |
-| Filter the timeline to one source | `python3 course.py timeline --source endpoint` |
-| Verify fixtures and all workbenches | `python3 course.py verify` |
+| Open the guided course | `./course` |
+| List a module's sections | `./course module 1` |
+| List a section's guides | `./course section 1 2` |
+| Read a guide | `./course guide 1 2 3` |
+| List a module's practice activities | `./course practice 1` |
+| Preview a short worked activity | `./course practice 1 routes --demo --limit 4` |
+| Start scored practice | `./course practice 2 cloud --seed 7` |
+| Show the incident timeline | `./course timeline` |
+| Filter the timeline to one source | `./course timeline --source endpoint` |
+| Verify fixtures and all workbenches | `./course verify` |
 
 The navigator calculates the hierarchy from the module directories and reads
 titles and content from the checked-in Markdown. It does not track progress or
-write learner data.
+write learner data. `python3 course.py ...` remains a supported equivalent for
+automation.
 
 ## Learning Path
 
@@ -95,7 +100,9 @@ combining each guide, its saved evidence, and the interactive workbench.
 ```text
 .
 ├── README.md          # Operational entry point
+├── PLAN.md            # Interactive course implementation plan
 ├── agenda.md          # Authoritative curriculum and completion standards
+├── course             # Natural guided-course command
 ├── course.py          # Short course navigation and practice commands
 ├── prerequisites/    # Mac setup, tool roles, and readiness checks
 ├── labs/             # Fixture builder and reproducible saved evidence

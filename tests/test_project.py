@@ -293,6 +293,19 @@ class WorkbenchTests(unittest.TestCase):
                 with mock.patch("builtins.input", return_value=" Y "):
                     with contextlib.redirect_stdout(io.StringIO()):
                         self.assertTrue(workbench.show_question(item, 1, False))
+            with self.subTest(workbench=name, mode="retry"):
+                stdout = io.StringIO()
+                with mock.patch("builtins.input", side_effect=("no", "Y")):
+                    with contextlib.redirect_stdout(stdout):
+                        self.assertTrue(workbench.show_question(item, 1, False))
+                self.assertIn("Try once more", stdout.getvalue())
+            with self.subTest(workbench=name, mode="help-and-show"):
+                stdout = io.StringIO()
+                with mock.patch("builtins.input", side_effect=("?", "show")):
+                    with contextlib.redirect_stdout(stdout):
+                        self.assertFalse(workbench.show_question(item, 1, False))
+                self.assertIn("capitalization is ignored", stdout.getvalue())
+                self.assertIn("Answer revealed", stdout.getvalue())
             with self.subTest(workbench=name, mode="wrong"):
                 with mock.patch("builtins.input", return_value="no"):
                     with contextlib.redirect_stdout(io.StringIO()):
@@ -302,6 +315,15 @@ class WorkbenchTests(unittest.TestCase):
                     with contextlib.redirect_stdout(io.StringIO()):
                         with self.assertRaisesRegex(SystemExit, "input ended"):
                             workbench.show_question(item, 1, False)
+
+    def test_guided_practice_menu_defaults_to_a_short_mixed_session(self):
+        for name, workbench in WORKBENCHES.items():
+            with self.subTest(workbench=name):
+                with mock.patch("builtins.input", return_value=""):
+                    with mock.patch.object(workbench, "run_session", return_value=0) as run:
+                        with contextlib.redirect_stdout(io.StringIO()):
+                            self.assertEqual(workbench.main(["menu"]), 0)
+                run.assert_called_once_with("all", 1, 5, False)
 
     def test_main_dispatches_all_common_cli_paths(self):
         for name, workbench in WORKBENCHES.items():
@@ -500,6 +522,24 @@ class CourseNavigatorTests(unittest.TestCase):
         self.assertEqual(stdout.getvalue().rstrip(), expected)
         self.assertIn("# Completion Criteria and Capstone", expected)
 
+    def test_guided_course_reaches_the_first_guide_with_defaults(self):
+        with mock.patch.object(COURSE, "sys") as system:
+            system.stdin.isatty.return_value = True
+            system.stdout.isatty.return_value = True
+            with mock.patch.object(COURSE, "guided_course", return_value=0) as guided:
+                self.assertEqual(COURSE.main([]), 0)
+        guided.assert_called_once_with()
+
+        answers = ("", "", "", "m", "q")
+        with mock.patch("builtins.input", side_effect=answers):
+            with mock.patch.object(COURSE.pydoc, "pager") as pager:
+                with contextlib.redirect_stdout(io.StringIO()):
+                    self.assertEqual(COURSE.guided_course(), 0)
+        pager.assert_called_once()
+        content = pager.call_args.args[0]
+        self.assertIn("Module 1 — Operational Networking ›", content)
+        self.assertIn("# Course Objectives and Shared Language", content)
+
     def test_invalid_numbers_and_missing_arguments_are_clear(self):
         cases = (
             (["module", "0"], "module must be between 1 and 3"),
@@ -599,17 +639,23 @@ class CourseNavigatorTests(unittest.TestCase):
             self.assertEqual(COURSE.run_script(script, "unused"), 9)
 
     def test_entry_point_works_outside_the_repository(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            result = subprocess.run(
-                [sys.executable, str(ROOT / "course.py"), "module", "2"],
-                cwd=temporary,
-                env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn("Module 2 — Network Architecture", result.stdout)
+        commands = (
+            [sys.executable, str(ROOT / "course.py"), "module", "2"],
+            [str(ROOT / "course"), "module", "2"],
+        )
+        for command in commands:
+            with self.subTest(command=command[0]):
+                with tempfile.TemporaryDirectory() as temporary:
+                    result = subprocess.run(
+                        command,
+                        cwd=temporary,
+                        env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
+                        capture_output=True,
+                        text=True,
+                        check=False,
+                    )
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertIn("Module 2 — Network Architecture", result.stdout)
 
 
 class SetupScriptTests(unittest.TestCase):
@@ -743,6 +789,7 @@ esac
         result, brew_log, python_log = self.run_setup("--check")
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("prerequisites ready", result.stdout)
+        self.assertIn("next: ./course", result.stdout)
         self.assertNotIn("install ", brew_log)
         self.assertEqual(
             python_log.strip(),

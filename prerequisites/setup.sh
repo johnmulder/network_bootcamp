@@ -72,6 +72,7 @@ if [ "$status" -eq 0 ]; then
         python3 "$project_root/labs/build_fixtures.py" --check
     fi
     echo "prerequisites ready"
+    echo "next: ./course"
 else
     echo "prerequisites incomplete; run $0" >&2
 fi
