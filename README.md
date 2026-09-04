@@ -19,7 +19,7 @@ enterprise hardware, or proprietary analyzers are required.
 | Workbench questions | 79 |
 | Evidence fixtures | 29 manifest-tracked files plus the manifest |
 | Incident timeline | 17 normalized events across 8 sources |
-| Automated tests | 19 tests across all 5 executable sources |
+| Automated tests | 29 tests across all 6 executable sources |
 | Supported environment | One Mac laptop with local, open-source tools |
 
 The [course agenda](agenda.md) is the authoritative curriculum specification.
@@ -34,19 +34,44 @@ evidence fixtures:
 ./prerequisites/setup.sh
 ```
 
-Confirm that the machine and repository are ready:
+Open the course dashboard:
+
+```bash
+python3 course.py
+```
+
+Confirm that the installed tools and course evidence are ready:
 
 ```bash
 ./prerequisites/setup.sh --check
-python3 labs/build_fixtures.py --check
-python3 modules/module-01-operational-networking/workbench/module1_workbench.py self-test
-python3 modules/module-02-network-architecture/workbench/module2_workbench.py self-test
-python3 modules/module-03-incident-response-and-integration/workbench/module3_workbench.py self-test
+python3 course.py verify
 ```
 
 The setup process and each command are explained in the
 [prerequisites guide](prerequisites/README.md). Begin the curriculum with
 [Module 1](modules/module-01-operational-networking/README.md).
+
+## Course Navigator
+
+`course.py` presents the existing curriculum without copying or replacing it.
+Use short numbers to move from a module to a section and then to a guide:
+
+| Goal | Command |
+| --- | --- |
+| Show the course dashboard | `python3 course.py` |
+| List a module's sections | `python3 course.py module 1` |
+| List a section's guides | `python3 course.py section 1 2` |
+| Read a guide | `python3 course.py guide 1 2 3` |
+| List a module's practice activities | `python3 course.py practice 1` |
+| Preview a short worked activity | `python3 course.py practice 1 routes --demo --limit 4` |
+| Start scored practice | `python3 course.py practice 2 cloud --seed 7` |
+| Show the incident timeline | `python3 course.py timeline` |
+| Filter the timeline to one source | `python3 course.py timeline --source endpoint` |
+| Verify fixtures and all workbenches | `python3 course.py verify` |
+
+The navigator calculates the hierarchy from the module directories and reads
+titles and content from the checked-in Markdown. It does not track progress or
+write learner data.
 
 ## Learning Path
 
@@ -71,6 +96,7 @@ combining each guide, its saved evidence, and the interactive workbench.
 .
 ├── README.md          # Operational entry point
 ├── agenda.md          # Authoritative curriculum and completion standards
+├── course.py          # Short course navigation and practice commands
 ├── prerequisites/    # Mac setup, tool roles, and readiness checks
 ├── labs/             # Fixture builder and reproducible saved evidence
 ├── modules/          # Guides, section directories, and workbenches
@@ -101,10 +127,11 @@ Run the complete project test suite from the repository root:
 python3 -B -m unittest discover -s tests -v
 ```
 
-The suite exercises the fixture builder, all three workbenches, and the setup
-script. It covers protocol construction, fixture generation and corruption,
-routing decisions, architecture decisions, incident timeline correlation,
-question and CLI behavior, and setup success and failure paths.
+The suite exercises the course navigator, fixture builder, all three
+workbenches, and the setup script. It covers navigation, command delegation,
+protocol construction, fixture generation and corruption, routing decisions,
+architecture decisions, incident timeline correlation, question and CLI
+behavior, and setup success and failure paths.
 
 Tests build fixtures only in temporary directories. Setup tests use simulated
 macOS and Homebrew commands, so they never install software or depend on the

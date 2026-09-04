@@ -523,6 +523,81 @@ class CourseNavigatorTests(unittest.TestCase):
             with self.assertRaisesRegex(SystemExit, "no # heading"):
                 COURSE.heading(path)
 
+    def test_practice_lists_or_translates_to_the_selected_workbench(self):
+        with mock.patch.object(COURSE, "run_script", return_value=0) as run:
+            self.assertEqual(COURSE.main(["practice", "1"]), 0)
+            run.assert_called_once_with(COURSE.workbench_path(1), "list")
+
+        with mock.patch.object(COURSE, "run_script", return_value=0) as run:
+            self.assertEqual(
+                COURSE.main(
+                    [
+                        "practice",
+                        "2",
+                        "cloud",
+                        "--demo",
+                        "--seed",
+                        "7",
+                        "--limit",
+                        "4",
+                    ]
+                ),
+                0,
+            )
+            run.assert_called_once_with(
+                COURSE.workbench_path(2),
+                "demo",
+                "cloud",
+                "--seed",
+                "7",
+                "--limit",
+                "4",
+            )
+
+        with mock.patch.object(COURSE, "run_script", return_value=8) as run:
+            self.assertEqual(COURSE.main(["practice", "3", "scope"]), 8)
+            run.assert_called_once_with(
+                COURSE.workbench_path(3), "run", "scope", "--seed", "1"
+            )
+
+        with self.assertRaisesRegex(SystemExit, "limit must be at least 1"):
+            COURSE.main(["practice", "1", "routes", "--limit", "0"])
+
+    def test_timeline_translates_source_and_preserves_status(self):
+        with mock.patch.object(COURSE, "run_script", return_value=0) as run:
+            self.assertEqual(COURSE.main(["timeline"]), 0)
+            run.assert_called_once_with(COURSE.workbench_path(3), "timeline")
+
+        with mock.patch.object(COURSE, "run_script", return_value=6) as run:
+            self.assertEqual(COURSE.main(["timeline", "--source", "endpoint"]), 6)
+            run.assert_called_once_with(
+                COURSE.workbench_path(3), "timeline", "--source", "endpoint"
+            )
+
+    def test_verify_runs_every_check_and_reports_aggregate_status(self):
+        stdout = io.StringIO()
+        stderr = io.StringIO()
+        with mock.patch.object(COURSE, "run_script", side_effect=(0, 7, 0, 2)) as run:
+            with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
+                self.assertEqual(COURSE.main(["verify"]), 7)
+        self.assertEqual(run.call_count, 4)
+        self.assertIn("== Evidence fixtures ==", stdout.getvalue())
+        self.assertIn("== Module 3 workbench ==", stdout.getvalue())
+        self.assertIn("Course verification failed", stderr.getvalue())
+
+        stdout = io.StringIO()
+        with mock.patch.object(COURSE, "run_script", return_value=0) as run:
+            with contextlib.redirect_stdout(stdout):
+                self.assertEqual(COURSE.main(["verify"]), 0)
+        self.assertEqual(run.call_count, 4)
+        self.assertIn("Course verification passed", stdout.getvalue())
+
+    def test_run_script_uses_python_and_preserves_exit_status(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            script = Path(temporary) / "exit.py"
+            script.write_text("raise SystemExit(9)\n")
+            self.assertEqual(COURSE.run_script(script, "unused"), 9)
+
     def test_entry_point_works_outside_the_repository(self):
         with tempfile.TemporaryDirectory() as temporary:
             result = subprocess.run(

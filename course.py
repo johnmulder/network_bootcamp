@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import subprocess
 import sys
 from pathlib import Path
 
@@ -66,6 +67,22 @@ def guide_path(module_number: int, section_number: int, guide_number: int) -> Pa
     )
 
 
+def workbench_path(module_number: int) -> Path:
+    module = module_path(module_number)
+    matches = tuple(module.glob("workbench/module*_workbench.py"))
+    if len(matches) != 1:
+        raise SystemExit(f"error: expected one workbench in {module.relative_to(ROOT)}")
+    return matches[0]
+
+
+def run_script(path: Path, *arguments: str) -> int:
+    return subprocess.run(
+        [sys.executable, "-B", str(path), *arguments],
+        cwd=ROOT,
+        check=False,
+    ).returncode
+
+
 def dashboard() -> int:
     print("Network Bootcamp")
     print("One Mac · saved evidence · open-source tools")
@@ -82,7 +99,8 @@ def dashboard() -> int:
     print("Start here")
     print("  Setup:     ./prerequisites/setup.sh")
     print("  Explore:   python3 course.py module 1")
-    print("  Read:      python3 course.py section 1 1")
+    print("  Practice:  python3 course.py practice 1")
+    print("  Verify:    python3 course.py verify")
     print()
     print("Write learner artifacts under work/. Saved evidence remains in labs/fixtures/.")
     return 0
@@ -122,6 +140,51 @@ def show_guide(module_number: int, section_number: int, guide_number: int) -> in
     return 0
 
 
+def practice(
+    module_number: int,
+    activity: str | None,
+    demo: bool,
+    seed: int,
+    limit: int | None,
+) -> int:
+    script = workbench_path(module_number)
+    if activity is None:
+        return run_script(script, "list")
+    if limit is not None and limit < 1:
+        raise SystemExit("error: --limit must be at least 1")
+    arguments = ["demo" if demo else "run", activity, "--seed", str(seed)]
+    if limit is not None:
+        arguments.extend(("--limit", str(limit)))
+    return run_script(script, *arguments)
+
+
+def timeline(source: str | None) -> int:
+    arguments = ["timeline"]
+    if source is not None:
+        arguments.extend(("--source", source))
+    return run_script(workbench_path(3), *arguments)
+
+
+def verify() -> int:
+    checks = (
+        ("Evidence fixtures", ROOT / "labs" / "build_fixtures.py", ("--check",)),
+        ("Module 1 workbench", workbench_path(1), ("self-test",)),
+        ("Module 2 workbench", workbench_path(2), ("self-test",)),
+        ("Module 3 workbench", workbench_path(3), ("self-test",)),
+    )
+    status = 0
+    for label, script, arguments in checks:
+        print(f"\n== {label} ==", flush=True)
+        result = run_script(script, *arguments)
+        if status == 0 and result != 0:
+            status = result
+    if status:
+        print("\nCourse verification failed.", file=sys.stderr)
+    else:
+        print("\nCourse verification passed.")
+    return status
+
+
 def parser() -> argparse.ArgumentParser:
     result = argparse.ArgumentParser(description=__doc__)
     commands = result.add_subparsers(dest="command")
@@ -137,6 +200,22 @@ def parser() -> argparse.ArgumentParser:
     guide.add_argument("module", type=int)
     guide.add_argument("section", type=int)
     guide.add_argument("guide", type=int)
+
+    practice_command = commands.add_parser(
+        "practice", help="list or run a module's workbench activities"
+    )
+    practice_command.add_argument("module", type=int)
+    practice_command.add_argument("activity", nargs="?")
+    practice_command.add_argument("--demo", action="store_true")
+    practice_command.add_argument("--seed", type=int, default=1)
+    practice_command.add_argument("--limit", type=int)
+
+    timeline_command = commands.add_parser(
+        "timeline", help="show the normalized Module 3 incident timeline"
+    )
+    timeline_command.add_argument("--source")
+
+    commands.add_parser("verify", help="verify fixtures and all workbenches")
     return result
 
 
@@ -148,7 +227,13 @@ def main(argv: list[str] | None = None) -> int:
         return show_module(args.module)
     if args.command == "section":
         return show_section(args.module, args.section)
-    return show_guide(args.module, args.section, args.guide)
+    if args.command == "guide":
+        return show_guide(args.module, args.section, args.guide)
+    if args.command == "practice":
+        return practice(args.module, args.activity, args.demo, args.seed, args.limit)
+    if args.command == "timeline":
+        return timeline(args.source)
+    return verify()
 
 
 if __name__ == "__main__":
