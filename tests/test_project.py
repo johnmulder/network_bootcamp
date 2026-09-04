@@ -31,6 +31,7 @@ def load_module(name: str, relative: str):
 
 
 BUILDER = load_module("fixture_builder", "labs/build_fixtures.py")
+COURSE = load_module("course_navigator", "course.py")
 WORKBENCHES = {
     "module1": load_module(
         "module1_workbench",
@@ -449,6 +450,91 @@ class WorkbenchTests(unittest.TestCase):
                     check=False,
                 )
                 self.assertEqual(result.returncode, 0, result.stderr)
+
+
+class CourseNavigatorTests(unittest.TestCase):
+    def test_discovery_matches_the_complete_curriculum(self):
+        self.assertEqual(len(COURSE.MODULES), 3)
+        section_counts = []
+        guide_counts = []
+        for module in COURSE.MODULES:
+            module_sections = COURSE.sections(module)
+            section_counts.append(len(module_sections))
+            guide_counts.append(sum(len(COURSE.guides(section)) for section in module_sections))
+            self.assertEqual(len(COURSE.section_titles(module)), len(module_sections))
+            self.assertTrue(COURSE.heading(module / "README.md").startswith("Module"))
+        self.assertEqual(section_counts, [8, 8, 7])
+        self.assertEqual(guide_counts, [43, 29, 32])
+
+    def test_dashboard_module_and_section_are_concise_indexes(self):
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            self.assertEqual(COURSE.main([]), 0)
+        dashboard = stdout.getvalue()
+        self.assertIn("Network Bootcamp", dashboard)
+        self.assertIn("8 sections, 43 guides", dashboard)
+        self.assertIn("7 sections, 32 guides", dashboard)
+
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            self.assertEqual(COURSE.main(["module", "1"]), 0)
+        module = stdout.getvalue()
+        self.assertIn("Operational Networking", module)
+        self.assertIn("1. Introduction and Mental Model (5 guides)", module)
+        self.assertIn("8. Module 1 Review (1 guide)", module)
+
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            self.assertEqual(COURSE.main(["section", "1", "2"]), 0)
+        section = stdout.getvalue()
+        self.assertIn("Layer 2 Networking", section)
+        self.assertIn("1. Ethernet and MAC Addressing", section)
+        self.assertIn("7. Layer 2 Packet-Path Exercise", section)
+
+    def test_guide_prints_the_authoritative_markdown(self):
+        path = COURSE.guide_path(3, 7, 3)
+        expected = path.read_text(encoding="utf-8").rstrip()
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            self.assertEqual(COURSE.main(["guide", "3", "7", "3"]), 0)
+        self.assertEqual(stdout.getvalue().rstrip(), expected)
+        self.assertIn("# Completion Criteria and Capstone", expected)
+
+    def test_invalid_numbers_and_missing_arguments_are_clear(self):
+        cases = (
+            (["module", "0"], "module must be between 1 and 3"),
+            (["section", "1", "9"], "section must be between 1 and 8"),
+            (["guide", "1", "8", "2"], "guide must be between 1 and 1"),
+        )
+        for arguments, message in cases:
+            with self.subTest(arguments=arguments):
+                with self.assertRaisesRegex(SystemExit, message):
+                    COURSE.main(arguments)
+
+        with contextlib.redirect_stderr(io.StringIO()):
+            with self.assertRaises(SystemExit) as raised:
+                COURSE.main(["section", "1"])
+        self.assertEqual(raised.exception.code, 2)
+
+    def test_heading_errors_when_markdown_has_no_title(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "untitled.md"
+            path.write_text("No heading here.\n")
+            with self.assertRaisesRegex(SystemExit, "no # heading"):
+                COURSE.heading(path)
+
+    def test_entry_point_works_outside_the_repository(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            result = subprocess.run(
+                [sys.executable, str(ROOT / "course.py"), "module", "2"],
+                cwd=temporary,
+                env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("Module 2 — Network Architecture", result.stdout)
 
 
 class SetupScriptTests(unittest.TestCase):
