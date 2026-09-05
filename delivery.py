@@ -6,6 +6,7 @@ import argparse
 import contextlib
 import copy
 import fcntl
+import functools
 import hashlib
 import importlib.util
 import json
@@ -121,7 +122,7 @@ def validate_definition(data: dict) -> None:
                 read_fragment(reference)
             if any(view not in EVIDENCE for view in phase["evidence"]):
                 raise DeliveryError(f"Unknown evidence view: {name}")
-            if any(check not in CHECKPOINTS for check in phase["checkpoints"]):
+            if any(check not in checkpoint_ids() for check in phase["checkpoints"]):
                 raise DeliveryError(f"Unknown checkpoint: {name}")
         totals[phase["block"]] += phase["minutes"]
         seen.add(name)
@@ -169,6 +170,17 @@ def module_at(relative: str):
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
+
+@functools.lru_cache(maxsize=3)
+def workbench(number: int):
+    path = next(ROOT.glob(f"modules/*/workbench/module{number}_workbench.py"))
+    return module_at(str(path.relative_to(ROOT)))
+
+
+def checkpoint_ids() -> set[str]:
+    return CHECKPOINTS | {item["id"] for number in (1, 2, 3)
+                          for group in workbench(number).all_questions().values() for item in group}
 
 
 def evidence_integrity() -> None:
@@ -358,7 +370,8 @@ def create_session(ident: str, mode: str = "solo", case: str = "A", pair_label: 
     if not order:
         raise DeliveryError("No phases are implemented", 4)
     state = dict(schema_version=1, id=ident, versions=versions(data), mode=mode,
-                 pair_label=pair_label, case=case, seed=seed, question_ids={},
+                 pair_label=pair_label, case=case, seed=seed,
+                 question_ids={str(n): [item["id"] for item in workbench(n).choose_questions("all", seed, 5)] for n in (1, 2, 3)},
                  revision=0, created_at=now(), updated_at=now(), order=order,
                  current=order[0], requests={}, phases={})
     for name in order:
@@ -387,8 +400,16 @@ def checkpoint_items(phase: dict, state: dict) -> list[dict]:
     items = {
         "transfer.payload": dict(id="transfer.payload", prompt="Largest TCP payload with MTU 1200, 20-byte IPv4 and TCP headers, no options or encapsulation? Include units.",
                                  evidence="challenges/transfer.pcap: frames 4–6",
+                                 explanation="1200 minus the two 20-byte headers leaves 1160 payload bytes.",
                                  answer="1160 bytes", answers={"1160 bytes", "1160 byte", "1160 b"}),
     }
+    for name in phase["checkpoints"]:
+        if name.startswith(("m1.", "m2.", "m3.")):
+            number = int(name[1])
+            for group in workbench(number).all_questions().values():
+                for item in group:
+                    if item["id"] == name:
+                        items[name] = {**item, "module": number}
     return [items[name] for name in phase["checkpoints"]]
 
 
@@ -499,7 +520,8 @@ def act(ident: str, request: dict) -> dict:
             checks = {}
             for item in items:
                 answer = require_text(answers[item["id"]], item["id"])
-                correct = " ".join(answer.lower().split()) in item["answers"]
+                evaluated = workbench(item.get("module", 1)).evaluate_question(item, answer)
+                correct = evaluated["correct"]
                 checks[item["id"]] = dict(correct=correct, independent=correct and not progress["exposed"],
                                           feedback="Correct." if correct else f"Reinspect {item['evidence']} and try again; include requested units.")
             progress["checks"] = checks

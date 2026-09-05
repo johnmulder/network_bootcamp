@@ -26,7 +26,7 @@ ACTIVITIES = {
 
 def repository_root() -> Path:
     for parent in Path(__file__).resolve().parents:
-        if (parent / "labs" / "fixtures" / "manifest.json").is_file():
+        if (parent / "course.py").is_file():
             return parent
     raise SystemExit("error: run this script from inside the network_bootcamp repository")
 
@@ -57,9 +57,12 @@ def question(
     explanation: str,
     evidence: str,
     aliases: tuple[str, ...] = (),
+    *,
+    question_id: str,
 ) -> dict:
     answers = {normalize(answer), *(normalize(alias) for alias in aliases)}
     return {
+        "id": question_id,
         "activity": activity,
         "prompt": prompt,
         "answer": answer,
@@ -85,6 +88,7 @@ def l2_questions() -> list[dict]:
             stp["root"],
             "The root field names the elected bridge; bridge priority confirms why it wins.",
             "network/l2-control.json: .stp.root and .stp.bridges",
+            question_id='m1.l2.root',
         ),
         question(
             "l2",
@@ -92,6 +96,7 @@ def l2_questions() -> list[dict]:
             discarded_bridge,
             "One side discards so the redundant triangle does not form a forwarding loop.",
             "network/l2-control.json: .stp.links[]",
+            question_id='m1.l2.discarding',
         ),
         question(
             "l2",
@@ -99,6 +104,7 @@ def l2_questions() -> list[dict]:
             next(vlan for vlan, details in data["vlans"].items() if details["name"] == "SERVERS"),
             "The VLAN map associates SERVERS with subnet 10.0.20.0/24.",
             "network/l2-control.json: .vlans",
+            question_id='m1.l2.servers-vlan',
         ),
         question(
             "l2",
@@ -106,6 +112,7 @@ def l2_questions() -> list[dict]:
             flow["member"],
             "A link aggregate normally keeps one flow on one selected member.",
             "network/l2-control.json: .lacp.flows[]",
+            question_id='m1.l2.lacp-member',
         ),
     ]
 
@@ -151,6 +158,7 @@ def route_questions() -> list[dict]:
                 prefix,
                 f"Longest-prefix match selects {prefix}; the selected next hop(s) are {next_hops}.",
                 "routing/route-candidates.csv",
+                question_id=f"m1.routes.{destination}",
             )
         )
     return result
@@ -175,6 +183,7 @@ def convergence_questions() -> list[dict]:
             "This measures the logged forwarding-table update, not detection delay or application recovery.",
             "routing/route-events.jsonl: link_down and fib_install",
             (f"{milliseconds} ms",),
+            question_id='m1.convergence.interval',
         ),
         question(
             "convergence",
@@ -182,6 +191,7 @@ def convergence_questions() -> list[dict]:
             installed["next_hop"],
             "The installation event names the remaining forwarding choice.",
             "routing/route-events.jsonl: fib_install.next_hop",
+            question_id='m1.convergence.next-hop',
         ),
         question(
             "convergence",
@@ -190,6 +200,7 @@ def convergence_questions() -> list[dict]:
             "Observe packets, session state, and an application response to establish service recovery.",
             "routing/route-events.jsonl: recorded event types",
             ("n",),
+            question_id='m1.convergence.application',
         ),
         question(
             "convergence",
@@ -197,6 +208,7 @@ def convergence_questions() -> list[dict]:
             prefix,
             "The two remaining /24 routes beat /8 and default by destination specificity; a flow's actual ECMP member is not shown.",
             "routing/route-candidates.csv: hypothetical removal of the .40/32 row",
+            question_id='m1.convergence.remove-host-route',
         ),
     ]
 
@@ -213,6 +225,7 @@ def service_questions() -> list[dict]:
             "The shared transaction follows Discover, Offer, Request, Acknowledge.",
             "network/dhcp.jsonl: records 1-4",
             ("dora",),
+            question_id='m1.services.sequence',
         ),
         question(
             "services",
@@ -220,6 +233,7 @@ def service_questions() -> list[dict]:
             offer["address"],
             "The OFFER proposes the address later confirmed by the ACK.",
             "network/dhcp.jsonl: OFFER.address",
+            question_id='m1.services.address',
         ),
         question(
             "services",
@@ -227,6 +241,7 @@ def service_questions() -> list[dict]:
             offer["gateway"],
             "The gateway is configuration delivered to the host, not learned from DNS.",
             "network/dhcp.jsonl: OFFER.gateway",
+            question_id='m1.services.gateway',
         ),
         question(
             "services",
@@ -234,6 +249,7 @@ def service_questions() -> list[dict]:
             offer["dns"][0],
             "The resolver address is a DHCP option; DNS queries depend on it afterward.",
             "network/dhcp.jsonl: OFFER.dns[0]",
+            question_id='m1.services.resolver',
         ),
     ]
 
@@ -274,6 +290,7 @@ def vrf_questions() -> list[dict]:
                 detail,
                 f"routing/vrfs.json: .{vrf}",
                 ("y",) if reachable else ("n",),
+                question_id=f"m1.vrf.{vrf.lower()}.{destination}",
             )
         )
     return result
@@ -293,6 +310,7 @@ def troubleshooting_questions() -> list[dict]:
             "Connectivity and the handshake work; the failure begins when the packet exceeds the reported path MTU.",
             "pcaps/mtu-failure.pcap: frames 1-6",
             ("mtu mismatch", "pmtu", "path mtu discovery failure"),
+            question_id='m1.troubleshooting.transfer',
         ),
         question(
             "troubleshooting",
@@ -301,6 +319,7 @@ def troubleshooting_questions() -> list[dict]:
             traceroute["note"],
             "routing/traceroute.json: .hops and .note",
             ("n",),
+            question_id='m1.troubleshooting.silent-hop',
         ),
         question(
             "troubleshooting",
@@ -309,6 +328,7 @@ def troubleshooting_questions() -> list[dict]:
             "The foundations capture shows ARP, DNS, TCP, HTTP, and the start of orderly close; the final FIN acknowledgment is absent.",
             "pcaps/foundations.pcap",
             ("foundations",),
+            question_id='m1.troubleshooting.healthy-capture',
         ),
         question(
             "troubleshooting",
@@ -316,6 +336,7 @@ def troubleshooting_questions() -> list[dict]:
             "1460",
             "Both SYN packets advertise MSS 1460 before the path reports MTU 1200.",
             "pcaps/mtu-failure.pcap: frames 1-2",
+            question_id='m1.troubleshooting.mss',
         ),
     ]
 
@@ -338,6 +359,24 @@ def choose_questions(activity: str, seed: int, limit: int | None) -> list[dict]:
     return selected[:limit] if limit else selected
 
 
+def public_question(item: dict) -> dict:
+    """Return a JSON-safe prompt without answers or a worked explanation."""
+    return {key: item[key] for key in ("id", "activity", "prompt", "evidence")}
+
+
+def evaluate_question(item: dict, response: str, *, revealed: bool = False) -> dict:
+    """Evaluate a response without input, printing, or mutating the question."""
+    if not isinstance(response, str):
+        raise ValueError("answer must be text")
+    correct = not revealed and normalize(response) in item["answers"]
+    result = dict(id=item["id"], correct=correct,
+                  learning_result="revealed" if revealed else "correct" if correct else "incorrect",
+                  feedback=item["explanation"] if correct or revealed else f"Reinspect {item['evidence']} and try again.")
+    if revealed:
+        result["answer"] = item["answer"]
+    return result
+
+
 def show_question(item: dict, number: int, reveal: bool) -> bool:
     print(f"\n{number}. [{item['activity']}] {item['prompt']}")
     print(f"   Evidence: labs/fixtures/{item['evidence']}")
@@ -358,7 +397,7 @@ def show_question(item: dict, number: int, reveal: bool) -> bool:
             if response in {"s", "show"}:
                 print("   Answer revealed.")
                 break
-            if response in item["answers"]:
+            if evaluate_question(item, response)["correct"]:
                 correct = True
                 print("   Correct.")
                 break
@@ -440,6 +479,8 @@ def self_test() -> int:
     assert best_vrf_route("CORP", "198.51.100.77", tables)["prefix"] == "0.0.0.0/0"
 
     groups = all_questions()
+    ids = [item["id"] for items in groups.values() for item in items]
+    assert len(ids) == len(set(ids)), "duplicate question IDs"
     assert set(groups) == set(ACTIVITIES)
     assert all(len(items) >= 4 for items in groups.values())
     assert groups["l2"][1]["answer"] == "sw-access-2"

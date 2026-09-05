@@ -48,7 +48,7 @@ LEDGER_FIELDS = [
 
 def repository_root() -> Path:
     for parent in Path(__file__).resolve().parents:
-        if (parent / "labs" / "fixtures" / "manifest.json").is_file():
+        if (parent / "course.py").is_file():
             return parent
     raise SystemExit("error: run this script from inside the network_bootcamp repository")
 
@@ -83,9 +83,12 @@ def question(
     explanation: str,
     evidence: str,
     aliases: tuple[str, ...] = (),
+    *,
+    question_id: str,
 ) -> dict:
     answers = {normalize(answer), *(normalize(alias) for alias in aliases)}
     return {
+        "id": question_id,
         "activity": activity,
         "prompt": prompt,
         "answer": answer,
@@ -189,6 +192,7 @@ def telemetry_questions(logs: dict[str, list[dict]]) -> list[dict]:
             "endpoint",
             "The endpoint record contains both process and query; DNS logs contain the client but not its process.",
             "incident/endpoint.jsonl: record 2",
+            question_id='m3.telemetry.process-dns',
         ),
         question(
             "telemetry",
@@ -196,6 +200,7 @@ def telemetry_questions(logs: dict[str, list[dict]]) -> list[dict]:
             "firewall",
             "The firewall session includes translated_src 192.0.2.44.",
             "incident/firewall.jsonl: record 1",
+            question_id='m3.telemetry.translation',
         ),
         question(
             "telemetry",
@@ -204,6 +209,7 @@ def telemetry_questions(logs: dict[str, list[dict]]) -> list[dict]:
             "The SIEM record declares flow and endpoint as source_events, so it is derived from them.",
             "incident/siem.jsonl: record 1",
             ("n",),
+            question_id='m3.telemetry.independence',
         ),
         question(
             "telemetry",
@@ -211,6 +217,7 @@ def telemetry_questions(logs: dict[str, list[dict]]) -> list[dict]:
             "proxy",
             "The proxy record supplies the requested host, result, and temporary-rule reason.",
             "incident/proxy.jsonl: record 1",
+            question_id='m3.telemetry.proxy',
         ),
         question(
             "telemetry",
@@ -219,6 +226,7 @@ def telemetry_questions(logs: dict[str, list[dict]]) -> list[dict]:
             "Flow records contain tuples, times, and byte totals; process attribution requires endpoint evidence.",
             "incident/flows.jsonl: records 1-4",
             ("flows", "netflow"),
+            question_id='m3.telemetry.bytes',
         ),
     ]
 
@@ -239,6 +247,7 @@ def timeline_questions(logs: dict[str, list[dict]]) -> list[dict]:
             process["process"],
             f"The process starts at {process['time']}, two seconds before the DNS records.",
             "incident/endpoint.jsonl: record 1",
+            question_id='m3.timeline.process',
         ),
         question(
             "timeline",
@@ -247,6 +256,7 @@ def timeline_questions(logs: dict[str, list[dict]]) -> list[dict]:
             "The external flow starts are 16:01:00, 16:02:00, and 16:03:00 UTC.",
             "incident/flows.jsonl: records 1-3",
             (f"{interval} seconds", "1 minute"),
+            question_id='m3.timeline.interval',
         ),
         question(
             "timeline",
@@ -254,6 +264,7 @@ def timeline_questions(logs: dict[str, list[dict]]) -> list[dict]:
             child["process"],
             "smb-client starts at 16:03:59 and the SMB flow starts at 16:04:00.",
             "incident/endpoint.jsonl: record 3 and incident/flows.jsonl: record 4",
+            question_id='m3.timeline.child',
         ),
         question(
             "timeline",
@@ -261,6 +272,7 @@ def timeline_questions(logs: dict[str, list[dict]]) -> list[dict]:
             "auth",
             "Authentication is recorded at 16:04:01; the firewall allow follows at 16:04:02.",
             "incident/auth.jsonl: record 2 and incident/firewall.jsonl: record 2",
+            question_id='m3.timeline.auth-order',
         ),
         question(
             "timeline",
@@ -269,6 +281,7 @@ def timeline_questions(logs: dict[str, list[dict]]) -> list[dict]:
             "The alert follows the SMB process, flow, authentication, and firewall evidence.",
             "incident/siem.jsonl: record 1",
             ("16:04:10Z", "16:04:10"),
+            question_id='m3.timeline.alert',
         ),
     ]
 
@@ -286,6 +299,7 @@ def correlation_questions(logs: dict[str, list[dict]]) -> list[dict]:
             dns["answer"],
             "The DNS answer supplies the address later used by all three external flows.",
             "incident/dns.jsonl: record 1",
+            question_id='m3.correlation.dns',
         ),
         question(
             "correlation",
@@ -293,6 +307,7 @@ def correlation_questions(logs: dict[str, list[dict]]) -> list[dict]:
             endpoint_dns["process"],
             "The endpoint event connects update-agent to the query on ws-23.",
             "incident/endpoint.jsonl: record 2",
+            question_id='m3.correlation.process',
         ),
         question(
             "correlation",
@@ -300,6 +315,7 @@ def correlation_questions(logs: dict[str, list[dict]]) -> list[dict]:
             firewall["translated_src"],
             "This mapping explains why a downstream source may differ from ws-23's local address.",
             "incident/firewall.jsonl: record 1",
+            question_id='m3.correlation.translation',
         ),
         question(
             "correlation",
@@ -307,6 +323,7 @@ def correlation_questions(logs: dict[str, list[dict]]) -> list[dict]:
             logs["proxy"][0]["result"],
             "BYPASS explains why normal proxy inspection may not cover the connection.",
             "incident/proxy.jsonl: record 1",
+            question_id='m3.correlation.proxy',
         ),
         question(
             "correlation",
@@ -314,6 +331,7 @@ def correlation_questions(logs: dict[str, list[dict]]) -> list[dict]:
             auth["user"],
             "The authentication record supplies user, target host, source, method, and result.",
             "incident/auth.jsonl: record 2",
+            question_id='m3.correlation.account',
         ),
         question(
             "correlation",
@@ -321,6 +339,7 @@ def correlation_questions(logs: dict[str, list[dict]]) -> list[dict]:
             siem["rule"],
             "The rule name is an alerting label; it is not proof of lateral movement.",
             "incident/siem.jsonl: record 1",
+            question_id='m3.correlation.rule',
         ),
         question(
             "correlation",
@@ -329,6 +348,7 @@ def correlation_questions(logs: dict[str, list[dict]]) -> list[dict]:
             "Those sources support the alert but also show why the alert is not independent evidence.",
             "incident/siem.jsonl: record 1 source_events",
             ("flow endpoint", "endpoint and flow"),
+            question_id='m3.correlation.sources',
         ),
     ]
 
@@ -342,6 +362,7 @@ def claim_questions() -> list[dict]:
             "observed",
             "The exact query and answer appear directly in a DNS record.",
             "incident/dns.jsonl: record 1",
+            question_id='m3.claims.dns',
         ),
         question(
             "claims",
@@ -349,6 +370,7 @@ def claim_questions() -> list[dict]:
             "inferred",
             "Process and DNS timing support this link, but no fixture maps the sockets directly to the process.",
             "incident/endpoint.jsonl and incident/flows.jsonl",
+            question_id='m3.claims.socket',
         ),
         question(
             "claims",
@@ -356,6 +378,7 @@ def claim_questions() -> list[dict]:
             "hypothesized",
             "Periodicity is consistent with beaconing and legitimate update checks; intent is not observed.",
             "incident/flows.jsonl: records 1-3",
+            question_id='m3.claims.c2',
         ),
         question(
             "claims",
@@ -363,6 +386,7 @@ def claim_questions() -> list[dict]:
             "unknown",
             "The fixtures show authentication behavior but no credential-theft evidence.",
             "incident/auth.jsonl and incident/endpoint.jsonl",
+            question_id='m3.claims.credentials',
         ),
         question(
             "claims",
@@ -370,6 +394,7 @@ def claim_questions() -> list[dict]:
             "observed",
             "All parts of the statement are fields in the network-authentication record.",
             "incident/auth.jsonl: record 2",
+            question_id='m3.claims.auth',
         ),
     ]
 
@@ -386,6 +411,7 @@ def scope_questions(logs: dict[str, list[dict]]) -> list[dict]:
             workstation["host"],
             "The sources repeatedly identify ws-23 or its address 10.0.10.23.",
             "incident/assets.json, incident/endpoint.jsonl, incident/dns.jsonl, incident/flows.jsonl, and incident/siem.jsonl",
+            question_id='m3.scope.host',
         ),
         question(
             "scope",
@@ -393,6 +419,7 @@ def scope_questions(logs: dict[str, list[dict]]) -> list[dict]:
             workstation["owner"],
             "Ownership is context for coordination, not proof of who caused the activity.",
             "incident/assets.json: 10.0.10.23.owner",
+            question_id='m3.scope.owner',
         ),
         question(
             "scope",
@@ -400,6 +427,7 @@ def scope_questions(logs: dict[str, list[dict]]) -> list[dict]:
             server["host"],
             "The asset and authentication records identify 10.0.20.40 as file-01.",
             "incident/assets.json and incident/auth.jsonl: record 2",
+            question_id='m3.scope.server',
         ),
         question(
             "scope",
@@ -407,6 +435,7 @@ def scope_questions(logs: dict[str, list[dict]]) -> list[dict]:
             denied["dst"],
             "The deny record names the destination and creates no session.",
             "incident/firewall.jsonl: record 3",
+            question_id='m3.scope.ot-destination',
         ),
         question(
             "scope",
@@ -415,6 +444,7 @@ def scope_questions(logs: dict[str, list[dict]]) -> list[dict]:
             "The only direct user-to-OT record is a deny; successful OT access remains unproven.",
             "incident/firewall.jsonl: record 3",
             ("n",),
+            question_id='m3.scope.ot-access',
         ),
         question(
             "scope",
@@ -423,6 +453,7 @@ def scope_questions(logs: dict[str, list[dict]]) -> list[dict]:
             "No persistence mechanism, transferred file, or outbound data volume proving exfiltration appears.",
             "incident/endpoint.jsonl and incident/flows.jsonl",
             ("n",),
+            question_id='m3.scope.exfiltration',
         ),
     ]
 
@@ -445,6 +476,24 @@ def choose_questions(activity: str, seed: int, limit: int | None) -> list[dict]:
     return selected[:limit] if limit else selected
 
 
+def public_question(item: dict) -> dict:
+    """Return a JSON-safe prompt without answers or a worked explanation."""
+    return {key: item[key] for key in ("id", "activity", "prompt", "evidence")}
+
+
+def evaluate_question(item: dict, response: str, *, revealed: bool = False) -> dict:
+    """Evaluate a response without input, printing, or mutating the question."""
+    if not isinstance(response, str):
+        raise ValueError("answer must be text")
+    correct = not revealed and normalize(response) in item["answers"]
+    result = dict(id=item["id"], correct=correct,
+                  learning_result="revealed" if revealed else "correct" if correct else "incorrect",
+                  feedback=item["explanation"] if correct or revealed else f"Reinspect {item['evidence']} and try again.")
+    if revealed:
+        result["answer"] = item["answer"]
+    return result
+
+
 def show_question(item: dict, number: int, reveal: bool) -> bool:
     print(f"\n{number}. [{item['activity']}] {item['prompt']}")
     print(f"   Evidence: labs/fixtures/{item['evidence']}")
@@ -465,7 +514,7 @@ def show_question(item: dict, number: int, reveal: bool) -> bool:
             if response in {"s", "show"}:
                 print("   Answer revealed.")
                 break
-            if response in item["answers"]:
+            if evaluate_question(item, response)["correct"]:
                 correct = True
                 print("   Correct.")
                 break
@@ -542,6 +591,8 @@ def self_test() -> int:
     assert logs["siem"][0]["source_events"] == ["flow", "endpoint"]
 
     groups = all_questions()
+    ids = [item["id"] for items in groups.values() for item in items]
+    assert len(ids) == len(set(ids)), "duplicate question IDs"
     assert set(groups) == set(ACTIVITIES)
     assert all(len(items) >= 5 for items in groups.values())
     assert all(normalize(item["answer"]) in item["answers"] for items in groups.values() for item in items)

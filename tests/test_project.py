@@ -278,6 +278,29 @@ class FixtureBuilderTests(unittest.TestCase):
 
 
 class WorkbenchTests(unittest.TestCase):
+    def test_structured_questions_and_evaluation_preserve_identity(self):
+        identifiers = set()
+        for workbench in WORKBENCHES.values():
+            for items in workbench.all_questions().values():
+                for item in items:
+                    self.assertNotIn(item["id"], identifiers)
+                    identifiers.add(item["id"])
+                    public = workbench.public_question(item)
+                    self.assertEqual(set(public), {"id", "activity", "prompt", "evidence"})
+                    json.dumps(public)
+                    correct = workbench.evaluate_question(item, item["answer"])
+                    self.assertTrue(correct["correct"])
+                    wrong = workbench.evaluate_question(item, "intentionally wrong")
+                    self.assertFalse(wrong["correct"])
+                    self.assertNotIn("answer", wrong)
+                    revealed = workbench.evaluate_question(item, item["answer"], revealed=True)
+                    self.assertFalse(revealed["correct"])
+                    self.assertEqual(revealed["learning_result"], "revealed")
+            first = workbench.choose_questions("all", 3, None)
+            second = workbench.choose_questions("all", 9, None)
+            self.assertEqual({q["id"] for q in first}, {q["id"] for q in second})
+        self.assertEqual(len(identifiers), 83)
+
     def test_existing_self_tests_and_question_contracts(self):
         for name, workbench in WORKBENCHES.items():
             with self.subTest(workbench=name):
@@ -298,6 +321,7 @@ class WorkbenchTests(unittest.TestCase):
                         self.assertEqual(
                             set(item),
                             {
+                                "id",
                                 "activity",
                                 "prompt",
                                 "answer",
@@ -329,12 +353,13 @@ class WorkbenchTests(unittest.TestCase):
                     "Explanation",
                     "fixture",
                     ("y -> now",),
+                    question_id="test.normalize",
                 )
                 self.assertEqual(item["answers"], {"yes now", "y now"})
 
     def test_answer_display_handles_reveal_correct_wrong_and_eof(self):
         for name, workbench in WORKBENCHES.items():
-            item = workbench.question("test", "Prompt", "yes", "Because", "fixture", ("y",))
+            item = workbench.question("test", "Prompt", "yes", "Because", "fixture", ("y",), question_id="test.answer")
             with self.subTest(workbench=name, mode="reveal"):
                 with mock.patch("builtins.input", side_effect=AssertionError("input called")):
                     with contextlib.redirect_stdout(io.StringIO()):

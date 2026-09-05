@@ -24,7 +24,7 @@ ACTIVITIES = {
 
 def repository_root() -> Path:
     for parent in Path(__file__).resolve().parents:
-        if (parent / "labs" / "fixtures" / "manifest.json").is_file():
+        if (parent / "course.py").is_file():
             return parent
     raise SystemExit("error: run this script from inside the network_bootcamp repository")
 
@@ -60,9 +60,12 @@ def question(
     explanation: str,
     evidence: str,
     aliases: tuple[str, ...] = (),
+    *,
+    question_id: str,
 ) -> dict:
     answers = {normalize(answer), *(normalize(alias) for alias in aliases)}
     return {
+        "id": question_id,
         "activity": activity,
         "prompt": prompt,
         "answer": answer,
@@ -87,6 +90,7 @@ def flow_questions() -> list[dict]:
                 row["policy_point"],
                 f"Flow {row['id']} records {row['policy_point']} as its intended enforcement boundary.",
                 f"architecture/traffic-flows.csv: row {row['id']}",
+                question_id=f"m2.flows.policy.{row['id'].lower()}",
             )
         )
     for flow_id in ("F2", "F3", "F5"):
@@ -99,6 +103,7 @@ def flow_questions() -> list[dict]:
                 f"The intended field is {row['intended']}; enforcement belongs at {row['policy_point']}.",
                 f"architecture/traffic-flows.csv: row {flow_id}",
                 ("allowed",) if row["intended"] == "allow" else ("denied",),
+                question_id=f"m2.flows.intent.{flow_id.lower()}",
             )
         )
     return result
@@ -114,6 +119,7 @@ def component_questions() -> list[dict]:
             "enterprise-firewall",
             "Only the enterprise firewall has all four behaviors while tls_termination is false.",
             "architecture/components.json: .enterprise-firewall",
+            question_id='m2.components.firewall',
         ),
         question(
             "components",
@@ -121,6 +127,7 @@ def component_questions() -> list[dict]:
             "reverse-proxy",
             "The reverse proxy terminates TLS, modifies traffic, and keeps state while routes is false.",
             "architecture/components.json: .reverse-proxy",
+            question_id='m2.components.proxy',
         ),
         question(
             "components",
@@ -128,6 +135,7 @@ def component_questions() -> list[dict]:
             "ids",
             "The IDS observes and records traffic; this model does not place it inline as an enforcer.",
             "architecture/components.json: .ids",
+            question_id='m2.components.ids',
         ),
         question(
             "components",
@@ -135,6 +143,7 @@ def component_questions() -> list[dict]:
             "load-balancer",
             "The load balancer has routes, tls_termination, and health telemetry set in its capability record.",
             "architecture/components.json: .load-balancer",
+            question_id='m2.components.balancer',
         ),
         question(
             "components",
@@ -143,6 +152,7 @@ def component_questions() -> list[dict]:
             "Its tls_termination field is false; session and NAT visibility do not imply payload decryption.",
             "architecture/components.json: .enterprise-firewall.tls_termination",
             ("n",) if not firewall["tls_termination"] else ("y",),
+            question_id='m2.components.firewall-tls',
         ),
     ]
 
@@ -161,6 +171,7 @@ def wan_questions() -> list[dict]:
             degraded["name"],
             f"Its state is degraded and its measured loss is {degraded['loss_percent']} percent.",
             "architecture/wan.json: .circuits",
+            question_id='m2.wan.degraded',
         ),
         question(
             "wan",
@@ -168,6 +179,7 @@ def wan_questions() -> list[dict]:
             encrypted["name"],
             "The internet VPN record explicitly sets encrypted to true.",
             "architecture/wan.json: .circuits",
+            question_id='m2.wan.encrypted',
         ),
         question(
             "wan",
@@ -175,6 +187,7 @@ def wan_questions() -> list[dict]:
             preferred["name"],
             f"{preferred['name']} has preference {preferred['preference']}; lower is a recorded value, not proof of present usability.",
             "architecture/wan.json: .circuits[].preference",
+            question_id='m2.wan.preference',
         ),
         question(
             "wan",
@@ -182,6 +195,7 @@ def wan_questions() -> list[dict]:
             data["sdwan_policy"]["business"],
             "The policy prefers private transport for the business class.",
             "architecture/wan.json: .sdwan_policy.business",
+            question_id='m2.wan.business',
         ),
         question(
             "wan",
@@ -189,6 +203,7 @@ def wan_questions() -> list[dict]:
             data["sdwan_policy"]["voice"],
             "The policy states a selection objective; measurements are still needed to choose a circuit.",
             "architecture/wan.json: .sdwan_policy.voice",
+            question_id='m2.wan.voice',
         ),
         question(
             "wan",
@@ -197,6 +212,7 @@ def wan_questions() -> list[dict]:
             "internet-vpn-1 has no loss_percent field, so the two circuits cannot be compared from this fixture alone.",
             "architecture/wan.json: .circuits[].loss_percent",
             ("y",) if loss_complete else ("n",),
+            question_id='m2.wan.loss-comparison',
         ),
         question(
             "wan",
@@ -205,6 +221,7 @@ def wan_questions() -> list[dict]:
             "The model explicitly records encrypted as false; private transport is not the same as encryption.",
             "architecture/wan.json: .mpls.encrypted",
             ("y",) if data["mpls"]["encrypted"] else ("n",),
+            question_id='m2.wan.mpls-encryption',
         ),
     ]
 
@@ -247,6 +264,7 @@ def cloud_questions() -> list[dict]:
                 detail,
                 f"architecture/cloud-routes.json: .attachments.{attachment} and .routes.{table}",
                 ("none",) if route is None else (),
+                question_id=f"m2.cloud.{attachment}.{destination}",
             )
         )
     return result
@@ -264,6 +282,7 @@ def failure_questions() -> list[dict]:
                 affected,
                 f"The modeled event limits its affected scope to {affected}; broader impact would be an unsupported inference.",
                 f"architecture/failures.jsonl: {record['component']} event",
+                question_id=f"m2.failures.{record['component']}.{record['condition']}",
             )
         )
     return result
@@ -286,6 +305,24 @@ def choose_questions(activity: str, seed: int, limit: int | None) -> list[dict]:
     return selected[:limit] if limit else selected
 
 
+def public_question(item: dict) -> dict:
+    """Return a JSON-safe prompt without answers or a worked explanation."""
+    return {key: item[key] for key in ("id", "activity", "prompt", "evidence")}
+
+
+def evaluate_question(item: dict, response: str, *, revealed: bool = False) -> dict:
+    """Evaluate a response without input, printing, or mutating the question."""
+    if not isinstance(response, str):
+        raise ValueError("answer must be text")
+    correct = not revealed and normalize(response) in item["answers"]
+    result = dict(id=item["id"], correct=correct,
+                  learning_result="revealed" if revealed else "correct" if correct else "incorrect",
+                  feedback=item["explanation"] if correct or revealed else f"Reinspect {item['evidence']} and try again.")
+    if revealed:
+        result["answer"] = item["answer"]
+    return result
+
+
 def show_question(item: dict, number: int, reveal: bool) -> bool:
     print(f"\n{number}. [{item['activity']}] {item['prompt']}")
     print(f"   Evidence: labs/fixtures/{item['evidence']}")
@@ -306,7 +343,7 @@ def show_question(item: dict, number: int, reveal: bool) -> bool:
             if response in {"s", "show"}:
                 print("   Answer revealed.")
                 break
-            if response in item["answers"]:
+            if evaluate_question(item, response)["correct"]:
                 correct = True
                 print("   Correct.")
                 break
@@ -388,6 +425,8 @@ def self_test() -> int:
     assert cloud_route("on-prem", "8.8.8.8", cloud)[1] is None
 
     groups = all_questions()
+    ids = [item["id"] for items in groups.values() for item in items]
+    assert len(ids) == len(set(ids)), "duplicate question IDs"
     assert set(groups) == set(ACTIVITIES)
     assert all(len(items) >= 4 for items in groups.values())
     assert all(normalize(item["answer"]) in item["answers"] for items in groups.values() for item in items)
