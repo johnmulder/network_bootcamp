@@ -28,12 +28,19 @@ if [ "$extended" = true ]; then
     requirements="$requirements zeek:zeek iperf3:iperf3"
 fi
 
+usable() {
+    command -v "$1" >/dev/null 2>&1 || return 1
+    if [ "$1" = python3 ]; then
+        python3 -c 'import sys; sys.exit(sys.version_info < (3, 10))'
+    fi
+}
+
 if [ "$mode" = install ]; then
     set --
     for requirement in $requirements; do
         formula=${requirement%%:*}
         command=${requirement#*:}
-        command -v "$command" >/dev/null 2>&1 || set -- "$@" "$formula"
+        usable "$command" || set -- "$@" "$formula"
     done
     if [ "$#" -gt 0 ]; then
         if ! command -v brew >/dev/null 2>&1; then
@@ -45,8 +52,8 @@ if [ "$mode" = install ]; then
 fi
 
 status=0
-for command in tcpdump netstat route arp traceroute nc; do
-    if command -v "$command" >/dev/null 2>&1; then
+for command in cat column; do
+    if usable "$command"; then
         printf '%-10s %s\n' "$command" "ok (macOS)"
     else
         printf '%-10s %s\n' "$command" "missing from macOS"
@@ -54,14 +61,22 @@ for command in tcpdump netstat route arp traceroute nc; do
     fi
 done
 
+for command in tcpdump netstat route arp traceroute nc; do
+    if usable "$command"; then
+        printf '%-10s %s\n' "$command" "ok (optional live exercise)"
+    else
+        printf '%-10s %s\n' "$command" "unavailable (optional live exercise)"
+    fi
+done
+
 for requirement in $requirements
 do
     formula=${requirement%%:*}
     command=${requirement#*:}
-    if command -v "$command" >/dev/null 2>&1; then
+    if usable "$command"; then
         printf '%-10s %s\n' "$formula" "ok"
     else
-        printf '%-10s %s\n' "$formula" "missing"
+        printf '%-10s %s\n' "$formula" "missing or unusable (Python requires 3.10+)"
         status=1
     fi
 done

@@ -95,7 +95,7 @@ checks validate structure and references; the rubric evaluates your claims.
 For a packet/log comparison, inspect a few selected records:
 
 ```sh
-tshark -r labs/fixtures/pcaps/incident.pcap -Y 'dns || tls.handshake.type == 1' -T fields -E header=y -e frame.number -e ip.src -e ip.dst -e dns.qry.name -e tls.handshake.extensions_server_name
+tshark -n -r labs/fixtures/pcaps/incident.pcap -Y 'dns || tls.handshake.type == 1' -T fields -E header=y -e frame.number -e ip.src -e ip.dst -e dns.qry.name -e tls.handshake.extensions_server_name
 ```
 
 A ClientHello does not show a completed TLS session or application content.

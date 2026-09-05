@@ -139,7 +139,8 @@ class SessionTests(unittest.TestCase):
     def review(self, phase, reviewer="self", score=2, hashes=None):
         view = d.session_status("learner", phase)
         return self.act("review", dict(reviewer=reviewer, scores=dict.fromkeys(d.DIMENSIONS, score),
-                        feedback="PRIVATE REHEARSAL TEXT: synthetic review", expected_artifact_hashes=hashes if hashes is not None else view["phase"]["artifact_hashes"]), phase)
+                        feedback="PRIVATE REHEARSAL TEXT: synthetic review", expected_artifact_hashes=hashes if hashes is not None else view["phase"]["artifact_hashes"],
+                        expected_response_sha256=view["phase"]["response_sha256"]), phase)
 
     def test_transfer_prediction_correction_resume_and_retry(self):
         self.reach_transfer()
@@ -323,11 +324,90 @@ class SessionTests(unittest.TestCase):
         text = path.read_text()
         path.write_text(re.sub(r"(?<=<!-- narrative:start -->\n).*?(?=\n<!-- narrative:end -->)", "word " * 151, text, flags=re.S))
         self.assertTrue(any("1–150" in error for error in d.validate_artifacts(directory, phase, state)["errors"]))
+        packet = directory / "packet-path.md"
+        packet.write_text("# Sheet\n\n## Healthy Path — Challenge 1\n\nAn arbitrary sentence.\n")
+        report = d.validate_artifacts(directory, d.phase_by_id(d.definition(), "c01.review"), state)
+        self.assertFalse(report["valid"])
+        self.assertTrue(any("table" in error for error in report["errors"]))
+
+    def test_concurrent_requests_advance_only_once(self):
+        script = "import sys; from pathlib import Path; import delivery; delivery.WORK_ROOT=Path(sys.argv[1]); raise SystemExit(delivery.cli(sys.argv[2:]))"
+        arguments = [sys.executable, "-B", "-c", script, str(d.WORK_ROOT), "session", "act", "--id", "learner", "--input", "-", "--json"]
+        request = self.request("skip", {"reason": "Concurrency rehearsal"})
+        processes = [subprocess.Popen(arguments, cwd=d.ROOT, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True) for _ in range(2)]
+        for index, process in enumerate(processes):
+            process.stdin.write(json.dumps({**request, "request_id": f"parallel-{index}"}))
+            process.stdin.close()
+            process.stdin = None
+        codes = []
+        for process in processes:
+            stdout, stderr = process.communicate(timeout=10)
+            codes.append(process.returncode)
+            self.assertIn(json.loads(stdout)["status"], ("ok", "error"))
+            self.assertEqual(stderr, "")
+        self.assertEqual(sorted(codes), [0, 3])
+        self.assertEqual(d.session_status("learner")["revision"], 1)
+
+    def test_evidence_failure_and_injection_leave_state_unchanged(self):
+        self.reach_transfer()
+        self.act("predict", {"text": "First explanation."})
+        self.act("continue")
+        path = d.session_dir("learner") / "session.json"
+        before = path.read_bytes()
+        for result in (dict(returncode=7, truncated=False), dict(returncode=None, truncated=False, timed_out=True), dict(returncode=0, truncated=True)):
+            with mock.patch.object(d, "run_tool", return_value=result):
+                with self.assertRaises(d.DeliveryError) as error:
+                    self.act("evidence", {"view": "transfer.fields"})
+                self.assertEqual(error.exception.code, 4)
+                self.assertEqual(error.exception.details, result)
+            self.assertEqual(path.read_bytes(), before)
+        with mock.patch.object(d, "run_tool") as run:
+            with self.assertRaises(d.DeliveryError):
+                self.act("evidence", {"view": "transfer.fields; touch unexpected"})
+            run.assert_not_called()
+        with mock.patch.object(d, "evidence_integrity", side_effect=d.DeliveryError("fixture checksum mismatch", 4)):
+            with self.assertRaisesRegex(d.DeliveryError, "checksum"):
+                self.act("answer", {"text": "Should not be saved."})
+        self.assertEqual(path.read_bytes(), before)
+
+    def test_export_files_do_not_overwrite_or_escape(self):
+        command = ["session", "export", "--id", "learner", "--json", "--output", "summary.json"]
+        with contextlib.redirect_stdout(io.StringIO()) as output:
+            self.assertEqual(d.cli(command), 0)
+        self.assertEqual(json.loads(output.getvalue())["included_files"], [])
+        target = d.session_dir("learner") / "exports/summary.json"
+        before = target.read_bytes()
+        for args, expected in ((command, 4), (command[:-1] + ["../escape.json"], 2),
+                               (["session", "export", "--id", "learner", "--json", "--format", "csv"], 2)):
+            with contextlib.redirect_stdout(io.StringIO()) as output:
+                self.assertEqual(d.cli(args), expected)
+            self.assertEqual(json.loads(output.getvalue())["status"], "error")
+        self.assertEqual(target.read_bytes(), before)
+        self.assertFalse((d.session_dir("learner") / "escape.json").exists())
+
+    def test_corrupt_valid_json_reports_recovery_without_reset(self):
+        path = d.session_dir("learner") / "session.json"
+        state = json.loads(path.read_text())
+        state["phases"]["opening.predict"]["reviews"] = [{}]
+        path.write_text(json.dumps(state))
+        before = path.read_bytes()
+        with self.assertRaisesRegex(d.DeliveryError, "Preserve this directory"):
+            d.session_status("learner")
+        self.assertEqual(path.read_bytes(), before)
 
 
 class HeadlessTests(unittest.TestCase):
+    def test_json_help_and_duplicate_keys(self):
+        result = subprocess.run([sys.executable, "-B", str(d.ROOT / "course.py"), "session", "act", "--help", "--json"], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0)
+        self.assertIn("--input", json.loads(result.stdout)["help"])
+        for text in ('{"revision": 0, "revision": 1}', '{"value": NaN}'):
+            with self.assertRaises(d.DeliveryError):
+                d.decode_json(text)
+
     def test_json_errors_without_terminal_input(self):
         for argv in (
+            ["--json", "unknown"],
             ["session", "status", "--json"],
             ["session", "unknown", "--json"],
             ["session", "act", "--id", "unused", "--input", "-", "--json"],

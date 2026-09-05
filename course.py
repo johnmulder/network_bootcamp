@@ -395,7 +395,7 @@ def parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else argv
-    if argv and argv[0] in {"session", "doctor", "learn"}:
+    if argv and (argv[0] in {"session", "doctor", "learn"} or "--json" in argv):
         import delivery
         return delivery.cli(argv)
     args = parser().parse_args(argv)

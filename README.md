@@ -19,9 +19,10 @@ enterprise hardware, or proprietary analyzers are required.
 | Detailed subsection guides | 104 |
 | Interactive workbenches | 3 |
 | Workbench questions | 83 |
+| Saved delivery | 36 phases, with terminal and JSON interfaces |
 | Evidence fixtures | 36 manifest-tracked files plus the manifest |
 | Incident timeline | 17 normalized events across 8 sources |
-| Automated tests | 36 tests across all 7 executable sources |
+| Automated tests | 57 standard-library tests plus complete delivery rehearsals |
 | Supported environment | One Mac laptop with local, open-source tools |
 
 The [course agenda](agenda.md) is the authoritative curriculum specification.
@@ -129,7 +130,8 @@ combining each guide, its saved evidence, and the interactive workbench.
 ├── challenges/       # One-day briefs, reference card, hints, and templates
 ├── facilitator/      # Teaching notes, solutions, and pilot worksheet
 ├── modules/          # Reference guides, section directories, and workbenches
-└── tests/            # Standard-library project test suite
+├── tests/            # Standard-library project test suite
+└── verification/     # Content checks, delivery rehearsals, and course packaging
 ```
 
 Learner-created diagrams, notes, command output, ledgers, and assessments go
@@ -157,15 +159,27 @@ python3 -B -m unittest discover -s tests -v
 ```
 
 The suite exercises the course navigator, fixture builder, all three
-workbenches, and the setup script. It covers navigation, command delegation,
-protocol construction, fixture generation and corruption, routing decisions,
-architecture decisions, incident timeline correlation, question and CLI
-behavior, and setup success and failure paths.
+workbenches, setup, and saved delivery. It covers packet construction,
+routing and architecture decisions, timeline correlation, question identity,
+staged evidence, save/resume, concurrent requests, failure recovery, artifact
+validation, review staleness, and private exports.
 
 Tests build fixtures only in temporary directories. Setup tests use simulated
 macOS and Homebrew commands, so they never install software or depend on the
 host's current package state. Python's `-B` option prevents bytecode cache files
 from being written into the course tree.
+
+With the core Mac tools available, rehearse both case assignments through all
+36 phases using fresh processes and synthetic learner responses:
+
+```sh
+python3 -B verification/check_delivery.py --smoke --journey
+```
+
+See the [delivery guide](delivery/README.md#verify-and-package-delivery) for
+portable content checks, CI, and building a course archive. The
+[validation record](facilitator/validation.md) distinguishes technical checks
+from the learner pilot that remains to be conducted.
 
 ## Documentation Guide
 

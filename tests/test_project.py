@@ -774,6 +774,8 @@ class CourseNavigatorTests(unittest.TestCase):
 class SetupScriptTests(unittest.TestCase):
     formulae = ("python", "wireshark", "zeek", "jq", "iperf3")
     commands = (
+        "cat",
+        "column",
         "python3",
         "tshark",
         "zeek",
@@ -798,6 +800,7 @@ class SetupScriptTests(unittest.TestCase):
         platform: str = "Darwin",
         installed: tuple[str, ...] | None = None,
         missing_commands: tuple[str, ...] = (),
+        old_python: bool = False,
     ) -> tuple[subprocess.CompletedProcess[str], str, str]:
         installed = self.formulae if installed is None else installed
         with tempfile.TemporaryDirectory() as temporary:
@@ -849,9 +852,12 @@ esac
                     continue
                 content = "#!/bin/sh\n"
                 if command == "python3":
+                    content += f'if [ "$1" = "-c" ]; then exit {int(old_python)}; fi\n'
                     content += "printf '%s\\n' \"$*\" >> \"$FAKE_PYTHON_LOG\"\n"
                 self.write_executable(binaries / command, content)
 
+            if "brew" in missing_commands:
+                (binaries / "brew").unlink()
             environment = {
                 **os.environ,
                 "PATH": str(binaries),
@@ -896,7 +902,7 @@ esac
         cases = (
             ({"missing_commands": ("jq",)}, "jq"),
             ({"missing_commands": ("tshark",)}, "wireshark"),
-            ({"missing_commands": ("nc",)}, "nc"),
+            ({"missing_commands": ("column",)}, "column"),
         )
         for options, missing in cases:
             with self.subTest(missing=missing):
@@ -932,6 +938,29 @@ esac
         result, brew_log, _ = self.run_setup("--extended", missing_commands=("zeek", "iperf3"))
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(brew_log.splitlines(), ["install zeek iperf3"])
+
+    def test_optional_live_tools_do_not_block_offline_delivery(self):
+        result, brew_log, python_log = self.run_setup("--check", missing_commands=("nc", "tcpdump", "zeek", "iperf3"))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("unavailable (optional live exercise)", result.stdout)
+        self.assertEqual(brew_log, "")
+        self.assertIn("--check", python_log)
+
+    def test_unsupported_python_is_reported_and_queued_for_installation(self):
+        result, brew_log, python_log = self.run_setup("--check", old_python=True)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("3.10+", result.stdout)
+        self.assertEqual(python_log, "")
+        result, brew_log, _ = self.run_setup(old_python=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(brew_log.splitlines(), ["install python"])
+
+    def test_homebrew_is_only_required_for_missing_packages(self):
+        result, _, _ = self.run_setup("--check", missing_commands=("brew",))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        result, _, _ = self.run_setup(missing_commands=("brew", "jq"))
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("Homebrew is required to install", result.stderr)
 
 
 if __name__ == "__main__":

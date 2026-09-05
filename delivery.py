@@ -32,9 +32,10 @@ MARKER = re.compile(r"<!-- delivery:(start|end) ([a-z0-9.-]+) -->\Z")
 
 
 class DeliveryError(Exception):
-    def __init__(self, message: str, code: int = 2):
+    def __init__(self, message: str, code: int = 2, details: dict | None = None):
         super().__init__(message)
         self.code = code
+        self.details = details
 
 
 def confined(base: Path, relative: str) -> Path:
@@ -144,14 +145,14 @@ def validate_definition(data: dict) -> None:
 
 
 EVIDENCE = {
-    "transfer.summary": ["tshark", "-r", "labs/fixtures/challenges/transfer.pcap"],
-    "transfer.fields": ["tshark", "-r", "labs/fixtures/challenges/transfer.pcap", "-Y", "tcp || icmp", "-T", "fields", "-E", "header=y", "-e", "frame.number", "-e", "frame.time_relative", "-e", "ip.src", "-e", "ip.dst", "-e", "ip.len", "-e", "ip.hdr_len", "-e", "tcp.hdr_len", "-e", "tcp.len", "-e", "tcp.seq", "-e", "tcp.options.mss_val", "-e", "icmp.type", "-e", "icmp.code", "-e", "icmp.mtu"],
-    "transfer.icmp": ["tshark", "-r", "labs/fixtures/challenges/transfer.pcap", "-Y", "icmp", "-V"],
+    "transfer.summary": ["tshark", "-n", "-r", "labs/fixtures/challenges/transfer.pcap"],
+    "transfer.fields": ["tshark", "-n", "-r", "labs/fixtures/challenges/transfer.pcap", "-Y", "tcp || icmp", "-T", "fields", "-E", "header=y", "-e", "frame.number", "-e", "frame.time_relative", "-e", "ip.src", "-e", "ip.dst", "-e", "ip.len", "-e", "ip.hdr_len", "-e", "tcp.hdr_len", "-e", "tcp.len", "-e", "tcp.seq", "-e", "tcp.options.mss_val", "-e", "icmp.type", "-e", "icmp.code", "-e", "icmp.mtu"],
+    "transfer.icmp": ["tshark", "-n", "-r", "labs/fixtures/challenges/transfer.pcap", "-Y", "icmp", "-V"],
 }
 EVIDENCE.update({
     'dhcp': ['jq', '.', 'labs/fixtures/network/dhcp.jsonl'],
-    'foundations.summary': ['tshark', '-r', 'labs/fixtures/pcaps/foundations.pcap'],
-    'foundations.fields': ['tshark', '-r', 'labs/fixtures/pcaps/foundations.pcap', '-T', 'fields', '-E', 'header=y', '-e', 'frame.number', '-e', 'vlan.id', '-e', 'eth.src', '-e', 'eth.dst', '-e', 'ip.src', '-e', 'ip.dst', '-e', 'tcp.flags', '-e', 'dns.qry.name', '-e', 'http.response.code'],
+    'foundations.summary': ['tshark', '-n', '-r', 'labs/fixtures/pcaps/foundations.pcap'],
+    'foundations.fields': ['tshark', '-n', '-r', 'labs/fixtures/pcaps/foundations.pcap', '-T', 'fields', '-E', 'header=y', '-e', 'frame.number', '-e', 'vlan.id', '-e', 'eth.src', '-e', 'eth.dst', '-e', 'ip.src', '-e', 'ip.dst', '-e', 'tcp.flags', '-e', 'dns.qry.name', '-e', 'http.response.code'],
     'routes': ['column', '-s,', '-t', 'labs/fixtures/routing/route-candidates.csv'],
     'ospf': ['jq', '.', 'labs/fixtures/routing/ospf.json'],
     'route-events': ['jq', '-c', '.', 'labs/fixtures/routing/route-events.jsonl'],
@@ -167,7 +168,7 @@ EVIDENCE.update({
     'incident.round1': ['jq', '.', 'labs/fixtures/challenges/incident-round-1.json'],
     'incident.round2': ['jq', '.', 'labs/fixtures/challenges/incident-round-2.json'],
     'incident.round3': ['jq', '.', 'labs/fixtures/challenges/incident-round-3.json'],
-    'incident.packets': ['tshark', '-r', 'labs/fixtures/pcaps/incident.pcap', '-Y', 'dns || tls.handshake.type == 1', '-T', 'fields', '-E', 'header=y', '-e', 'frame.number', '-e', 'ip.src', '-e', 'ip.dst', '-e', 'dns.qry.name', '-e', 'tls.handshake.extensions_server_name'],
+    'incident.packets': ['tshark', '-n', '-r', 'labs/fixtures/pcaps/incident.pcap', '-Y', 'dns || tls.handshake.type == 1', '-T', 'fields', '-E', 'header=y', '-e', 'frame.number', '-e', 'ip.src', '-e', 'ip.dst', '-e', 'dns.qry.name', '-e', 'tls.handshake.extensions_server_name'],
     'case.main': ['jq', '.', 'labs/fixtures/challenges/case-a.json'],
     'case.exit': ['jq', '.', 'labs/fixtures/challenges/case-b.json'],
     "incident.timeline": [sys.executable, "-B", "course.py", "timeline"],
@@ -200,8 +201,15 @@ def now() -> str:
 def decode_json(text: str):
     def invalid(value):
         raise ValueError(f"Non-finite JSON number: {value}")
+    def unique_pairs(pairs):
+        result = {}
+        for key, value in pairs:
+            if key in result:
+                raise ValueError(f"Duplicate JSON key: {key}")
+            result[key] = value
+        return result
     try:
-        return json.loads(text, parse_constant=invalid)
+        return json.loads(text, parse_constant=invalid, object_pairs_hook=unique_pairs)
     except (ValueError, TypeError) as error:
         raise DeliveryError(f"Invalid JSON: {error}") from error
 
@@ -238,7 +246,7 @@ def evidence_integrity() -> None:
 
 
 def versions(data: dict) -> dict:
-    paths = {DEFINITION, "delivery.py", "course.py", "agenda.md", *ARTIFACTS.values()}
+    paths = {DEFINITION, "delivery.py", "course.py", "agenda.md", "challenges/reference.md", "facilitator/README.md", *ARTIFACTS.values()}
     paths.update(str(path.relative_to(ROOT)) for path in ROOT.glob("modules/*/workbench/*.py"))
     for phase in data["phases"]:
         for reference in phase["content"] + phase["hints"] + phase["solutions"]:
@@ -399,6 +407,18 @@ def load_state(directory: Path, data: dict) -> dict:
             progress = state["phases"][name]
             if not isinstance(progress["submissions"], list) or not isinstance(progress["checks"], dict):
                 raise ValueError("invalid phase history")
+            if (progress["status"] not in {"incomplete", "complete", "pending_review", "skipped", "demonstrated"}
+                    or not isinstance(progress["views"], list) or not isinstance(progress["reviews"], list)
+                    or type(progress["hints"]) is not int or not 0 <= progress["hints"] <= 3
+                    or type(progress["exposed"]) is not bool):
+                raise ValueError("invalid phase status")
+            for check in progress["checks"].values():
+                if type(check["correct"]) is not bool or type(check["independent"]) is not bool:
+                    raise ValueError("invalid checkpoint result")
+            for review in progress["reviews"]:
+                if (review["reviewer"] not in ("self", "facilitator") or not isinstance(review["artifact_hashes"], dict)
+                        or not isinstance(review["response_sha256"], str) or type(review["passed"]) is not bool):
+                    raise ValueError("invalid review record")
     except (OSError, ValueError, KeyError, TypeError, DeliveryError) as error:
         raise DeliveryError(f"Cannot load session: {error}. Preserve this directory; restore a saved copy or create a new session.", 3) from error
     if state["versions"] != versions(data):
@@ -604,6 +624,7 @@ def status_result(state: dict, data: dict, result: dict | None = None, view_phas
         view["mode_prompt"] = "Write your own explanation before continuing." if state["mode"] == "solo" else "Swap evidence-reader and skeptical-reviewer roles; record your own answer. The exit is individual."
         if phase["kind"] == "review":
             view["artifact_hashes"] = artifact_hashes(session_dir(state["id"]), phase["artifacts"])
+            view["response_sha256"] = response_hash(state, phase["block"])
             view["artifact_check"] = validate_artifacts(session_dir(state["id"]), phase, state)
         if "practice" in view["allowed_actions"]:
             view["practice"] = [workbench(number).public_question(item) for number, item in practice_items(phase, state)]
@@ -741,6 +762,20 @@ def validate_artifacts(directory: Path, phase: dict, state: dict) -> dict:
                     errors.append(f"{name}: complete the {heading} section")
                 elif "___" in body or re.search(r"\|[ \t]*\|", body):
                     errors.append(f"{name}: fill placeholders and empty table cells in {heading}; unknown with a reason is acceptable")
+                expected_tables = re.findall(r"(?:^\|[^\n]*\|\n?)+", original[heading], re.M)
+                actual_tables = re.findall(r"(?:^\|[^\n]*\|\n?)+", body, re.M)
+                for expected_table in expected_tables:
+                    expected_rows = [row.strip() for row in expected_table.splitlines()]
+                    matching = [table.splitlines() for table in actual_tables if table.splitlines()[0].strip() == expected_rows[0]]
+                    if not matching or len(matching[0]) < len(expected_rows) or any(len(row.split("|")) != len(expected_rows[0].split("|")) for row in matching[0]):
+                        errors.append(f"{name}: retain the table columns and required rows in {heading}")
+                paragraphs = [" ".join(paragraph.split()) for paragraph in body.split("\n\n")]
+                for paragraph in original[heading].split("\n\n"):
+                    if "___" not in paragraph or paragraph.lstrip().startswith(("|", "<!--")):
+                        continue
+                    label = " ".join(paragraph.split("___", 1)[0].split())
+                    if label and not any(p.startswith(label) and len(p) > len(label) for p in paragraphs):
+                        errors.append(f"{name}: keep and answer the field beginning '{label[:65]}'")
                 if phase["id"] == "c06.review" and f"{state['case']}-v1" not in body:
                     errors.append(f"{name}: identify the assigned main case in {heading}")
             marker = "narrative" if phase["id"] == "c05.review" else "handoff" if phase["id"] == "c06.review" else None
@@ -791,7 +826,8 @@ def act(ident: str, request: dict) -> dict:
     if not isinstance(request, dict) or set(request) != {"request_id", "expected_revision", "phase_id", "action", "payload"}:
         raise DeliveryError("Request needs request_id, expected_revision, phase_id, action, and payload")
     if (not isinstance(request["request_id"], str) or not ID.fullmatch(request["request_id"])
-            or type(request["expected_revision"]) is not int or not isinstance(request["payload"], dict)):
+            or type(request["expected_revision"]) is not int or not isinstance(request["payload"], dict)
+            or not isinstance(request["phase_id"], str) or not isinstance(request["action"], str)):
         raise DeliveryError("Invalid request ID, revision, or payload")
     data = definition()
     directory = session_dir(ident)
@@ -840,7 +876,7 @@ def act(ident: str, request: dict) -> dict:
                 raise DeliveryError("Evidence view is not available in this phase", 3)
             output = run_tool(evidence_command(view, state))
             if output["returncode"] != 0 or output["truncated"]:
-                raise DeliveryError(f"Evidence command failed or exceeded limits; phase unchanged: {output}", 4)
+                raise DeliveryError("Evidence command failed or exceeded limits; phase unchanged", 4, output)
             if view not in progress["views"]:
                 progress["views"].append(view)
             result.update(view=view, output=output, fixture_manifest_sha256=state["versions"]["fixtures_sha256"])
@@ -865,6 +901,8 @@ def act(ident: str, request: dict) -> dict:
             current_hashes = artifact_hashes(directory, phase["artifacts"])
             if payload.get("expected_artifact_hashes") != current_hashes:
                 raise DeliveryError("Artifact versions changed or hashes were omitted; fetch status and review the current files", 3)
+            if payload.get("expected_response_sha256") != response_hash(state, phase["block"]):
+                raise DeliveryError("Response version changed or hash was omitted; review the current responses", 3)
             review = dict(at=now(), reviewer=payload["reviewer"], scores=scores,
                           feedback=require_text(payload.get("feedback"), "feedback"),
                           artifact_hashes=current_hashes,
@@ -939,6 +977,7 @@ def export_session(ident: str, include_artifacts: bool = False) -> dict:
                   mode=state["mode"], pair_label=state["pair_label"], main_case=state["case"], exit_case=other_case(state),
                   created_at=state["created_at"], updated_at=state["updated_at"],
                   completion=completion(state, data), reviews=review_statuses(state, data),
+                  response_hashes={phase["id"]: response_hash(state, phase["block"]) for phase in data["phases"] if phase["kind"] == "review"},
                   review_history={name: [dict(at=r["at"], reviewer=r["reviewer"], scores=r["scores"], passed_at_review=r["passed"], artifact_hashes=r["artifact_hashes"])
                                         for r in p["reviews"]] for name, p in state["phases"].items() if p["reviews"]},
                   artifact_hashes=artifact_hashes(directory, list(ARTIFACTS)),
@@ -1062,7 +1101,7 @@ def learn(ident: str, mode: str = "solo", case: str = "A", pair_label: str | Non
                     reviewer = input("Reviewer: self or facilitator [self]: ").strip() or "self"
                     scores = {name: int(input(f"{name} (0–2): ")) for name in DIMENSIONS}
                     payload = dict(reviewer=reviewer, scores=scores, feedback=input("Feedback and next revision: "),
-                                   expected_artifact_hashes=phase["artifact_hashes"])
+                                   expected_artifact_hashes=phase["artifact_hashes"], expected_response_sha256=phase["response_sha256"])
                 elif operation == "feedback":
                     for key, prompt in (("wanted_to_know", "I wanted to find out what happened next"), ("manageable", "The challenge felt manageable")):
                         value = input(f"{prompt} (1–5, Enter to omit): ").strip()
@@ -1134,7 +1173,19 @@ def cli(argv: list[str]) -> int:
                 operation.add_argument("--format", choices=("json", "markdown", "csv"), default="json")
                 operation.add_argument("--include-artifacts", action="store_true", help="include answers, review feedback, and the four learner files")
                 operation.add_argument("--output", help="new filename under this session's exports directory; never overwrites")
-        args = parser.parse_args(argv)
+        if json_mode:
+            with contextlib.redirect_stdout(io.StringIO()) as help_output:
+                try:
+                    args = parser.parse_args(argv)
+                except SystemExit as error:
+                    if error.code != 0:
+                        raise
+                    args = None
+            if args is None:
+                print(json.dumps(dict(protocol_version=1, status="ok", help=help_output.getvalue())))
+                return 0
+        else:
+            args = parser.parse_args(argv)
         if args.command == "learn":
             return learn(args.id, args.mode, args.case, args.pair_label)
         if args.command == "doctor":
@@ -1170,7 +1221,7 @@ def cli(argv: list[str]) -> int:
             else:
                 with contextlib.nullcontext(sys.stdin) if args.input == "-" else open(args.input, encoding="utf-8") as handle:
                     raw = handle.read(131073)
-                if len(raw) > 131072:
+                if len(raw.encode("utf-8")) > 131072:
                     raise DeliveryError("Request exceeds 128 KiB")
                 result = act(args.id, decode_json(raw))
         print(json.dumps(result, indent=2, ensure_ascii=False, allow_nan=False))
@@ -1178,7 +1229,8 @@ def cli(argv: list[str]) -> int:
     except (DeliveryError, OSError, ValueError, KeyError, TypeError) as error:
         code = error.code if isinstance(error, DeliveryError) else 4
         if json_mode:
-            print(json.dumps(dict(protocol_version=1, status="error", error=str(error), code=code)))
+            print(json.dumps(dict(protocol_version=1, status="error", error=str(error), code=code,
+                                  details=error.details if isinstance(error, DeliveryError) else None)))
         else:
             print(f"error: {error}", file=sys.stderr)
         return code

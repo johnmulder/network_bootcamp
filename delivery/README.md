@@ -107,7 +107,7 @@ requires the same five envelope fields shown above.
 | `reveal` | `{}` | Shows only this block's worked review and assigned case. Subsequent answers exposed by it cannot count as independent. |
 | `continue` | `{}` or optional numeric `minutes` | Advances after required responses; review can remain pending. Minutes are self-reported. |
 | `skip` | Nonempty `reason` | Continues while recording unfinished work. Revisit and finish it later to satisfy completion. |
-| `review` | `reviewer`, `scores`, `feedback`, `expected_artifact_hashes` | Records a self/facilitator rubric review of a specific artifact version. |
+| `review` | `reviewer`, `scores`, `feedback`, `expected_artifact_hashes`, `expected_response_sha256` | Records a self/facilitator rubric review of specific file and response versions. |
 | `practice` | `answers` for the five displayed optional questions, or `reveal: true` | Saves practice results without affecting the grade. Question IDs and order are retained across resumes. |
 | `feedback` | Optional integer `wanted_to_know` and `manageable` ratings, 1–5; optional `text` | Records the existing engagement questions. An empty object opts out. |
 
@@ -144,6 +144,8 @@ or whether a proposed action is proportionate.
 For `review`, `reviewer` is `self` or `facilitator`; `scores` maps `mechanism`,
 `evidence`, `uncertainty`, and `action` to integers 0–2. Supply nonempty feedback
 and copy the status response's `artifact_hashes` to `expected_artifact_hashes`.
+Also copy its `response_sha256` to `expected_response_sha256` so a review cannot
+silently assess responses changed after the reviewer read them.
 Scores are retained even when work needs revision. A valid pass needs at least
 6/8, no zero, and structurally complete artifacts. Reviewer type is a local
 label, not authenticated identity or certification.
@@ -182,9 +184,10 @@ file. Exports contain relative source/file references and version hashes, so
 they can be reviewed on another machine. Nothing is automatically submitted,
 uploaded, or sent to a facilitator.
 
-The JSON export includes the session revision and artifact hashes. A reviewer
-can return a `review` action using those hashes and a fresh session revision
-after checking that the course and response versions still match. Preserve
+The JSON export includes the session revision, artifact hashes, and each review
+phase's `response_hashes` entry. A reviewer can return a `review` action using
+those hashes and a fresh session revision after checking that the course and
+response versions still match. Preserve
 first and revised scores when recording pilot observations. Timestamps and
 self-reported minutes are separate from observed active student minutes.
 
@@ -214,3 +217,45 @@ its fixed evidence commands and checkpoints. Validate content markers, question
 IDs, and timing with `./course verify`, and run the project tests after edits.
 Keep Markdown commands consistent with their registered argument arrays. The
 104 reference guides continue to use manual navigation and optional exercises.
+
+## Verify and Package Delivery
+
+Run these checks on a development Mac with core tools installed:
+
+```sh
+python3 -B -m unittest discover -s tests -v
+python3 -B verification/check_delivery.py
+python3 -B verification/check_delivery.py --smoke --journey
+```
+
+The content check validates local links/anchors and matches each teaching
+command to its registered argument array. The smoke check executes all 25
+read-only views. The journey check uses fresh CLI processes, real evidence,
+both case assignments, an incorrect answer, save/resume, retry, skipped-work
+revision, hints, a reveal, synthetic rubric reviews, and portable exports. Its
+temporary session directories are cleaned afterward. These are scripted
+technical checks; their scores and timings are not learner-pilot results.
+
+To build a distributable archive, commit or stage the intended source files
+first. Packaging reads tracked files from the current checkout, includes the
+saved evidence and `RELEASE.json` with content/fixture fingerprints, and excludes
+`work/`, Git metadata, and implementation plans:
+
+```sh
+python3 -B verification/package_course.py --output work/course.tar.gz --journey
+```
+
+Choose a new output filename for later builds; packaging never overwrites one.
+The check extracts into a path containing spaces and exercises the course without
+Git metadata. `--check` runs the portable checks without requiring the real Mac
+tools; `--journey` also runs doctor, evidence smoke, and both full journeys.
+The archive preserves executable permissions. Recipients extract it and run
+`./prerequisites/setup.sh` before starting their own sessions.
+
+The [CI workflow](../.github/workflows/check.yml) runs the standard-library suite
+on Python 3.10 and real delivery on a Mac with Python 3.13. Tool installation
+occurs before offline course execution. Its GitHub-maintained
+[checkout](https://github.com/actions/checkout) and
+[Python setup](https://github.com/actions/setup-python) actions provision the
+job; the course itself has no new Python dependencies. The workflow checks an
+archive but does not publish a release or upload learner results.

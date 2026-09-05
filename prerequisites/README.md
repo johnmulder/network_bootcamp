@@ -9,7 +9,7 @@ access is required.
 - macOS on Apple silicon or Intel
 - a local administrator account for initial installation and optional packet
   capture
-- Homebrew
+- Homebrew when installing missing or outdated tools
 - internet access during initial installation
 
 The core course reads local, saved evidence. It does not require `sudo`, create
@@ -18,8 +18,8 @@ observations generate traffic only on the laptop's loopback interface (`lo0`).
 
 ## Install
 
-If Homebrew is not installed, follow the instructions at
-[brew.sh](https://brew.sh/). Then run:
+If you need to install tools and Homebrew is not installed, follow the
+instructions at [brew.sh](https://brew.sh/). Then run:
 
 ```sh
 cd /path/to/network_bootcamp
@@ -32,7 +32,10 @@ verifies the committed
 interrupted or partial installation. When setup succeeds, start with
 `./course`.
 
-The default installs only the one-day tools: Python, TShark, and jq. A readiness
+The default installs only the one-day tools: Python, TShark, and jq. Python 3.10
+or later is required; an older Python is queued for installation. If an older
+system Python still takes precedence afterward, correct your shell's Homebrew
+PATH setup and rerun the check. A readiness
 check uses available commands and does not refresh Homebrew package metadata.
 Existing usable installations are accepted even if their formula names differ.
 Homebrew remains the installer for missing tools. Readiness checks do not need
@@ -63,8 +66,9 @@ For the optional Zeek and iperf3 reference exercises:
 | macOS BSD tools | Inspect routes, neighbors, sockets, paths, and packet captures | Core and optional practice | Open source, included with macOS |
 
 Homebrew installs the command-line Wireshark formula for TShark; no GUI is
-required. The setup script also checks the macOS-provided `tcpdump`, `netstat`,
-`route`, `arp`, `traceroute`, and `nc` commands.
+required. `cat` and `column` support the core saved-evidence views. The setup
+script reports macOS-provided `tcpdump`, `netstat`, `route`, `arp`, `traceroute`,
+and `nc` separately; missing optional live tools do not block offline delivery.
 
 ## Verify the Current Project
 

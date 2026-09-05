@@ -28,8 +28,8 @@ change, and what does it leave unresolved?
 Only after the prediction, read the neutral case capture:
 
 ```sh
-tshark -r labs/fixtures/challenges/transfer.pcap
-tshark -r labs/fixtures/challenges/transfer.pcap -Y 'tcp || icmp' -T fields -E header=y -e frame.number -e frame.time_relative -e ip.src -e ip.dst -e ip.len -e ip.hdr_len -e tcp.hdr_len -e tcp.len -e tcp.seq -e tcp.options.mss_val -e icmp.type -e icmp.code -e icmp.mtu
+tshark -n -r labs/fixtures/challenges/transfer.pcap
+tshark -n -r labs/fixtures/challenges/transfer.pcap -Y 'tcp || icmp' -T fields -E header=y -e frame.number -e frame.time_relative -e ip.src -e ip.dst -e ip.len -e ip.hdr_len -e tcp.hdr_len -e tcp.len -e tcp.seq -e tcp.options.mss_val -e icmp.type -e icmp.code -e icmp.mtu
 ```
 
 Compare TCP data lengths and sequence numbers, not just frame lengths. ICMP
@@ -38,7 +38,7 @@ contain multiple IP values. Use the packet detail when you need to distinguish
 the outer error packet from its quoted packet:
 
 ```sh
-tshark -r labs/fixtures/challenges/transfer.pcap -Y 'icmp' -V
+tshark -n -r labs/fixtures/challenges/transfer.pcap -Y 'icmp' -V
 ```
 
 If the table is hard to read, use this decoded evidence after predicting:

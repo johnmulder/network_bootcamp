@@ -36,8 +36,8 @@ request. Identify which missing neighbor information would require ARP.
 
 ```sh
 jq '.' labs/fixtures/network/dhcp.jsonl
-tshark -r labs/fixtures/pcaps/foundations.pcap
-tshark -r labs/fixtures/pcaps/foundations.pcap -T fields -E header=y -e frame.number -e vlan.id -e eth.src -e eth.dst -e ip.src -e ip.dst -e tcp.flags -e dns.qry.name -e http.response.code
+tshark -n -r labs/fixtures/pcaps/foundations.pcap
+tshark -n -r labs/fixtures/pcaps/foundations.pcap -T fields -E header=y -e frame.number -e vlan.id -e eth.src -e eth.dst -e ip.src -e ip.dst -e tcp.flags -e dns.qry.name -e http.response.code
 ```
 
 Use the packet sheet to record observations and cite frame numbers:
