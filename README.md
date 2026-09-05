@@ -17,9 +17,9 @@ enterprise hardware, or proprietary analyzers are required.
 | Detailed subsection guides | 104 |
 | Interactive workbenches | 3 |
 | Workbench questions | 79 |
-| Evidence fixtures | 29 manifest-tracked files plus the manifest |
+| Evidence fixtures | 36 manifest-tracked files plus the manifest |
 | Incident timeline | 17 normalized events across 8 sources |
-| Automated tests | 31 tests across all 7 executable sources |
+| Automated tests | 33 tests across all 7 executable sources |
 | Supported environment | One Mac laptop with local, open-source tools |
 
 The [course agenda](agenda.md) is the authoritative curriculum specification.

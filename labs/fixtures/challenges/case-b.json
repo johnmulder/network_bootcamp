@@ -1,0 +1,84 @@
+{
+  "after": {
+    "ingress_vrf": "ISOLATED",
+    "time": "2026-08-16T11:00:00Z"
+  },
+  "before": {
+    "health_check": "HTTP 200 over TLS",
+    "ingress_vrf": "CORP",
+    "time": "2026-08-16T10:59:00Z"
+  },
+  "brief": "An approved workstation diagnostic connection stops after an interface reassignment.",
+  "case": "B-v1",
+  "conditions": {
+    "change_owner": "network-operations",
+    "clock": "All records synchronized to UTC within 1 ms; event spacing exceeds that tolerance.",
+    "link": "Client link and gateway neighbor remain healthy.",
+    "nat": "At enterprise-firewall only: 10.0.10.23 to 192.0.2.44.",
+    "policy": "Approved diagnostic TCP/443 flow; firewall permits it if reached, with healthy NAT/session state.",
+    "return": "External service returns to 192.0.2.44; firewall has routes to the client prefix in both contexts.",
+    "route_leaking": false,
+    "route_tables_complete_for_this_flow": true
+  },
+  "flow": {
+    "dport": 443,
+    "dst": "198.51.100.77",
+    "protocol": "tcp",
+    "sport": 57000,
+    "src": "10.0.10.23"
+  },
+  "limitations": [
+    "No change ticket says whether reassignment was intentional containment.",
+    "No evidence supports compromise or a firewall deny for this attempt."
+  ],
+  "observations": [
+    {
+      "dst": "198.51.100.77",
+      "event": "SYN emitted",
+      "id": "B1",
+      "sensor": "client-host",
+      "src": "10.0.10.23",
+      "time": "2026-08-16T11:00:01.000Z"
+    },
+    {
+      "dst": "198.51.100.77",
+      "event": "ingress SYN; lookup has no matching prefix",
+      "id": "B2",
+      "sensor": "context-router",
+      "time": "2026-08-16T11:00:01.010Z",
+      "vrf": "ISOLATED"
+    },
+    {
+      "coverage": "Full session table checked; no session creation observed.",
+      "event": "no matching session in this three-second window",
+      "id": "B3",
+      "sensor": "enterprise-firewall",
+      "time": "2026-08-16T11:00:04.000Z"
+    }
+  ],
+  "path": [
+    "ws-23",
+    "context-router",
+    "enterprise-firewall",
+    "external-test-service"
+  ],
+  "routes": {
+    "CORP": [
+      {
+        "next_hop": "connected",
+        "prefix": "10.0.10.0/24"
+      },
+      {
+        "next_hop": "enterprise-firewall",
+        "prefix": "0.0.0.0/0"
+      }
+    ],
+    "ISOLATED": [
+      {
+        "next_hop": "connected",
+        "prefix": "10.0.10.0/24"
+      }
+    ]
+  },
+  "scope": "Independent drill. The explicit test permission replaces the incident's egress intent for this flow only."
+}

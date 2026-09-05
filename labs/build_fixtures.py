@@ -677,6 +677,118 @@ F5,10.0.99.10,10.0.40.10,tcp,22,allow,jump-host-policy
     )
 
 
+def build_challenge_fixtures() -> None:
+    """Package existing evidence and two explicitly authored transfer cases."""
+    transfer = FIXTURES / "challenges" / "transfer.pcap"
+    transfer.parent.mkdir(parents=True, exist_ok=True)
+    transfer.write_bytes((FIXTURES / "pcaps" / "mtu-failure.pcap").read_bytes())
+    rounds = (
+        ("incident/assets.json", "incident/siem.jsonl", "incident/flows.jsonl"),
+        ("incident/dns.jsonl", "incident/endpoint.jsonl", "incident/auth.jsonl"),
+        ("incident/firewall.jsonl", "incident/proxy.jsonl", "routing/vrfs.json"),
+    )
+    for number, sources in enumerate(rounds, 1):
+        evidence = {}
+        for source in sources:
+            raw = (FIXTURES / source).read_text()
+            evidence[source] = (
+                [json.loads(line) for line in raw.splitlines()]
+                if source.endswith(".jsonl") else json.loads(raw)
+            )
+        write_json(f"challenges/incident-round-{number}.json", evidence)
+
+    write_json(
+        "challenges/case-a.json",
+        {
+            "case": "A-v1",
+            "brief": "An approved cloud-to-server health check stops after a routing change.",
+            "scope": "Independent drill on the reference network, not part of the incident timeline.",
+            "flow": {"src": "10.20.5.10", "dst": "10.0.20.40", "protocol": "tcp", "sport": 56000, "dport": 443},
+            "path": ["corp-vpc", "hybrid-link", "on-prem-firewall", "file-01"],
+            "conditions": {
+                "route_tables_complete_for_this_flow": True,
+                "firewall": "Allows this flow and established return traffic; state is healthy.",
+                "nat": False,
+                "link": "Up in both directions; no recorded link change during the drill.",
+                "server": "TCP/443 listener healthy; TLS and application success must still be tested.",
+                "change_owner": "network-operations",
+                "clock": "All records synchronized to UTC within 1 ms; event spacing exceeds that tolerance.",
+            },
+            "before": {
+                "time": "2026-08-16T09:59:00Z",
+                "routes": {
+                    "corp-vpc": [{"prefix": "10.0.0.0/8", "next_hop": "on-prem"}],
+                    "on-prem": [
+                        {"prefix": "10.0.20.0/24", "next_hop": "connected"},
+                        {"prefix": "10.20.0.0/16", "next_hop": "corp-vpc"},
+                    ],
+                },
+                "health_check": "HTTP 200 over TLS",
+            },
+            "after": {
+                "time": "2026-08-16T10:00:00Z",
+                "routes": {
+                    "corp-vpc": [{"prefix": "10.0.0.0/8", "next_hop": "on-prem"}],
+                    "on-prem": [{"prefix": "10.0.20.0/24", "next_hop": "connected"}],
+                },
+            },
+            "observations": [
+                {"id": "A1", "time": "2026-08-16T10:00:01.000Z", "sensor": "corp-vpc-egress", "event": "SYN sent", "src": "10.20.5.10", "dst": "10.0.20.40"},
+                {"id": "A2", "time": "2026-08-16T10:00:01.020Z", "sensor": "file-01-host", "event": "SYN received; SYN-ACK emitted", "src": "10.20.5.10", "dst": "10.0.20.40"},
+                {"id": "A3", "time": "2026-08-16T10:00:01.030Z", "sensor": "on-prem-router", "event": "drop: no matching route", "src": "10.0.20.40", "dst": "10.20.5.10"},
+                {"id": "A4", "time": "2026-08-16T10:00:04.000Z", "sensor": "client-host", "event": "connection timeout; no SYN-ACK received"},
+            ],
+            "limitations": ["No audit record establishes why the route changed.", "No post-repair packet or application observation is supplied."],
+        },
+    )
+    write_json(
+        "challenges/case-b.json",
+        {
+            "case": "B-v1",
+            "brief": "An approved workstation diagnostic connection stops after an interface reassignment.",
+            "scope": "Independent drill. The explicit test permission replaces the incident's egress intent for this flow only.",
+            "flow": {"src": "10.0.10.23", "dst": "198.51.100.77", "protocol": "tcp", "sport": 57000, "dport": 443},
+            "path": ["ws-23", "context-router", "enterprise-firewall", "external-test-service"],
+            "conditions": {
+                "route_tables_complete_for_this_flow": True,
+                "route_leaking": False,
+                "policy": "Approved diagnostic TCP/443 flow; firewall permits it if reached, with healthy NAT/session state.",
+                "nat": "At enterprise-firewall only: 10.0.10.23 to 192.0.2.44.",
+                "return": "External service returns to 192.0.2.44; firewall has routes to the client prefix in both contexts.",
+                "link": "Client link and gateway neighbor remain healthy.",
+                "change_owner": "network-operations",
+                "clock": "All records synchronized to UTC within 1 ms; event spacing exceeds that tolerance.",
+            },
+            "routes": {
+                "CORP": [
+                    {"prefix": "10.0.10.0/24", "next_hop": "connected"},
+                    {"prefix": "0.0.0.0/0", "next_hop": "enterprise-firewall"},
+                ],
+                "ISOLATED": [{"prefix": "10.0.10.0/24", "next_hop": "connected"}],
+            },
+            "before": {"time": "2026-08-16T10:59:00Z", "ingress_vrf": "CORP", "health_check": "HTTP 200 over TLS"},
+            "after": {"time": "2026-08-16T11:00:00Z", "ingress_vrf": "ISOLATED"},
+            "observations": [
+                {"id": "B1", "time": "2026-08-16T11:00:01.000Z", "sensor": "client-host", "event": "SYN emitted", "src": "10.0.10.23", "dst": "198.51.100.77"},
+                {"id": "B2", "time": "2026-08-16T11:00:01.010Z", "sensor": "context-router", "event": "ingress SYN; lookup has no matching prefix", "vrf": "ISOLATED", "dst": "198.51.100.77"},
+                {"id": "B3", "time": "2026-08-16T11:00:04.000Z", "sensor": "enterprise-firewall", "event": "no matching session in this three-second window", "coverage": "Full session table checked; no session creation observed."},
+            ],
+            "limitations": ["No change ticket says whether reassignment was intentional containment.", "No evidence supports compromise or a firewall deny for this attempt."],
+        },
+    )
+    write_json(
+        "challenges/evidence-map.json",
+        {
+            "transfer.pcap": {"source": "pcaps/mtu-failure.pcap", "sha256": hashlib.sha256(transfer.read_bytes()).hexdigest(), "collection_point": "Modeled VLAN 10 trunk", "limitation": "ICMP visible here does not prove receipt or handling by the sender."},
+            "incident_rounds": {str(n): list(sources) for n, sources in enumerate(rounds, 1)},
+            "case-a.json": {"source": "Authored independent drill A-v1", "collection_points": ["cloud egress", "server host", "on-prem router", "client host"]},
+            "case-b.json": {"source": "Authored independent drill B-v1", "collection_points": ["client host", "context router", "firewall session table"]},
+            "integrity": "All challenge files and original source files are covered by the parent fixture manifest.",
+            "independence": "Round files are copies of original records, not additional sensors. Zeek is derived from incident.pcap; SIEM lists flow and endpoint dependencies.",
+        },
+    )
+
+
 def build_manifest() -> None:
     files = []
     for path in sorted(FIXTURES.rglob("*")):
@@ -703,6 +815,7 @@ def build() -> None:
     build_mtu_failure()
     build_incident()
     build_text_fixtures()
+    build_challenge_fixtures()
     build_manifest()
 
 

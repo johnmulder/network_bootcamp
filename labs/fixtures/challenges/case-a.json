@@ -1,0 +1,102 @@
+{
+  "after": {
+    "routes": {
+      "corp-vpc": [
+        {
+          "next_hop": "on-prem",
+          "prefix": "10.0.0.0/8"
+        }
+      ],
+      "on-prem": [
+        {
+          "next_hop": "connected",
+          "prefix": "10.0.20.0/24"
+        }
+      ]
+    },
+    "time": "2026-08-16T10:00:00Z"
+  },
+  "before": {
+    "health_check": "HTTP 200 over TLS",
+    "routes": {
+      "corp-vpc": [
+        {
+          "next_hop": "on-prem",
+          "prefix": "10.0.0.0/8"
+        }
+      ],
+      "on-prem": [
+        {
+          "next_hop": "connected",
+          "prefix": "10.0.20.0/24"
+        },
+        {
+          "next_hop": "corp-vpc",
+          "prefix": "10.20.0.0/16"
+        }
+      ]
+    },
+    "time": "2026-08-16T09:59:00Z"
+  },
+  "brief": "An approved cloud-to-server health check stops after a routing change.",
+  "case": "A-v1",
+  "conditions": {
+    "change_owner": "network-operations",
+    "clock": "All records synchronized to UTC within 1 ms; event spacing exceeds that tolerance.",
+    "firewall": "Allows this flow and established return traffic; state is healthy.",
+    "link": "Up in both directions; no recorded link change during the drill.",
+    "nat": false,
+    "route_tables_complete_for_this_flow": true,
+    "server": "TCP/443 listener healthy; TLS and application success must still be tested."
+  },
+  "flow": {
+    "dport": 443,
+    "dst": "10.0.20.40",
+    "protocol": "tcp",
+    "sport": 56000,
+    "src": "10.20.5.10"
+  },
+  "limitations": [
+    "No audit record establishes why the route changed.",
+    "No post-repair packet or application observation is supplied."
+  ],
+  "observations": [
+    {
+      "dst": "10.0.20.40",
+      "event": "SYN sent",
+      "id": "A1",
+      "sensor": "corp-vpc-egress",
+      "src": "10.20.5.10",
+      "time": "2026-08-16T10:00:01.000Z"
+    },
+    {
+      "dst": "10.0.20.40",
+      "event": "SYN received; SYN-ACK emitted",
+      "id": "A2",
+      "sensor": "file-01-host",
+      "src": "10.20.5.10",
+      "time": "2026-08-16T10:00:01.020Z"
+    },
+    {
+      "dst": "10.20.5.10",
+      "event": "drop: no matching route",
+      "id": "A3",
+      "sensor": "on-prem-router",
+      "src": "10.0.20.40",
+      "time": "2026-08-16T10:00:01.030Z"
+    },
+    {
+      "event": "connection timeout; no SYN-ACK received",
+      "id": "A4",
+      "sensor": "client-host",
+      "time": "2026-08-16T10:00:04.000Z"
+    }
+  ],
+  "path": [
+    "corp-vpc",
+    "hybrid-link",
+    "on-prem-firewall",
+    "file-01"
+  ],
+  "scope": "Independent drill on the reference network, not part of the incident timeline."
+}

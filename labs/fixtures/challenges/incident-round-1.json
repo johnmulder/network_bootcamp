@@ -1,0 +1,84 @@
+{
+  "incident/assets.json": {
+    "10.0.10.23": {
+      "host": "ws-23",
+      "owner": "alex",
+      "role": "user-workstation"
+    },
+    "10.0.20.40": {
+      "host": "file-01",
+      "owner": "platform",
+      "role": "file-server"
+    },
+    "10.0.20.41": {
+      "host": "app-02",
+      "owner": "platform",
+      "role": "application"
+    },
+    "10.0.20.42": {
+      "host": "admin-01",
+      "owner": "it",
+      "role": "admin-workstation"
+    },
+    "198.51.100.77": {
+      "host": "external-77",
+      "owner": "unknown",
+      "role": "external"
+    }
+  },
+  "incident/flows.jsonl": [
+    {
+      "bytes": 278,
+      "dport": 443,
+      "dst": "198.51.100.77",
+      "end": "2026-08-15T16:01:01Z",
+      "protocol": "tcp",
+      "sport": 54000,
+      "src": "10.0.10.23",
+      "start": "2026-08-15T16:01:00Z"
+    },
+    {
+      "bytes": 278,
+      "dport": 443,
+      "dst": "198.51.100.77",
+      "end": "2026-08-15T16:02:01Z",
+      "protocol": "tcp",
+      "sport": 54001,
+      "src": "10.0.10.23",
+      "start": "2026-08-15T16:02:00Z"
+    },
+    {
+      "bytes": 278,
+      "dport": 443,
+      "dst": "198.51.100.77",
+      "end": "2026-08-15T16:03:01Z",
+      "protocol": "tcp",
+      "sport": 54002,
+      "src": "10.0.10.23",
+      "start": "2026-08-15T16:03:00Z"
+    },
+    {
+      "bytes": 1198,
+      "dport": 445,
+      "dst": "10.0.20.40",
+      "end": "2026-08-15T16:04:03Z",
+      "protocol": "tcp",
+      "sport": 55000,
+      "src": "10.0.10.23",
+      "start": "2026-08-15T16:04:00Z"
+    }
+  ],
+  "incident/siem.jsonl": [
+    {
+      "entity": "ws-23",
+      "rule": "WORKSTATION-SMB-FANOUT",
+      "severity": "high",
+      "source_events": [
+        "flow",
+        "endpoint"
+      ],
+      "status": "new",
+      "time": "2026-08-15T16:04:10Z"
+    }
+  ]
+}

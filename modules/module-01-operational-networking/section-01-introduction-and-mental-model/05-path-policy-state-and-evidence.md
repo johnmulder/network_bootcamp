@@ -75,7 +75,7 @@ observations prove the conclusion.
 
 ## Expected Evidence
 
-* The manifest reports the case name `network-bootcamp-reference` and 29
+* The manifest reports the case name `network-bootcamp-reference` and 36
   checksum-protected fixture files.
 
 * The architecture places `ws-23` at `10.0.10.23`, `file-01` at `10.0.20.40`,

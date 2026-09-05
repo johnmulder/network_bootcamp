@@ -4,7 +4,7 @@ The course uses one fictional network and incident across all three modules.
 Every address is private or reserved for documentation, and no exercise needs
 traffic from an external system.
 
-The checked-in dataset contains 29 manifest-tracked evidence files plus
+The checked-in dataset contains 36 manifest-tracked evidence files plus
 `labs/fixtures/manifest.json`. The builder creates every file deterministically
 using only the Python standard library.
 
@@ -19,7 +19,7 @@ python3 labs/build_fixtures.py --check
 
 The first command regenerates the complete dataset. The second compares every
 expected path and SHA-256 digest with the generated manifest without changing
-the fixtures. A successful check reports `fixtures ready: 29 files`.
+the fixtures. A successful check reports `fixtures ready: 36 files`.
 
 Treat `labs/fixtures/` as reproducible, read-only course evidence. Store notes,
 derived output, diagrams, ledgers, and assessments under `work/`; rebuilding
@@ -34,7 +34,8 @@ fixtures does not modify that learner directory.
 | `network/` | 3 | DHCP, IPv6, and Layer 2 control-plane state |
 | `pcaps/` | 3 | Foundations, MTU failure, and incident packet captures |
 | `routing/` | 7 | macOS routes, route candidates and events, traceroute, VRFs, OSPF, and BGP |
-| **Total evidence files** | **29** | All manifest-tracked fixtures, excluding the manifest itself |
+| `challenges/` | 7 | Neutral transfer capture, three staged incident rounds, two independent capstones, and provenance map |
+| **Total evidence files** | **36** | All manifest-tracked fixtures, excluding the manifest itself |
 
 The manifest is generated alongside those files and records each relative
 path, byte length, and SHA-256 digest.
@@ -96,3 +97,17 @@ Saved fixtures are the default evidence path and require neither elevated
 privileges nor network access. If a fixture is accidentally changed, regenerate
 the complete dataset and then rerun `--check`. Do not put learner answers inside
 `labs/fixtures/`, because regeneration replaces fixture content by design.
+
+## One-Day Challenge Evidence
+
+`challenges/transfer.pcap` is a byte-identical alias of the transfer-failure
+capture. The three `incident-round-*.json` files preserve the original records
+and filenames as keys, allowing gradual release without inventing new sensor
+evidence. `challenges/evidence-map.json` maps aliases and rounds to their
+original sources; the manifest covers both source and derived files.
+
+`case-a.json` and `case-b.json` are separate, explicitly authored drills dated
+the following day. Each provides complete route snapshots for its specified
+flow, policy and state conditions, timestamped observations, and limitations.
+They must not be joined to the original incident timeline. The capstone is
+reviewed through the course rubric; there is no automatic diagnosis engine.

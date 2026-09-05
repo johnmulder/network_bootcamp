@@ -56,7 +56,7 @@ workbench:
 ./course verify
 ```
 
-Both commands must exit successfully. The course check should report 29 fixture
+Both commands must exit successfully. The course check should report 36 fixture
 files and a passing self-test for each workbench. See the [lab dataset
 guide](../labs/README.md) if a checksum or fixture path fails.
 

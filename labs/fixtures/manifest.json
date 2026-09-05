@@ -32,6 +32,41 @@
       "sha256": "56fe3ba96dcda3fb23b7da1f380c695ad4406de51f275cd37bd21db8fc5d69f1"
     },
     {
+      "bytes": 2584,
+      "path": "challenges/case-a.json",
+      "sha256": "9fd885e8464c7ea1462689ade1a6c7fe4e5f19aab0a2126f579afa37b65ae70f"
+    },
+    {
+      "bytes": 2475,
+      "path": "challenges/case-b.json",
+      "sha256": "cae29633c76b89cf28a7eef8236b96005cee0ac670b16bd12377fbd5d5e5f95a"
+    },
+    {
+      "bytes": 1286,
+      "path": "challenges/evidence-map.json",
+      "sha256": "1b448419cbd28c628e788c92dfbcee0055010ae3481b4c5fde5066190e87c97f"
+    },
+    {
+      "bytes": 1794,
+      "path": "challenges/incident-round-1.json",
+      "sha256": "615bef5a87699cc5eea34657c1584d53f8aba8b6c25bd08e5b29bc9c5d0e7fca"
+    },
+    {
+      "bytes": 1457,
+      "path": "challenges/incident-round-2.json",
+      "sha256": "60dcdf1a66431b94b88f2a34ee1e5c852ae919b74a1103b9aec536e94e30b02b"
+    },
+    {
+      "bytes": 1707,
+      "path": "challenges/incident-round-3.json",
+      "sha256": "e46213791d6f029194ffbf31f5d97a003d4f219224353fa3aa69c743364cff95"
+    },
+    {
+      "bytes": 3292,
+      "path": "challenges/transfer.pcap",
+      "sha256": "fdcb74c3c04c253361fa3461cc19f8f46f00da9f3f8a12448d8dfea372b70356"
+    },
+    {
       "bytes": 490,
       "path": "incident/assets.json",
       "sha256": "b7bf323198874229e9a7e37f656c08447f07de18079f6fb5df829615d5859065"

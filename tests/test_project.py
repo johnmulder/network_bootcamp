@@ -159,11 +159,12 @@ class FixtureBuilderTests(unittest.TestCase):
                 manifest = json.loads((fixtures / "manifest.json").read_text())
 
         entries = manifest["files"]
-        self.assertEqual(len(entries), 29)
+        self.assertEqual(len(entries), 36)
         self.assertEqual(
             Counter(Path(entry["path"]).parts[0] for entry in entries),
             {
                 "architecture": 6,
+                "challenges": 7,
                 "incident": 10,
                 "network": 3,
                 "pcaps": 3,
@@ -214,7 +215,7 @@ class FixtureBuilderTests(unittest.TestCase):
                 stdout = io.StringIO()
                 with mock.patch.object(sys, "argv", ["build_fixtures.py"]), contextlib.redirect_stdout(stdout):
                     self.assertEqual(BUILDER.main(), 0)
-                self.assertIn("fixtures ready: 29 files", stdout.getvalue())
+                self.assertIn("fixtures ready: 36 files", stdout.getvalue())
 
                 with mock.patch.object(sys, "argv", ["build_fixtures.py", "--check"]):
                     with contextlib.redirect_stdout(io.StringIO()):
@@ -225,6 +226,55 @@ class FixtureBuilderTests(unittest.TestCase):
                 with mock.patch.object(sys, "argv", ["build_fixtures.py", "--check"]), contextlib.redirect_stderr(stderr):
                     self.assertEqual(BUILDER.main(), 1)
                 self.assertIn("invalid JSON dhcp.jsonl:1", stderr.getvalue())
+
+
+    def test_challenge_rounds_preserve_sources_and_capture_identity(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            fixtures = Path(temporary) / "fixtures"
+            with mock.patch.object(BUILDER, "FIXTURES", fixtures):
+                BUILDER.build()
+                first_manifest = (fixtures / "manifest.json").read_bytes()
+                BUILDER.build()
+                self.assertEqual((fixtures / "manifest.json").read_bytes(), first_manifest)
+            self.assertEqual(
+                (fixtures / "challenges/transfer.pcap").read_bytes(),
+                (fixtures / "pcaps/mtu-failure.pcap").read_bytes(),
+            )
+            expected = (
+                {"incident/assets.json", "incident/siem.jsonl", "incident/flows.jsonl"},
+                {"incident/dns.jsonl", "incident/endpoint.jsonl", "incident/auth.jsonl"},
+                {"incident/firewall.jsonl", "incident/proxy.jsonl", "routing/vrfs.json"},
+            )
+            for number, sources in enumerate(expected, 1):
+                packet = json.loads((fixtures / f"challenges/incident-round-{number}.json").read_text())
+                self.assertEqual(set(packet), sources)
+                for source, records in packet.items():
+                    raw = (fixtures / source).read_text()
+                    original = [json.loads(line) for line in raw.splitlines()] if source.endswith(".jsonl") else json.loads(raw)
+                    self.assertEqual(records, original)
+
+    def test_capstone_variants_change_forward_and_return_decisions(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            fixtures = Path(temporary) / "fixtures"
+            with mock.patch.object(BUILDER, "FIXTURES", fixtures):
+                BUILDER.build()
+            case_a = json.loads((fixtures / "challenges/case-a.json").read_text())
+            case_b = json.loads((fixtures / "challenges/case-b.json").read_text())
+        lookup = WORKBENCHES["module1"].best_vrf_route
+        self.assertEqual(case_a["before"]["routes"]["corp-vpc"], case_a["after"]["routes"]["corp-vpc"])
+        for state in ("before", "after"):
+            self.assertIsNotNone(lookup("corp-vpc", case_a["flow"]["dst"], case_a[state]["routes"]))
+        self.assertIsNotNone(lookup("on-prem", case_a["flow"]["src"], case_a["before"]["routes"]))
+        self.assertIsNone(lookup("on-prem", case_a["flow"]["src"], case_a["after"]["routes"]))
+        self.assertIsNotNone(lookup(case_b["before"]["ingress_vrf"], case_b["flow"]["dst"], case_b["routes"]))
+        self.assertIsNone(lookup(case_b["after"]["ingress_vrf"], case_b["flow"]["dst"], case_b["routes"]))
+        self.assertFalse(case_b["conditions"]["route_leaking"])
+        for case in (case_a, case_b):
+            self.assertTrue(case["conditions"]["route_tables_complete_for_this_flow"])
+            times = [record["time"] for record in case["observations"]]
+            self.assertEqual(times, sorted(times))
+            self.assertEqual(len({record["id"] for record in case["observations"]}), len(times))
+            self.assertTrue(case["limitations"])
 
 
 class WorkbenchTests(unittest.TestCase):

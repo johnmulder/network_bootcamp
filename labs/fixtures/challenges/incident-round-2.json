@@ -1,0 +1,62 @@
+{
+  "incident/auth.jsonl": [
+    {
+      "host": "ws-23",
+      "method": "console",
+      "result": "success",
+      "time": "2026-08-15T15:59:40Z",
+      "user": "alex"
+    },
+    {
+      "host": "file-01",
+      "method": "network",
+      "result": "success",
+      "source": "10.0.10.23",
+      "time": "2026-08-15T16:04:01Z",
+      "user": "svc-backup"
+    }
+  ],
+  "incident/dns.jsonl": [
+    {
+      "answer": "198.51.100.77",
+      "client": "10.0.10.23",
+      "query": "cdn-update.example.test",
+      "rcode": "NOERROR",
+      "time": "2026-08-15T16:00:00.000Z",
+      "type": "A"
+    },
+    {
+      "answer": "10.0.30.50",
+      "client": "10.0.20.40",
+      "query": "historian.ot.example.test",
+      "rcode": "NOERROR",
+      "time": "2026-08-15T16:10:00.000Z",
+      "type": "A"
+    }
+  ],
+  "incident/endpoint.jsonl": [
+    {
+      "event": "process_start",
+      "host": "ws-23",
+      "parent": "launchd",
+      "process": "update-agent",
+      "sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "time": "2026-08-15T15:59:58Z"
+    },
+    {
+      "event": "dns_query",
+      "host": "ws-23",
+      "process": "update-agent",
+      "query": "cdn-update.example.test",
+      "time": "2026-08-15T16:00:00Z"
+    },
+    {
+      "event": "process_start",
+      "host": "ws-23",
+      "parent": "update-agent",
+      "process": "smb-client",
+      "time": "2026-08-15T16:03:59Z",
+      "user": "alex"
+    }
+  ]
+}

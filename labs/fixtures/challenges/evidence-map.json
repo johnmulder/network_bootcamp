@@ -1,0 +1,44 @@
+{
+  "case-a.json": {
+    "collection_points": [
+      "cloud egress",
+      "server host",
+      "on-prem router",
+      "client host"
+    ],
+    "source": "Authored independent drill A-v1"
+  },
+  "case-b.json": {
+    "collection_points": [
+      "client host",
+      "context router",
+      "firewall session table"
+    ],
+    "source": "Authored independent drill B-v1"
+  },
+  "incident_rounds": {
+    "1": [
+      "incident/assets.json",
+      "incident/siem.jsonl",
+      "incident/flows.jsonl"
+    ],
+    "2": [
+      "incident/dns.jsonl",
+      "incident/endpoint.jsonl",
+      "incident/auth.jsonl"
+    ],
+    "3": [
+      "incident/firewall.jsonl",
+      "incident/proxy.jsonl",
+      "routing/vrfs.json"
+    ]
+  },
+  "independence": "Round files are copies of original records, not additional sensors. Zeek is derived from incident.pcap; SIEM lists flow and endpoint dependencies.",
+  "integrity": "All challenge files and original source files are covered by the parent fixture manifest.",
+  "transfer.pcap": {
+    "collection_point": "Modeled VLAN 10 trunk",
+    "limitation": "ICMP visible here does not prove receipt or handling by the sender.",
+    "sha256": "fdcb74c3c04c253361fa3461cc19f8f46f00da9f3f8a12448d8dfea372b70356",
+    "source": "pcaps/mtu-failure.pcap"
+  }
+}
