@@ -57,13 +57,19 @@ Record your choices before reading the following failure evidence:
 
 ```sh
 jq '.' labs/fixtures/architecture/wan.json
-jq -c '.' labs/fixtures/architecture/failures.jsonl
+jq -c 'del(.affected)' labs/fixtures/architecture/failures.jsonl
 ```
 
-Predict affected flows first; only then compare with the `affected` fields.
-Distinguish existing NAT sessions from new connections during stale state
-synchronization. A preferred WAN circuit has loss; what comparable measurement
-is missing for the backup? Does interface-up status meet the requirement?
+The first view hides the outcome fields. Predict affected flows and distinguish
+existing NAT sessions from new connections during stale state synchronization.
+A preferred WAN circuit has loss; what comparable measurement is missing for
+the backup? Does interface-up status meet the requirement?
+
+After recording predictions, reveal the modeled outcomes:
+
+```sh
+jq -c '{component, affected}' labs/fixtures/architecture/failures.jsonl
+```
 
 Now apply this **hypothetical twist**: both transport paths use the same
 building power feed; management currently uses the preferred circuit. Revise

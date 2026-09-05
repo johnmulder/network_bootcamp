@@ -113,7 +113,6 @@ combining each guide, its saved evidence, and the interactive workbench.
 ```text
 .
 ├── README.md          # Operational entry point
-├── PLAN.md            # Interactive course implementation plan
 ├── agenda.md          # Authoritative curriculum and completion standards
 ├── course             # Natural guided-course command
 ├── course.py          # Short course navigation and practice commands

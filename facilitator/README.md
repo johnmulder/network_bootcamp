@@ -106,6 +106,9 @@ once; do not add class-size-dependent presentation time.
 
 ## Pilot and Improvement
 
+See the [implementation validation record](validation.md) for completed
+technical checks and the learner outcomes that remain unmeasured.
+
 Run an actual pilot when learners are available. Record beginner/experienced
 and solo/pair modes without collecting unnecessary personal data. Target
 80% meeting the rubric after one revision and median 4/5 on both engagement
