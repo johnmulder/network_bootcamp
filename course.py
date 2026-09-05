@@ -378,6 +378,10 @@ def parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    argv = sys.argv[1:] if argv is None else argv
+    if argv and argv[0] in {"session", "doctor"}:
+        import delivery
+        return delivery.cli(argv)
     args = parser().parse_args(argv)
     if args.command is None:
         if sys.stdin.isatty() and sys.stdout.isatty():

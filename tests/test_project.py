@@ -886,11 +886,11 @@ esac
             f"{ROOT}/labs/build_fixtures.py --check",
         )
 
-    def test_install_adds_only_missing_core_commands_then_builds_fixtures(self):
+    def test_install_adds_only_missing_core_commands_then_checks_fixtures(self):
         result, brew_log, python_log = self.run_setup(installed=("python", "jq"), missing_commands=("tshark", "zeek", "iperf3"))
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(brew_log.splitlines(), ["install wireshark"])
-        self.assertEqual(python_log.strip(), f"{ROOT}/labs/build_fixtures.py")
+        self.assertEqual(python_log.strip(), f"{ROOT}/labs/build_fixtures.py --check")
         self.assertIn("prerequisites ready", result.stdout)
 
     def test_extended_tools_are_checked_and_installed_only_when_requested(self):

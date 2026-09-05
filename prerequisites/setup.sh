@@ -23,11 +23,6 @@ if [ "$(uname -s)" != "Darwin" ]; then
     exit 1
 fi
 
-if ! command -v brew >/dev/null 2>&1; then
-    echo "error: Homebrew is required; install it from https://brew.sh/" >&2
-    exit 1
-fi
-
 requirements="python:python3 wireshark:tshark jq:jq"
 if [ "$extended" = true ]; then
     requirements="$requirements zeek:zeek iperf3:iperf3"
@@ -41,6 +36,10 @@ if [ "$mode" = install ]; then
         command -v "$command" >/dev/null 2>&1 || set -- "$@" "$formula"
     done
     if [ "$#" -gt 0 ]; then
+        if ! command -v brew >/dev/null 2>&1; then
+            echo "error: Homebrew is required to install missing tools; see https://brew.sh/" >&2
+            exit 1
+        fi
         brew install "$@"
     fi
 fi
@@ -69,11 +68,7 @@ done
 
 if [ "$status" -eq 0 ]; then
     project_root=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
-    if [ "$mode" = install ]; then
-        python3 "$project_root/labs/build_fixtures.py"
-    else
-        python3 "$project_root/labs/build_fixtures.py" --check
-    fi
+    python3 "$project_root/labs/build_fixtures.py" --check
     echo "prerequisites ready"
     echo "next: ./course"
 else

@@ -27,7 +27,7 @@ cd /path/to/network_bootcamp
 ```
 
 The script is idempotent: it installs packages only for missing commands and
-builds the
+verifies the committed
 [local lab dataset](../labs/README.md). It can be run again safely after an
 interrupted or partial installation. When setup succeeds, start with
 `./course`.
@@ -35,7 +35,14 @@ interrupted or partial installation. When setup succeeds, start with
 The default installs only the one-day tools: Python, TShark, and jq. A readiness
 check uses available commands and does not refresh Homebrew package metadata.
 Existing usable installations are accepted even if their formula names differ.
-Homebrew remains the installer for missing tools.
+Homebrew remains the installer for missing tools. Readiness checks do not need
+Homebrew when the commands are already available. `./course doctor --json`
+also checks representative jq operations and TShark fields.
+
+Routine setup preserves saved evidence. Restore damaged fixtures from the
+matching course copy; maintainers can deliberately regenerate them with
+`python3 labs/build_fixtures.py`. Saved delivery sessions reject changed course
+or evidence versions rather than mixing results from different versions.
 
 For the optional Zeek and iperf3 reference exercises:
 
