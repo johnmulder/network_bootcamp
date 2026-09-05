@@ -50,9 +50,20 @@ same sequence and makes a group debrief reproducible.
 | --- | --- | --- |
 | `l2` | Section 2: VLANs, STP, and LACP | `labs/fixtures/network/l2-control.json` |
 | `routes` | Section 3: longest-prefix match and ECMP | `labs/fixtures/routing/route-candidates.csv` |
+| `convergence` | Section 5 and Challenge 3: update timing, remaining next hop, recovery limits, and a changed prefix | `labs/fixtures/routing/route-events.jsonl` and route candidates |
 | `services` | Section 4: DHCP state and dependencies | `labs/fixtures/network/dhcp.jsonl` |
 | `vrf` | Section 6: route isolation and route leaking | `labs/fixtures/routing/vrfs.json` |
 | `troubleshooting` | Sections 7–8: evidence-driven diagnosis | `labs/fixtures/pcaps/` and `routing/traceroute.json` |
+
+For four focused checks after Challenge 3:
+
+```sh
+./course practice 1 convergence --seed 7
+```
+
+These questions use recorded event times and a declared host-route removal.
+The seed still changes question order only. Open-ended reasoning is reviewed
+with the one-day rubric, not graded by string comparison.
 
 ## Learning Routine
 

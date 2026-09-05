@@ -10,12 +10,14 @@ import ipaddress
 import json
 import random
 import sys
+from datetime import datetime
 from pathlib import Path
 
 
 ACTIVITIES = {
     "l2": "VLAN, STP, and LACP evidence",
     "routes": "longest-prefix route selection",
+    "convergence": "failure timing and changed route decisions",
     "services": "DHCP state and dependencies",
     "vrf": "routing-context reachability",
     "troubleshooting": "evidence-driven diagnosis",
@@ -154,6 +156,51 @@ def route_questions() -> list[dict]:
     return result
 
 
+def convergence_questions() -> list[dict]:
+    events = read_jsonl("routing/route-events.jsonl")
+    detected = next(event for event in events if event["event"] == "link_down")
+    installed = next(event for event in events if event["event"] == "fib_install")
+    elapsed = (
+        datetime.fromisoformat(installed["time"].replace("Z", "+00:00"))
+        - datetime.fromisoformat(detected["time"].replace("Z", "+00:00"))
+    )
+    milliseconds = round(elapsed.total_seconds() * 1000)
+    remaining = [row for row in route_rows() if row["prefix"] != "10.0.20.40/32"]
+    prefix = select_routes("10.0.20.40", remaining)[0]["prefix"]
+    return [
+        question(
+            "convergence",
+            "How many milliseconds pass from logged link-down to FIB installation?",
+            str(milliseconds),
+            "This measures the logged forwarding-table update, not detection delay or application recovery.",
+            "routing/route-events.jsonl: link_down and fib_install",
+            (f"{milliseconds} ms",),
+        ),
+        question(
+            "convergence",
+            "Which next hop is installed after the modeled link failure?",
+            installed["next_hop"],
+            "The installation event names the remaining forwarding choice.",
+            "routing/route-events.jsonl: fib_install.next_hop",
+        ),
+        question(
+            "convergence",
+            "Does a FIB installation timestamp alone prove application recovery? (yes/no)",
+            "no",
+            "Observe packets, session state, and an application response to establish service recovery.",
+            "routing/route-events.jsonl: recorded event types",
+            ("n",),
+        ),
+        question(
+            "convergence",
+            "In the independent CSV snapshot, remove only 10.0.20.40/32. Which prefix now wins for 10.0.20.40?",
+            prefix,
+            "The two remaining /24 routes beat /8 and default by destination specificity; a flow's actual ECMP member is not shown.",
+            "routing/route-candidates.csv: hypothetical removal of the .40/32 row",
+        ),
+    ]
+
+
 def service_questions() -> list[dict]:
     records = read_jsonl("network/dhcp.jsonl")
     offer = next(record for record in records if record["message"] == "OFFER")
@@ -259,7 +306,7 @@ def troubleshooting_questions() -> list[dict]:
             "troubleshooting",
             "Which capture is the healthy comparison: foundations.pcap or mtu-failure.pcap?",
             "foundations.pcap",
-            "The foundations capture completes ARP, DNS, TCP, HTTP, and orderly close.",
+            "The foundations capture shows ARP, DNS, TCP, HTTP, and the start of orderly close; the final FIN acknowledgment is absent.",
             "pcaps/foundations.pcap",
             ("foundations",),
         ),
@@ -277,6 +324,7 @@ def all_questions() -> dict[str, list[dict]]:
     return {
         "l2": l2_questions(),
         "routes": route_questions(),
+        "convergence": convergence_questions(),
         "services": service_questions(),
         "vrf": vrf_questions(),
         "troubleshooting": troubleshooting_questions(),
@@ -364,6 +412,7 @@ def verify_manifest() -> None:
         "network/l2-control.json",
         "network/dhcp.jsonl",
         "routing/route-candidates.csv",
+        "routing/route-events.jsonl",
         "routing/traceroute.json",
         "routing/vrfs.json",
         "pcaps/foundations.pcap",
@@ -395,7 +444,7 @@ def self_test() -> int:
     assert all(len(items) >= 4 for items in groups.values())
     assert groups["l2"][1]["answer"] == "sw-access-2"
     assert all(normalize(item["answer"]) in item["answers"] for items in groups.values() for item in items)
-    print(f"self-test passed: {sum(map(len, groups.values()))} questions, 7 fixtures verified")
+    print(f"self-test passed: {sum(map(len, groups.values()))} questions, 8 fixtures verified")
     return 0
 
 

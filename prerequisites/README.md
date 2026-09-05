@@ -26,10 +26,23 @@ cd /path/to/network_bootcamp
 ./prerequisites/setup.sh
 ```
 
-The script is idempotent: it installs only missing packages and builds the
+The script is idempotent: it installs packages only for missing commands and
+builds the
 [local lab dataset](../labs/README.md). It can be run again safely after an
 interrupted or partial installation. When setup succeeds, start with
 `./course`.
+
+The default installs only the one-day tools: Python, TShark, and jq. A readiness
+check uses available commands and does not refresh Homebrew package metadata.
+Existing usable installations are accepted even if their formula names differ.
+Homebrew remains the installer for missing tools.
+
+For the optional Zeek and iperf3 reference exercises:
+
+```sh
+./prerequisites/setup.sh --extended
+./prerequisites/setup.sh --check --extended
+```
 
 ## Tool Roles
 
@@ -37,7 +50,7 @@ interrupted or partial installation. When setup succeeds, start with
 | --- | --- | --- | --- |
 | Python | Builds fixtures and runs all three workbenches | Core | Python-2.0 |
 | TShark | Decodes saved packet captures and optional local captures | Core | GPL-2.0-or-later |
-| Zeek | Produces and interprets network-security telemetry | Core | BSD-3-Clause |
+| Zeek | Produces and interprets network-security telemetry | Extended study | BSD-3-Clause |
 | jq | Filters JSON fixtures and structured logs | Core | MIT |
 | iperf3 | Generates TCP or UDP traffic for optional local experiments | Optional practice | BSD-3-Clause |
 | macOS BSD tools | Inspect routes, neighbors, sockets, paths, and packet captures | Core and optional practice | Open source, included with macOS |
@@ -56,7 +69,8 @@ workbench:
 ./course verify
 ```
 
-Both commands must exit successfully. The course check should report 36 fixture
+Both commands must exit successfully for the one-day route. Use `--extended`
+when checking the additional reference tools. The course check reports 36 fixture
 files and a passing self-test for each workbench. See the [lab dataset
 guide](../labs/README.md) if a checksum or fixture path fails.
 

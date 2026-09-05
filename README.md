@@ -18,10 +18,10 @@ enterprise hardware, or proprietary analyzers are required.
 | Sections | 23 |
 | Detailed subsection guides | 104 |
 | Interactive workbenches | 3 |
-| Workbench questions | 79 |
+| Workbench questions | 83 |
 | Evidence fixtures | 36 manifest-tracked files plus the manifest |
 | Incident timeline | 17 normalized events across 8 sources |
-| Automated tests | 33 tests across all 7 executable sources |
+| Automated tests | 36 tests across all 7 executable sources |
 | Supported environment | One Mac laptop with local, open-source tools |
 
 The [course agenda](agenda.md) is the authoritative curriculum specification.
@@ -63,15 +63,19 @@ The setup process and each command are explained in the
 ## Course Navigator
 
 `./course` opens a numbered menu when run in a terminal. Press Enter to follow
-the recommended path through Module 1, or choose a module, short practice
-session, incident timeline, or verification. Long guides use the terminal
-pager, so they can be read without losing your place.
+the six-hour challenge path, or choose the module reference library, short
+practice, incident timeline, or verification. Each challenge returns to a
+numbered list with the next challenge preselected. Use b for the main menu.
+Long guides use the terminal pager, so they can be read without losing your
+place.
 
 Direct commands remain available for repeatable facilitation and scripting:
 
 | Goal | Command |
 | --- | --- |
 | Open the guided course | `./course` |
+| Read the one-day schedule and start instructions | `./course day` |
+| Read a challenge | `./course challenge 1` |
 | List a module's sections | `./course module 1` |
 | List a section's guides | `./course section 1 2` |
 | Read a guide | `./course guide 1 2 3` |
@@ -91,7 +95,7 @@ automation.
 
 | Module | Material | Interactive support | Primary learner artifact |
 | --- | --- | --- | --- |
-| [1 — Operational Networking](modules/module-01-operational-networking/README.md) | 8 sections, 43 guides | [5 activities and 21 questions](modules/module-01-operational-networking/workbench/README.md) | Evidence-backed packet-path review |
+| [1 — Operational Networking](modules/module-01-operational-networking/README.md) | 8 sections, 43 guides | [6 activities and 25 questions](modules/module-01-operational-networking/workbench/README.md) | Evidence-backed packet-path review |
 | [2 — Network Architecture](modules/module-02-network-architecture/README.md) | 8 sections, 29 guides | [5 activities and 30 questions](modules/module-02-network-architecture/workbench/README.md) | Annotated architecture and failure assessment |
 | [3 — Incident Response and Integration](modules/module-03-incident-response-and-integration/README.md) | 7 sections, 32 guides | [5 activities and 28 questions](modules/module-03-incident-response-and-integration/workbench/README.md) | Evidence ledger, incident narrative, and cross-functional handoff |
 

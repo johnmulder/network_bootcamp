@@ -46,7 +46,7 @@ WORKBENCHES = {
         "modules/module-03-incident-response-and-integration/workbench/module3_workbench.py",
     ),
 }
-QUESTION_COUNTS = {"module1": 21, "module2": 30, "module3": 28}
+QUESTION_COUNTS = {"module1": 25, "module2": 30, "module3": 28}
 
 
 class FixtureBuilderTests(unittest.TestCase):
@@ -467,6 +467,15 @@ class WorkbenchTests(unittest.TestCase):
         data["routes"]["app-routes"] = []
         self.assertEqual(workbench.cloud_route("app", "10.0.0.8", data), ("app-routes", None))
 
+    def test_convergence_uses_recorded_time_and_changed_prefix(self):
+        workbench = WORKBENCHES["module1"]
+        questions = workbench.convergence_questions()
+        self.assertEqual([q["answer"] for q in questions], ["80", "10.255.0.3", "no", "10.0.20.0/24"])
+        events = workbench.read_jsonl("routing/route-events.jsonl")
+        next(event for event in events if event["event"] == "fib_install")["time"] = "2026-08-15T15:20:00.100Z"
+        with mock.patch.object(workbench, "read_jsonl", return_value=events):
+            self.assertEqual(workbench.convergence_questions()[0]["answer"], "100")
+
     def test_module3_transforms_and_filters_every_timeline_source(self):
         workbench = WORKBENCHES["module3"]
         logs = workbench.load_logs()
@@ -572,7 +581,7 @@ class CourseNavigatorTests(unittest.TestCase):
         self.assertEqual(stdout.getvalue().rstrip(), expected)
         self.assertIn("# Completion Criteria and Capstone", expected)
 
-    def test_guided_course_reaches_the_first_guide_with_defaults(self):
+    def test_guided_course_reaches_the_short_path_and_reference_library(self):
         with mock.patch.object(COURSE, "sys") as system:
             system.stdin.isatty.return_value = True
             system.stdout.isatty.return_value = True
@@ -580,15 +589,38 @@ class CourseNavigatorTests(unittest.TestCase):
                 self.assertEqual(COURSE.main([]), 0)
         guided.assert_called_once_with()
 
-        answers = ("", "", "", "m", "q")
+        answers = ("", "", "b", "q")
         with mock.patch("builtins.input", side_effect=answers):
             with mock.patch.object(COURSE.pydoc, "pager") as pager:
                 with contextlib.redirect_stdout(io.StringIO()):
                     self.assertEqual(COURSE.guided_course(), 0)
-        pager.assert_called_once()
+        self.assertEqual(pager.call_count, 2)
+        self.assertIn("# One-Day Network Bootcamp", pager.call_args_list[0].args[0])
+        self.assertIn("# Be the Packet", pager.call_args_list[1].args[0])
+
+        with mock.patch("builtins.input", side_effect=("2", "1", "1", "1", "m", "q")):
+            with mock.patch.object(COURSE.pydoc, "pager") as pager:
+                with contextlib.redirect_stdout(io.StringIO()):
+                    self.assertEqual(COURSE.guided_course(), 0)
         content = pager.call_args.args[0]
         self.assertIn("Module 1 — Operational Networking ›", content)
         self.assertIn("# Course Objectives and Shared Language", content)
+
+    def test_day_and_challenge_commands_read_student_materials(self):
+        self.assertEqual(len(COURSE.CHALLENGES), 6)
+        for arguments, path in (
+            (["day"], ROOT / "challenges/README.md"),
+            (["challenge", "1"], COURSE.CHALLENGES[0]),
+            (["challenge", "6"], COURSE.CHALLENGES[-1]),
+        ):
+            with self.subTest(arguments=arguments):
+                stdout = io.StringIO()
+                with contextlib.redirect_stdout(stdout):
+                    self.assertEqual(COURSE.main(arguments), 0)
+                self.assertEqual(stdout.getvalue().rstrip(), path.read_text().rstrip())
+        for number in (0, 7):
+            with self.assertRaisesRegex(SystemExit, "challenge must be between 1 and 6"):
+                COURSE.main(["challenge", str(number)])
 
     def test_invalid_numbers_and_missing_arguments_are_clear(self):
         cases = (
@@ -767,6 +799,13 @@ case "$1" in
     install)
         shift
         for formula do
+            case "$formula" in
+                python) executable=python3 ;;
+                wireshark) executable=tshark ;;
+                *) executable=$formula ;;
+            esac
+            printf '#!/bin/sh\n' > "$FAKE_BIN_DIR/$executable"
+            /bin/chmod +x "$FAKE_BIN_DIR/$executable"
             printf '%s\n' "$formula" >> "$FAKE_BREW_STATE"
         done
         ;;
@@ -788,6 +827,7 @@ esac
                 "FAKE_BREW_LOG": str(brew_log),
                 "FAKE_BREW_STATE": str(brew_state),
                 "FAKE_PYTHON_LOG": str(python_log),
+                "FAKE_BIN_DIR": str(binaries),
             }
             result = subprocess.run(
                 ["/bin/sh", str(SETUP), *arguments],
@@ -821,9 +861,9 @@ esac
         self.assertEqual(result.returncode, 1)
         self.assertIn("requires macOS", result.stderr)
 
-    def test_check_reports_missing_formula_or_command_without_building(self):
+    def test_check_reports_missing_required_command_without_building(self):
         cases = (
-            ({"installed": tuple(item for item in self.formulae if item != "zeek")}, "zeek"),
+            ({"missing_commands": ("jq",)}, "jq"),
             ({"missing_commands": ("tshark",)}, "wireshark"),
             ({"missing_commands": ("nc",)}, "nc"),
         )
@@ -836,22 +876,31 @@ esac
                 self.assertEqual(python_log, "")
 
     def test_successful_check_verifies_fixtures(self):
-        result, brew_log, python_log = self.run_setup("--check")
+        result, brew_log, python_log = self.run_setup("--check", installed=(), missing_commands=("zeek", "iperf3"))
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("prerequisites ready", result.stdout)
         self.assertIn("next: ./course", result.stdout)
-        self.assertNotIn("install ", brew_log)
+        self.assertEqual(brew_log, "")
         self.assertEqual(
             python_log.strip(),
             f"{ROOT}/labs/build_fixtures.py --check",
         )
 
-    def test_install_adds_only_missing_formulae_then_builds_fixtures(self):
-        result, brew_log, python_log = self.run_setup(installed=("python", "jq"))
+    def test_install_adds_only_missing_core_commands_then_builds_fixtures(self):
+        result, brew_log, python_log = self.run_setup(installed=("python", "jq"), missing_commands=("tshark", "zeek", "iperf3"))
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn("install wireshark zeek iperf3", brew_log.splitlines())
+        self.assertEqual(brew_log.splitlines(), ["install wireshark"])
         self.assertEqual(python_log.strip(), f"{ROOT}/labs/build_fixtures.py")
         self.assertIn("prerequisites ready", result.stdout)
+
+    def test_extended_tools_are_checked_and_installed_only_when_requested(self):
+        result, brew_log, _ = self.run_setup("--extended", "--check", missing_commands=("zeek",))
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("zeek", result.stdout)
+        self.assertEqual(brew_log, "")
+        result, brew_log, _ = self.run_setup("--extended", missing_commands=("zeek", "iperf3"))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(brew_log.splitlines(), ["install zeek iperf3"])
 
 
 if __name__ == "__main__":

@@ -3,16 +3,20 @@
 set -eu
 
 usage() {
-    echo "usage: $0 [--check]" >&2
+    echo "usage: $0 [--check] [--extended]" >&2
     exit 2
 }
 
 mode=install
-if [ "${1:-}" = "--check" ]; then
-    mode=check
+extended=false
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --check) mode=check ;;
+        --extended) extended=true ;;
+        *) usage ;;
+    esac
     shift
-fi
-[ "$#" -eq 0 ] || usage
+done
 
 if [ "$(uname -s)" != "Darwin" ]; then
     echo "error: this course requires macOS" >&2
@@ -24,12 +28,17 @@ if ! command -v brew >/dev/null 2>&1; then
     exit 1
 fi
 
-formulae="python wireshark zeek jq iperf3"
+requirements="python:python3 wireshark:tshark jq:jq"
+if [ "$extended" = true ]; then
+    requirements="$requirements zeek:zeek iperf3:iperf3"
+fi
 
 if [ "$mode" = install ]; then
     set --
-    for formula in $formulae; do
-        brew list --versions "$formula" >/dev/null 2>&1 || set -- "$@" "$formula"
+    for requirement in $requirements; do
+        formula=${requirement%%:*}
+        command=${requirement#*:}
+        command -v "$command" >/dev/null 2>&1 || set -- "$@" "$formula"
     done
     if [ "$#" -gt 0 ]; then
         brew install "$@"
@@ -46,17 +55,11 @@ for command in tcpdump netstat route arp traceroute nc; do
     fi
 done
 
-for requirement in \
-    "python:python3" \
-    "wireshark:tshark" \
-    "zeek:zeek" \
-    "jq:jq" \
-    "iperf3:iperf3"
+for requirement in $requirements
 do
     formula=${requirement%%:*}
     command=${requirement#*:}
-    if brew list --versions "$formula" >/dev/null 2>&1 && \
-        command -v "$command" >/dev/null 2>&1; then
+    if command -v "$command" >/dev/null 2>&1; then
         printf '%-10s %s\n' "$formula" "ok"
     else
         printf '%-10s %s\n' "$formula" "missing"

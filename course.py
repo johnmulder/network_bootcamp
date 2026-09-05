@@ -12,6 +12,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 MODULES = tuple(sorted((ROOT / "modules").glob("module-*")))
+CHALLENGES = tuple(sorted((ROOT / "challenges").glob("[0-9][0-9]-*.md")))
 
 
 def heading(path: Path, prefix: str = "# ") -> str:
@@ -177,6 +178,23 @@ def browse_module(module_number: int) -> str:
             return action
 
 
+def browse_day() -> str:
+    pydoc.pager((ROOT / "challenges" / "README.md").read_text(encoding="utf-8"))
+    default = 1
+    while True:
+        print("\nOne-day challenges · b: main menu · q: quit")
+        for number, path in enumerate(CHALLENGES, 1):
+            print(f"  {number}. {heading(path)}")
+        choice = ask_number(len(CHALLENGES), default=default, back=True)
+        if choice in {"back", "quit"}:
+            return choice
+        path = numbered(CHALLENGES, choice, "challenge")
+        pydoc.pager(path.read_text(encoding="utf-8"))
+        default = min(choice + 1, len(CHALLENGES))
+        if choice == len(CHALLENGES):
+            print("End of the challenge list; complete the exit task, then use b or q.")
+
+
 def guided_course() -> int:
     ready = (ROOT / "labs" / "fixtures" / "manifest.json").is_file()
     print("Network Bootcamp")
@@ -186,16 +204,19 @@ def guided_course() -> int:
 
     while True:
         print("\nWhat would you like to do?")
-        print("  1. Start Module 1 (recommended)")
-        print("  2. Choose a module")
+        print("  1. Start the six-hour challenge course (recommended)")
+        print("  2. Browse the module reference library")
         print("  3. Practice a topic")
         print("  4. Explore the incident timeline")
         print("  5. Verify the course")
         choice = ask_number(5)
         if choice == "quit":
             return 0
-        if choice in {1, 2}:
-            module_number = 1 if choice == 1 else choose_module()
+        if choice == 1:
+            if browse_day() == "quit":
+                return 0
+        elif choice == 2:
+            module_number = choose_module()
             if module_number == "quit":
                 return 0
             if module_number == "back":
@@ -229,7 +250,9 @@ def dashboard() -> int:
     print()
     print("Start here")
     print("  Setup:     ./prerequisites/setup.sh")
-    print("  Explore:   ./course module 1")
+    print("  One day:   ./course day")
+    print("  Challenge: ./course challenge 1")
+    print("  Reference: ./course module 1")
     print("  Practice:  ./course practice 1")
     print("  Verify:    ./course verify")
     print()
@@ -320,6 +343,10 @@ def parser() -> argparse.ArgumentParser:
     result = argparse.ArgumentParser(prog="./course", description=__doc__)
     commands = result.add_subparsers(dest="command")
 
+    commands.add_parser("day", help="show the six-hour schedule and start instructions")
+    challenge = commands.add_parser("challenge", help="read a one-day challenge")
+    challenge.add_argument("number", type=int)
+
     module = commands.add_parser("module", help="show one module's sections")
     module.add_argument("module", type=int)
 
@@ -356,6 +383,13 @@ def main(argv: list[str] | None = None) -> int:
         if sys.stdin.isatty() and sys.stdout.isatty():
             return guided_course()
         return dashboard()
+    if args.command == "day":
+        print((ROOT / "challenges" / "README.md").read_text(encoding="utf-8").rstrip())
+        return 0
+    if args.command == "challenge":
+        path = numbered(CHALLENGES, args.number, "challenge")
+        print(path.read_text(encoding="utf-8").rstrip())
+        return 0
     if args.command == "module":
         return show_module(args.module)
     if args.command == "section":

@@ -22,7 +22,7 @@ reference guides include worked observations.
 
 | Module | Sections | Guides | Workbench | Outcome |
 | --- | ---: | ---: | --- | --- |
-| [1 — Operational Networking](module-01-operational-networking/README.md) | 8 | 43 | [5 activities, 21 questions](module-01-operational-networking/workbench/README.md) | Explain and validate an end-to-end packet path |
+| [1 — Operational Networking](module-01-operational-networking/README.md) | 8 | 43 | [6 activities, 25 questions](module-01-operational-networking/workbench/README.md) | Explain and validate an end-to-end packet path |
 | [2 — Network Architecture](module-02-network-architecture/README.md) | 8 | 29 | [5 activities, 30 questions](module-02-network-architecture/workbench/README.md) | Assess boundaries, dependencies, and failure behavior |
 | [3 — Incident Response and Integration](module-03-incident-response-and-integration/README.md) | 7 | 32 | [5 activities, 28 questions](module-03-incident-response-and-integration/workbench/README.md) | Build a qualified incident assessment and handoff |
 

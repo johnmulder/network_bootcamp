@@ -10,6 +10,10 @@ pairs, remotely, or alone. You need no previous vendor configuration experience.
 Install and check the [prerequisites](../prerequisites/README.md) beforehand;
 installation is additional time. All required evidence is local.
 
+Open `./course` for the guided route, `./course day` for this overview, or
+`./course challenge 1` for the first brief. The module commands still open the
+reference library. No progress data or learner answers are stored by the CLI.
+
 ## Start the Shift — 15 Minutes
 
 1. Write a private first prediction: “A dashboard opens, but a transfer stalls.

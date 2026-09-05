@@ -9,6 +9,7 @@ submission for each of the 104 guides.
 
 - Send the prerequisites in advance; allow separate installation support time.
   Run `./prerequisites/setup.sh --check` and `./course verify`.
+  Zeek/iperf3 reference exercises additionally use setup with `--extended`.
 - Have each participant copy the three templates and existing ledger CSV using
   the one-day start instructions. Never overwrite prior learner work.
 - Prepare endpoint cards or use the equivalent text tables. Pair learners and
