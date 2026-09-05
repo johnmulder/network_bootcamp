@@ -5,6 +5,18 @@
 Each subsection guide explains the technical model, then provides exact local
 commands, expected evidence, a submission path, and a completion standard.
 
+## One-Day Route
+
+Use these challenge briefs during the six-hour course:
+
+* [Be the Packet](../../challenges/01-be-the-packet.md)
+* [The Transfer That Stops](../../challenges/02-the-transfer-that-stops.md)
+* [Pull One Link](../../challenges/03-pull-one-link.md)
+
+Update the three shared artifacts from the [one-day start](../../challenges/README.md).
+The subsection guides below are optional references with worked observations;
+their individual submission requirements apply only to extended study.
+
 ## Dynamic Practice
 
 Use the [Module 1 Workbench](workbench/README.md) for immediate, scored practice

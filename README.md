@@ -1,8 +1,8 @@
 # Network Bootcamp
 
-A practical networking course for learning how packets move, how network
-architecture shapes that movement, and how to use network evidence during an
-incident investigation.
+A six-hour networking bootcamp built around six practical challenges: follow
+a packet, diagnose a stalled transfer, handle a routing failure, defend a
+design, investigate suspicious activity, and brief the next shift.
 
 The course runs on one Mac laptop. Its core exercises use local, saved evidence
 and open-source tools; no virtual machines, containers, cloud accounts,
@@ -12,7 +12,9 @@ enterprise hardware, or proprietary analyzers are required.
 
 | Curriculum element | Implemented material |
 | --- | --- |
-| Modules | 3 |
+| Required one-day challenges | 6, plus opening and individual exit |
+| Required learner deliverables | 3 connected bundles |
+| Modules in the reference library | 3 |
 | Sections | 23 |
 | Detailed subsection guides | 104 |
 | Interactive workbenches | 3 |
@@ -26,6 +28,13 @@ The [course agenda](agenda.md) is the authoritative curriculum specification.
 This README is the operational entry point for using the implemented material.
 
 ## Start Here
+
+Follow the [one-day challenge path](challenges/README.md) for six teaching
+hours, with breaks and lunch additional. Its short briefs, pocket reference,
+hints, and shared templates replace separate submissions for every guide.
+Facilitators use the [teaching guide](facilitator/README.md), solutions, and
+pilot worksheet. The [module library](modules/README.md) remains available for
+extended study.
 
 From the repository root, install the course tools and generate the local
 evidence fixtures:
@@ -48,8 +57,8 @@ Confirm that the installed tools and course evidence are ready:
 ```
 
 The setup process and each command are explained in the
-[prerequisites guide](prerequisites/README.md). Begin the curriculum with
-[Module 1](modules/module-01-operational-networking/README.md).
+[prerequisites guide](prerequisites/README.md). Begin the required curriculum with
+[Start the Shift](challenges/README.md#start-the-shift--15-minutes).
 
 ## Course Navigator
 
@@ -78,7 +87,7 @@ titles and content from the checked-in Markdown. It does not track progress or
 write learner data. `python3 course.py ...` remains a supported equivalent for
 automation.
 
-## Learning Path
+## Reference Library
 
 | Module | Material | Interactive support | Primary learner artifact |
 | --- | --- | --- | --- |
@@ -106,7 +115,9 @@ combining each guide, its saved evidence, and the interactive workbench.
 ├── course.py          # Short course navigation and practice commands
 ├── prerequisites/    # Mac setup, tool roles, and readiness checks
 ├── labs/             # Fixture builder and reproducible saved evidence
-├── modules/          # Guides, section directories, and workbenches
+├── challenges/       # One-day briefs, reference card, hints, and templates
+├── facilitator/      # Teaching notes, solutions, and pilot worksheet
+├── modules/          # Reference guides, section directories, and workbenches
 └── tests/            # Standard-library project test suite
 ```
 
@@ -146,6 +157,9 @@ host's current package state. Python's `-B` option prevents bytecode cache files
 from being written into the course tree.
 
 ## Documentation Guide
+
+- [One-day route](challenges/README.md): timed challenges and shared outputs.
+- [Facilitator guide](facilitator/README.md): reveal points, rubric, and delivery.
 
 - [Agenda](agenda.md): course intent, module content, exercises, and completion
   standards.

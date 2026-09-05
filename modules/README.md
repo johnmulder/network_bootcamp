@@ -10,7 +10,15 @@ defines completion. The [local lab dataset](../labs/README.md) supplies the
 shared evidence, and each module includes a Python workbench for immediate
 feedback.
 
-## Current Curriculum
+## One-Day Route and Extended Study
+
+Start with the [six-hour challenge path](../challenges/README.md). It draws on
+these modules but requires only three shared deliverables. The guide-level
+submission instructions below are optional extended-study exercises. During
+the one-day course, consult a guide after attempting its challenge because
+reference guides include worked observations.
+
+## Current Reference Curriculum
 
 | Module | Sections | Guides | Workbench | Outcome |
 | --- | ---: | ---: | --- | --- |
@@ -18,7 +26,8 @@ feedback.
 | [2 — Network Architecture](module-02-network-architecture/README.md) | 8 | 29 | [5 activities, 30 questions](module-02-network-architecture/workbench/README.md) | Assess boundaries, dependencies, and failure behavior |
 | [3 — Incident Response and Integration](module-03-incident-response-and-integration/README.md) | 7 | 32 | [5 activities, 28 questions](module-03-incident-response-and-integration/workbench/README.md) | Build a qualified incident assessment and handoff |
 
-Start with Module 1 unless you can already complete its packet-path review.
+For extended study, start with Module 1 unless you can already complete its
+packet-path review.
 Each module's final artifact becomes useful context for the next:
 
 1. Module 1 produces an evidence-backed packet-path review.
@@ -28,7 +37,7 @@ Each module's final artifact becomes useful context for the next:
 
 ## Learning Workflow
 
-Use this sequence for every subsection:
+For optional extended study, use this sequence for a selected subsection:
 
 1. **Orient:** Read the guide's objective, mental model, and named fixture
    paths before running commands.

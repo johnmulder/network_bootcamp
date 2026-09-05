@@ -5,6 +5,16 @@
 Each subsection guide explains the technical model, then provides exact local
 commands, expected evidence, a submission path, and a completion standard.
 
+## One-Day Route
+
+Use these challenge briefs during the six-hour course:
+
+* [Spend Your Resilience Budget](../../challenges/04-resilience-budget.md)
+
+Update the three shared artifacts from the [one-day start](../../challenges/README.md).
+The subsection guides below are optional references with worked observations;
+their individual submission requirements apply only to extended study.
+
 ## Dynamic Practice
 
 Use the [Module 2 Workbench](workbench/README.md) for immediate, scored

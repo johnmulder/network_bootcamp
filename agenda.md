@@ -38,6 +38,67 @@ addresses and common enterprise systems is helpful but not assumed.
 Complete the [prerequisite setup](prerequisites/README.md) before beginning the
 course.
 
+## One-Day Teaching Contract
+
+The required course is six teaching hours in one day, plus a 30-minute lunch
+and two 15-minute breaks. Prerequisite installation is additional, completed
+before class. No networking or vendor configuration experience is added as a
+hidden prerequisite. Use the pocket reference and worked first hop for novices.
+
+Follow the [one-day challenge path](challenges/README.md). Participants create
+three connected deliverables under `work/bootcamp/`: a packet-path sheet, an
+architecture assessment, and an incident dossier with the existing ten-field
+evidence ledger. The subsection library's separate submissions are optional
+extended study, not 104 required assignments.
+
+| Time | Teaching minutes | Required activity | Core practice |
+| --- | ---: | --- | --- |
+| 09:00–09:15 | 15 | Opening diagnostic and first observation | Local/remote addressing, DNS versus connectivity, limits of a handshake |
+| 09:15–10:20 | 65 | Be the Packet | Ethernet, ARP, VLANs, CIDR, gateways, longest-prefix lookup, DHCP/DNS/TCP/UDP/TLS dependencies |
+| 10:20–10:35 | — | Break | |
+| 10:35–11:20 | 45 | The Transfer That Stops | MTU/MSS, ICMP, retransmission, competing hypotheses, payload calculation |
+| 11:20–12:00 | 40 | Pull One Link | Control/data planes, OSPF, BGP policy, ECMP, convergence, VRF isolation |
+| 12:00–12:30 | — | Lunch | |
+| 12:30–13:30 | 60 | Spend Your Resilience Budget | Segmentation, OT/DMZ and management boundaries, state/NAT, components, WAN/cloud return paths, failure domains |
+| 13:30–14:35 | 65 | Suspicious Is Not Proven | Staged telemetry, identity/time correlation, provenance, scope, qualified incident claims |
+| 14:35–14:50 | — | Break | |
+| 14:50–15:45 | 55 | The Shift Handoff | Independent changed-condition case and four technical viewpoints |
+| 15:45–16:00 | 15 | Individual exit, revision, feedback | Transfer of understanding to a different case |
+| **Total** | **360** | **Seven elapsed hours** | |
+
+Keep at least 210 minutes for active prediction, inspection, explanation, and
+peer discussion. Explanations should not run uninterrupted beyond ten minutes.
+If learners need more foundation support, shorten recognition tours and repeated
+quizzes; protect the core challenges, capstone, and debrief.
+
+### Required Depth and Recognition Topics
+
+Required depth means explaining forward and return decisions, identifying
+policy/state dependencies, calculating a packet-size bound, separating routing
+installation from service recovery, and citing evidence without overstating it.
+
+Retain STP/LACP purpose, IPv6/Neighbor Discovery, HSRP/VRRP, VPN/IPsec,
+MPLS/SD-WAN, leaf/spine, VXLAN/EVPN, and ATT&CK as recognition prompts or
+references. Recognition means purpose and one limitation, not operational
+proficiency. Full protocol configuration, BGP decision memorization,
+redistribution design, EVPN route types, and advanced subnet arithmetic are
+outside the required day. The optional library remains intact.
+
+### Completion and Feedback
+
+Score mechanism, evidence, uncertainty, and action/handoff from 0 to 2 each:
+unsupported/missing, partially demonstrated, or demonstrated with precise
+support. Complete at 6/8 with no zero after feedback and revision, plus an
+individual explanation of the reserved exit case. The
+[facilitator rubric](facilitator/README.md#assessment) defines examples.
+Multiple defensible designs and qualified unresolved conclusions can pass.
+
+Keep workbench quizzes low-stakes. Hints are free, predictions are private
+before discussion, and revision is encouraged. Separate student briefs from
+worked answers by reveal convention. The [pilot worksheet](facilitator/pilot.md)
+records actual timing, individual learning, and engagement; proposed targets
+are not claims of measured outcomes.
+
 ## Lab Environment and Constraints
 
 All course work must be completed on one macOS laptop using open-source tools
@@ -82,6 +143,12 @@ Detailed readings and exercises are available in the
 [course module directory](modules/README.md).
 
 All exercises use the checksum-verified [local lab dataset](labs/README.md).
+
+## Reference Catalog
+
+The detailed modules below describe the broader reference library. Their
+individual exercises and submissions support extended study. For one-day
+completion, use the challenge route, shared artifacts, and rubric above.
 
 ## Module 1 — Operational Networking
 

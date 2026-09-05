@@ -5,6 +5,17 @@
 Each subsection guide explains the technical model, then provides exact local
 commands, expected evidence, a submission path, and a completion standard.
 
+## One-Day Route
+
+Use these challenge briefs during the six-hour course:
+
+* [Suspicious Is Not Proven](../../challenges/05-suspicious-is-not-proven.md)
+* [The Shift Handoff](../../challenges/06-the-shift-handoff.md)
+
+Update the three shared artifacts from the [one-day start](../../challenges/README.md).
+The subsection guides below are optional references with worked observations;
+their individual submission requirements apply only to extended study.
+
 ## Dynamic Practice
 
 Use the [Module 3 Workbench](workbench/README.md) to build the merged timeline

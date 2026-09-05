@@ -60,7 +60,7 @@ state, and telemetry.
    column -s, -t labs/fixtures/routing/route-candidates.csv
    jq '.' labs/fixtures/network/ipv6.json
    jq '.' labs/fixtures/routing/traceroute.json
-   tshark -r labs/fixtures/pcaps/mtu-failure.pcap -Y 'tcp.options.mss || icmp' -T fields -E header=y -E separator=, -e frame.number -e ip.src -e ip.dst -e tcp.options.mss_val -e icmp.type -e icmp.code -e icmp.mtu
+   tshark -r labs/fixtures/pcaps/mtu-failure.pcap -Y 'tcp || icmp' -T fields -E header=y -E separator=, -e frame.number -e ip.src -e ip.dst -e ip.len -e ip.hdr_len -e tcp.hdr_len -e tcp.len -e tcp.seq -e tcp.options.mss_val -e icmp.type -e icmp.code -e icmp.mtu
    ```
 
 4. In the output file, add a `## Analysis` section for **ECMP and Asymmetric
