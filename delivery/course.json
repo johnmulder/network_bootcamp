@@ -1,0 +1,740 @@
+{
+  "schema_version": 1,
+  "course_version": "1.0",
+  "blocks": [
+    {
+      "id": "opening",
+      "title": "Start the Shift",
+      "minutes": 15,
+      "break_after": 0
+    },
+    {
+      "id": "c01",
+      "title": "Be the Packet",
+      "minutes": 65,
+      "break_after": 15
+    },
+    {
+      "id": "c02",
+      "title": "The Transfer That Stops",
+      "minutes": 45,
+      "break_after": 0
+    },
+    {
+      "id": "c03",
+      "title": "Pull One Link",
+      "minutes": 40,
+      "break_after": 30
+    },
+    {
+      "id": "c04",
+      "title": "Spend Your Resilience Budget",
+      "minutes": 60,
+      "break_after": 0
+    },
+    {
+      "id": "c05",
+      "title": "Suspicious Is Not Proven",
+      "minutes": 65,
+      "break_after": 15
+    },
+    {
+      "id": "c06",
+      "title": "The Shift Handoff",
+      "minutes": 55,
+      "break_after": 0
+    },
+    {
+      "id": "exit",
+      "title": "Individual Exit",
+      "minutes": 15,
+      "break_after": 0
+    }
+  ],
+  "phases": [
+    {
+      "id": "opening.predict",
+      "block": "opening",
+      "minutes": 5,
+      "kind": "prediction",
+      "prerequisites": [],
+      "implemented": false,
+      "content": [],
+      "evidence": [],
+      "checkpoints": [],
+      "hints": [],
+      "solutions": [],
+      "artifacts": []
+    },
+    {
+      "id": "opening.diagnostic",
+      "block": "opening",
+      "minutes": 5,
+      "kind": "checkpoint",
+      "prerequisites": [
+        "opening.predict"
+      ],
+      "implemented": false,
+      "content": [],
+      "evidence": [],
+      "checkpoints": [],
+      "hints": [],
+      "solutions": [],
+      "artifacts": []
+    },
+    {
+      "id": "opening.reflect",
+      "block": "opening",
+      "minutes": 5,
+      "kind": "reflection",
+      "prerequisites": [
+        "opening.diagnostic"
+      ],
+      "implemented": false,
+      "content": [],
+      "evidence": [],
+      "checkpoints": [],
+      "hints": [],
+      "solutions": [],
+      "artifacts": []
+    },
+    {
+      "id": "c01.model",
+      "block": "c01",
+      "minutes": 10,
+      "kind": "prediction",
+      "prerequisites": [
+        "opening.reflect"
+      ],
+      "implemented": false,
+      "content": [],
+      "evidence": [],
+      "checkpoints": [],
+      "hints": [],
+      "solutions": [],
+      "artifacts": []
+    },
+    {
+      "id": "c01.inspect",
+      "block": "c01",
+      "minutes": 30,
+      "kind": "reflection",
+      "prerequisites": [
+        "c01.model"
+      ],
+      "implemented": false,
+      "content": [],
+      "evidence": [],
+      "checkpoints": [],
+      "hints": [],
+      "solutions": [],
+      "artifacts": []
+    },
+    {
+      "id": "c01.change",
+      "block": "c01",
+      "minutes": 15,
+      "kind": "checkpoint",
+      "prerequisites": [
+        "c01.inspect"
+      ],
+      "implemented": false,
+      "content": [],
+      "evidence": [],
+      "checkpoints": [],
+      "hints": [],
+      "solutions": [],
+      "artifacts": []
+    },
+    {
+      "id": "c01.review",
+      "block": "c01",
+      "minutes": 10,
+      "kind": "review",
+      "prerequisites": [
+        "c01.change"
+      ],
+      "implemented": false,
+      "content": [],
+      "evidence": [],
+      "checkpoints": [],
+      "hints": [],
+      "solutions": [],
+      "artifacts": []
+    },
+    {
+      "id": "c02.predict",
+      "block": "c02",
+      "minutes": 5,
+      "kind": "prediction",
+      "prerequisites": [
+        "c01.review"
+      ],
+      "implemented": true,
+      "content": [
+        {
+          "path": "challenges/02-the-transfer-that-stops.md",
+          "fragment": "c02.brief"
+        },
+        {
+          "path": "challenges/02-the-transfer-that-stops.md",
+          "fragment": "c02.predict"
+        }
+      ],
+      "evidence": [],
+      "checkpoints": [],
+      "hints": [
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c02.hint1"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c02.hint2"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c02.hint3"
+        }
+      ],
+      "solutions": [
+        {
+          "path": "facilitator/solutions.md",
+          "fragment": "c02.solution"
+        }
+      ],
+      "artifacts": [
+        "packet-path.md"
+      ]
+    },
+    {
+      "id": "c02.inspect",
+      "block": "c02",
+      "minutes": 20,
+      "kind": "reflection",
+      "prerequisites": [
+        "c02.predict"
+      ],
+      "implemented": true,
+      "content": [
+        {
+          "path": "challenges/02-the-transfer-that-stops.md",
+          "fragment": "c02.inspect"
+        }
+      ],
+      "evidence": [
+        "transfer.summary",
+        "transfer.fields",
+        "transfer.icmp"
+      ],
+      "checkpoints": [],
+      "hints": [
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c02.hint1"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c02.hint2"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c02.hint3"
+        }
+      ],
+      "solutions": [
+        {
+          "path": "facilitator/solutions.md",
+          "fragment": "c02.solution"
+        }
+      ],
+      "artifacts": [
+        "packet-path.md"
+      ]
+    },
+    {
+      "id": "c02.calculate",
+      "block": "c02",
+      "minutes": 10,
+      "kind": "checkpoint",
+      "prerequisites": [
+        "c02.inspect"
+      ],
+      "implemented": true,
+      "content": [
+        {
+          "path": "challenges/02-the-transfer-that-stops.md",
+          "fragment": "c02.calculate"
+        }
+      ],
+      "evidence": [],
+      "checkpoints": [
+        "transfer.payload"
+      ],
+      "hints": [
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c02.hint1"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c02.hint2"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c02.hint3"
+        }
+      ],
+      "solutions": [
+        {
+          "path": "facilitator/solutions.md",
+          "fragment": "c02.solution"
+        }
+      ],
+      "artifacts": [
+        "packet-path.md"
+      ]
+    },
+    {
+      "id": "c02.review",
+      "block": "c02",
+      "minutes": 10,
+      "kind": "review",
+      "prerequisites": [
+        "c02.calculate"
+      ],
+      "implemented": true,
+      "content": [
+        {
+          "path": "challenges/02-the-transfer-that-stops.md",
+          "fragment": "c02.review"
+        }
+      ],
+      "evidence": [],
+      "checkpoints": [],
+      "hints": [
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c02.hint1"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c02.hint2"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c02.hint3"
+        }
+      ],
+      "solutions": [
+        {
+          "path": "facilitator/solutions.md",
+          "fragment": "c02.solution"
+        }
+      ],
+      "artifacts": [
+        "packet-path.md"
+      ]
+    },
+    {
+      "id": "c03.predict",
+      "block": "c03",
+      "minutes": 5,
+      "kind": "prediction",
+      "prerequisites": [
+        "c02.review"
+      ],
+      "implemented": false,
+      "content": [],
+      "evidence": [],
+      "checkpoints": [],
+      "hints": [],
+      "solutions": [],
+      "artifacts": []
+    },
+    {
+      "id": "c03.reconstruct",
+      "block": "c03",
+      "minutes": 15,
+      "kind": "checkpoint",
+      "prerequisites": [
+        "c03.predict"
+      ],
+      "implemented": false,
+      "content": [],
+      "evidence": [],
+      "checkpoints": [],
+      "hints": [],
+      "solutions": [],
+      "artifacts": []
+    },
+    {
+      "id": "c03.compare",
+      "block": "c03",
+      "minutes": 10,
+      "kind": "checkpoint",
+      "prerequisites": [
+        "c03.reconstruct"
+      ],
+      "implemented": false,
+      "content": [],
+      "evidence": [],
+      "checkpoints": [],
+      "hints": [],
+      "solutions": [],
+      "artifacts": []
+    },
+    {
+      "id": "c03.review",
+      "block": "c03",
+      "minutes": 10,
+      "kind": "review",
+      "prerequisites": [
+        "c03.compare"
+      ],
+      "implemented": false,
+      "content": [],
+      "evidence": [],
+      "checkpoints": [],
+      "hints": [],
+      "solutions": [],
+      "artifacts": []
+    },
+    {
+      "id": "c04.requirements",
+      "block": "c04",
+      "minutes": 10,
+      "kind": "reflection",
+      "prerequisites": [
+        "c03.review"
+      ],
+      "implemented": false,
+      "content": [],
+      "evidence": [],
+      "checkpoints": [],
+      "hints": [],
+      "solutions": [],
+      "artifacts": []
+    },
+    {
+      "id": "c04.flows",
+      "block": "c04",
+      "minutes": 15,
+      "kind": "checkpoint",
+      "prerequisites": [
+        "c04.requirements"
+      ],
+      "implemented": false,
+      "content": [],
+      "evidence": [],
+      "checkpoints": [],
+      "hints": [],
+      "solutions": [],
+      "artifacts": []
+    },
+    {
+      "id": "c04.choose",
+      "block": "c04",
+      "minutes": 7,
+      "kind": "checkpoint",
+      "prerequisites": [
+        "c04.flows"
+      ],
+      "implemented": false,
+      "content": [],
+      "evidence": [],
+      "checkpoints": [],
+      "hints": [],
+      "solutions": [],
+      "artifacts": []
+    },
+    {
+      "id": "c04.predict",
+      "block": "c04",
+      "minutes": 6,
+      "kind": "prediction",
+      "prerequisites": [
+        "c04.choose"
+      ],
+      "implemented": false,
+      "content": [],
+      "evidence": [],
+      "checkpoints": [],
+      "hints": [],
+      "solutions": [],
+      "artifacts": []
+    },
+    {
+      "id": "c04.outcomes",
+      "block": "c04",
+      "minutes": 4,
+      "kind": "reflection",
+      "prerequisites": [
+        "c04.predict"
+      ],
+      "implemented": false,
+      "content": [],
+      "evidence": [],
+      "checkpoints": [],
+      "hints": [],
+      "solutions": [],
+      "artifacts": []
+    },
+    {
+      "id": "c04.twist",
+      "block": "c04",
+      "minutes": 3,
+      "kind": "reflection",
+      "prerequisites": [
+        "c04.outcomes"
+      ],
+      "implemented": false,
+      "content": [],
+      "evidence": [],
+      "checkpoints": [],
+      "hints": [],
+      "solutions": [],
+      "artifacts": []
+    },
+    {
+      "id": "c04.review",
+      "block": "c04",
+      "minutes": 15,
+      "kind": "review",
+      "prerequisites": [
+        "c04.twist"
+      ],
+      "implemented": false,
+      "content": [],
+      "evidence": [],
+      "checkpoints": [],
+      "hints": [],
+      "solutions": [],
+      "artifacts": []
+    },
+    {
+      "id": "c05.predict",
+      "block": "c05",
+      "minutes": 5,
+      "kind": "prediction",
+      "prerequisites": [
+        "c04.review"
+      ],
+      "implemented": false,
+      "content": [],
+      "evidence": [],
+      "checkpoints": [],
+      "hints": [],
+      "solutions": [],
+      "artifacts": []
+    },
+    {
+      "id": "c05.round1",
+      "block": "c05",
+      "minutes": 12,
+      "kind": "reflection",
+      "prerequisites": [
+        "c05.predict"
+      ],
+      "implemented": false,
+      "content": [],
+      "evidence": [],
+      "checkpoints": [],
+      "hints": [],
+      "solutions": [],
+      "artifacts": []
+    },
+    {
+      "id": "c05.round2",
+      "block": "c05",
+      "minutes": 12,
+      "kind": "checkpoint",
+      "prerequisites": [
+        "c05.round1"
+      ],
+      "implemented": false,
+      "content": [],
+      "evidence": [],
+      "checkpoints": [],
+      "hints": [],
+      "solutions": [],
+      "artifacts": []
+    },
+    {
+      "id": "c05.round3",
+      "block": "c05",
+      "minutes": 12,
+      "kind": "reflection",
+      "prerequisites": [
+        "c05.round2"
+      ],
+      "implemented": false,
+      "content": [],
+      "evidence": [],
+      "checkpoints": [],
+      "hints": [],
+      "solutions": [],
+      "artifacts": []
+    },
+    {
+      "id": "c05.narrative",
+      "block": "c05",
+      "minutes": 14,
+      "kind": "reflection",
+      "prerequisites": [
+        "c05.round3"
+      ],
+      "implemented": false,
+      "content": [],
+      "evidence": [],
+      "checkpoints": [],
+      "hints": [],
+      "solutions": [],
+      "artifacts": []
+    },
+    {
+      "id": "c05.review",
+      "block": "c05",
+      "minutes": 10,
+      "kind": "review",
+      "prerequisites": [
+        "c05.narrative"
+      ],
+      "implemented": false,
+      "content": [],
+      "evidence": [],
+      "checkpoints": [],
+      "hints": [],
+      "solutions": [],
+      "artifacts": []
+    },
+    {
+      "id": "c06.receive",
+      "block": "c06",
+      "minutes": 5,
+      "kind": "reflection",
+      "prerequisites": [
+        "c05.review"
+      ],
+      "implemented": false,
+      "content": [],
+      "evidence": [],
+      "checkpoints": [],
+      "hints": [],
+      "solutions": [],
+      "artifacts": []
+    },
+    {
+      "id": "c06.analyze",
+      "block": "c06",
+      "minutes": 20,
+      "kind": "checkpoint",
+      "prerequisites": [
+        "c06.receive"
+      ],
+      "implemented": false,
+      "content": [],
+      "evidence": [],
+      "checkpoints": [],
+      "hints": [],
+      "solutions": [],
+      "artifacts": []
+    },
+    {
+      "id": "c06.handoff",
+      "block": "c06",
+      "minutes": 10,
+      "kind": "reflection",
+      "prerequisites": [
+        "c06.analyze"
+      ],
+      "implemented": false,
+      "content": [],
+      "evidence": [],
+      "checkpoints": [],
+      "hints": [],
+      "solutions": [],
+      "artifacts": []
+    },
+    {
+      "id": "c06.exchange",
+      "block": "c06",
+      "minutes": 10,
+      "kind": "reflection",
+      "prerequisites": [
+        "c06.handoff"
+      ],
+      "implemented": false,
+      "content": [],
+      "evidence": [],
+      "checkpoints": [],
+      "hints": [],
+      "solutions": [],
+      "artifacts": []
+    },
+    {
+      "id": "c06.review",
+      "block": "c06",
+      "minutes": 10,
+      "kind": "review",
+      "prerequisites": [
+        "c06.exchange"
+      ],
+      "implemented": false,
+      "content": [],
+      "evidence": [],
+      "checkpoints": [],
+      "hints": [],
+      "solutions": [],
+      "artifacts": []
+    },
+    {
+      "id": "exit.answer",
+      "block": "exit",
+      "minutes": 5,
+      "kind": "checkpoint",
+      "prerequisites": [
+        "c06.review"
+      ],
+      "implemented": false,
+      "content": [],
+      "evidence": [],
+      "checkpoints": [],
+      "hints": [],
+      "solutions": [],
+      "artifacts": []
+    },
+    {
+      "id": "exit.review",
+      "block": "exit",
+      "minutes": 5,
+      "kind": "review",
+      "prerequisites": [
+        "exit.answer"
+      ],
+      "implemented": false,
+      "content": [],
+      "evidence": [],
+      "checkpoints": [],
+      "hints": [],
+      "solutions": [],
+      "artifacts": []
+    },
+    {
+      "id": "exit.feedback",
+      "block": "exit",
+      "minutes": 5,
+      "kind": "feedback",
+      "prerequisites": [
+        "exit.review"
+      ],
+      "implemented": false,
+      "content": [],
+      "evidence": [],
+      "checkpoints": [],
+      "hints": [],
+      "solutions": [],
+      "artifacts": []
+    }
+  ]
+}

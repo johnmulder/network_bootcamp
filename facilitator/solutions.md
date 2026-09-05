@@ -35,6 +35,7 @@ Common misconception: copying the CSV's next hop into the PCAP explanation.
 These are deliberately different instructional snapshots; require source
 labels, not a fabricated combined topology.
 
+<!-- delivery:start c02.solution -->
 ## Challenge 2
 
 The capture supports a path-size problem and incomplete effective PMTU
@@ -57,6 +58,7 @@ PMTU/transport state could distinguish those possibilities.
 A good action asks the endpoint/network owner to check feedback delivery and
 handling, then test appropriately sized data and application success. A
 specific permanent configuration fix is not established by this fixture.
+<!-- delivery:end c02.solution -->
 
 ## Challenge 3
 

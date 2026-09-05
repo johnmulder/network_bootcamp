@@ -14,11 +14,20 @@ are in the separate [worked review](../facilitator/solutions.md).
 
 ## Challenge 2
 
-1. Compare the first successful exchange with the first large data packet.
-2. Inspect `tcp.len`, `ip.len`, repeated sequence numbers, and the ICMP detail.
-3. Subtract the two stated 20-byte headers from the reported 1200-byte path
+<!-- delivery:start c02.hint1 -->
+**Hint 1.** Compare the first successful exchange with the first large data packet.
+<!-- delivery:end c02.hint1 -->
+
+<!-- delivery:start c02.hint2 -->
+**Hint 2.** Inspect `tcp.len`, `ip.len`, repeated sequence numbers, and the
+ICMP detail.
+<!-- delivery:end c02.hint2 -->
+
+<!-- delivery:start c02.hint3 -->
+**Hint 3.** Subtract the two stated 20-byte headers from the reported 1200-byte path
    limit. That calculation does not tell you whether the endpoint received
    the ICMP packet you observed elsewhere.
+<!-- delivery:end c02.hint3 -->
 
 ## Challenge 3
 

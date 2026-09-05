@@ -1,3 +1,4 @@
+<!-- delivery:start c02.brief -->
 # The Transfer That Stops
 
 **Module 1 · 45 minutes · Deliverable: `work/bootcamp/packet-path.md`**
@@ -10,14 +11,18 @@ observation needed before recommending a repair.
 Prerequisite: distinguish a TCP handshake from application success. Consult
 the [reference card](reference.md) as needed. This is a constructed transfer
 drill; port 443 and the dummy data do not establish a valid TLS session.
+<!-- delivery:end c02.brief -->
 
+<!-- delivery:start c02.predict -->
 ## Predict — 5 Minutes
 
 Write three hypotheses, such as name resolution, path/policy, and packet size
 or endpoint behavior. For each, predict an observation that would help rule
 it out. You already know packets 1–3 form a TCP handshake. What does that
 change, and what does it leave unresolved?
+<!-- delivery:end c02.predict -->
 
+<!-- delivery:start c02.inspect -->
 ## Inspect — 20 Minutes
 
 Only after the prediction, read the neutral case capture:
@@ -47,7 +52,9 @@ If the table is hard to read, use this decoded evidence after predicting:
 
 These are alternate views of the same packets, not independent corroboration.
 The observation point is a modeled VLAN 10 trunk.
+<!-- delivery:end c02.inspect -->
 
+<!-- delivery:start c02.calculate -->
 ## Calculate and Challenge — 10 Minutes
 
 1. Calculate the largest TCP payload fitting the reported path limit with
@@ -62,7 +69,9 @@ The observation point is a modeled VLAN 10 trunk.
 
 You may propose a host capture, endpoint PMTU state, or a controlled packet-size
 comparison. Explain the result expected under each surviving hypothesis.
+<!-- delivery:end c02.calculate -->
 
+<!-- delivery:start c02.review -->
 ## Debrief and Checkpoint — 10 Minutes
 
 Give the leading mechanism, decisive frames, one rejected hypothesis, and one
@@ -76,3 +85,4 @@ without claiming to know an unobserved endpoint configuration. Use
 [worked review](../facilitator/solutions.md#challenge-2) after your attempt.
 
 Next: [Pull One Link](03-pull-one-link.md).
+<!-- delivery:end c02.review -->
