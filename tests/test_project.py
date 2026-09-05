@@ -614,7 +614,13 @@ class CourseNavigatorTests(unittest.TestCase):
                 self.assertEqual(COURSE.main([]), 0)
         guided.assert_called_once_with()
 
-        answers = ("", "", "b", "q")
+        with mock.patch("builtins.input", side_effect=("", "q")):
+            with mock.patch("delivery.cli", return_value=0) as learn:
+                with contextlib.redirect_stdout(io.StringIO()):
+                    self.assertEqual(COURSE.guided_course(), 0)
+        learn.assert_called_once_with(["learn"])
+
+        answers = ("6", "", "b", "q")
         with mock.patch("builtins.input", side_effect=answers):
             with mock.patch.object(COURSE.pydoc, "pager") as pager:
                 with contextlib.redirect_stdout(io.StringIO()):

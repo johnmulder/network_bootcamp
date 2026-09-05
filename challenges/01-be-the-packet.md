@@ -1,3 +1,4 @@
+<!-- delivery:start c01.brief -->
 # Be the Packet
 
 **Module 1 · 65 minutes · Deliverable: `work/bootcamp/packet-path.md`**
@@ -6,7 +7,9 @@ Your mission: explain how the workstation reaches its DNS resolver and an
 application server. Start with [addresses and paths](reference.md#addresses-and-paths)
 if IP addresses, prefixes, or MAC addresses are unfamiliar. No command syntax
 needs to be memorized; run the commands below from the repository root.
+<!-- delivery:end c01.brief -->
 
+<!-- delivery:start c01.model -->
 ## Model One Hop — 10 Minutes
 
 Assign the roles below to cards, worksheet rows, or participants. In pairs,
@@ -26,7 +29,9 @@ Example: a host sending to a remote subnet first needs local delivery to an
 appropriate router. The packet's IP destination remains the remote server.
 Predict the destination MAC for the local DNS query and the remote application
 request. Identify which missing neighbor information would require ARP.
+<!-- delivery:end c01.model -->
 
+<!-- delivery:start c01.inspect -->
 ## Inspect and Trace — 30 Minutes
 
 ```sh
@@ -52,7 +57,9 @@ Use the packet sheet to record observations and cite frame numbers:
 Readable orientation: frame 1 is an ARP request, frame 3 a DNS query, and
 frame 5 a TCP SYN. The modeled capture is on a VLAN 10 trunk. It does not
 show the entire routed path or prove that the real network matches the diagram.
+<!-- delivery:end c01.inspect -->
 
+<!-- delivery:start c01.change -->
 ## Change One Condition — 15 Minutes
 
 This CSV is an **independent route-selection snapshot**, not the table that
@@ -70,7 +77,9 @@ identify the ECMP member actually used by one flow?
 
 Use the reference card to contrast STP and LACP with this routed decision.
 Neither redundant links nor an ECMP set imply that one flow uses all paths.
+<!-- delivery:end c01.change -->
 
+<!-- delivery:start c01.review -->
 ## Debrief and Checkpoint — 10 Minutes
 
 Each learner explains one routing boundary, independently traces the important
@@ -83,3 +92,4 @@ header changes and explain your changed route choice. Use
 [worked review](../facilitator/solutions.md#challenge-1) afterward.
 
 Next: [The Transfer That Stops](02-the-transfer-that-stops.md).
+<!-- delivery:end c01.review -->

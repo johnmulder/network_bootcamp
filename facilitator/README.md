@@ -10,12 +10,16 @@ submission for each of the 104 guides.
 - Send the prerequisites in advance; allow separate installation support time.
   Run `./prerequisites/setup.sh --check` and `./course verify`.
   Zeek/iperf3 reference exercises additionally use setup with `--extended`.
-- Have each participant copy the three templates and existing ledger CSV using
-  the one-day start instructions. Never overwrite prior learner work.
+- Have each participant start `./course learn --id <anonymous-label>`, which
+  creates the three templates and ledger. Manual delivery can still copy them
+  using the one-day start instructions. Never overwrite prior learner work.
 - Prepare endpoint cards or use the equivalent text tables. Pair learners and
   rotate the person making a decision and the person requesting evidence.
 - Reserve one capstone case for the individual exit task. Default: A for the
   group, B for the exit. Avoid opening the reserved solution prematurely.
+  In guided delivery, use `--case B` when creating a session to reverse them.
+  Use a separate session per learner even in pairs; `--mode pair --pair-label`
+  records an optional shared anonymous label without sharing individual answers.
 - Open [solutions and provenance](solutions.md) separately from student briefs.
   Filenames and reveal points are teaching conventions, not access controls.
 - Prepare the [pilot worksheet](pilot.md); distinguish rehearsal findings from
@@ -97,6 +101,11 @@ observed activity on a host from confirmed compromise of that host. A successful
 authentication does not prove credential theft or remote code execution.
 
 ## Solo and Remote Delivery
+
+The [delivery runner](../delivery/README.md) manages prompts, evidence views,
+save/resume, and factual checks. Timing remains advisory; it never releases
+evidence because a timer expires. Self-review and facilitator review remain
+distinct, and a skipped or revealed answer is not an independent pass.
 
 Every challenge supports written answers and a self-review path. Solo learners
 record a prediction before reading the next round, then use hints or solutions.

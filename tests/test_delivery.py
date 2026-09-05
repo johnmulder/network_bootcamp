@@ -1,7 +1,10 @@
 """Contracts and journeys for local course delivery."""
 
 import copy
+import contextlib
+import io
 import json
+import shlex
 import subprocess
 import sys
 import tempfile
@@ -11,6 +14,27 @@ from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import delivery as d
+
+ANSWERS = {
+    "opening.local": "yes", "opening.dns": "no", "opening.application": "no",
+    "m1.routes.10.0.20.40": "10.0.20.40/32",
+    "m1.convergence.remove-host-route": "10.0.20.0/24",
+    "route.before-hops": "10.0.10.252", "route.after-hops": "10.0.10.253, 10.0.10.254",
+    "transfer.payload": "1160 bytes", "m1.convergence.interval": "80 ms",
+    "m1.convergence.next-hop": "10.255.0.3", "m1.convergence.application": "no",
+    "routing.bgp-peer": "192.0.2.2", "routing.corp-route": "0.0.0.0/0",
+    "routing.ot-route": "no route", "m2.cloud.corp-vpc.10.0.20.40": "on-prem",
+    "m2.cloud.on-prem.10.20.5.10": "corp-vpc", "flows.server-ot": "allow",
+    "flows.user-ot": "deny", "budget.options": "state-sync, monitoring",
+    "incident.utc": "2026-08-15T16:04:01Z", "incident.auth-record": "2",
+}
+
+
+def answers_for(phase, main_case):
+    letter = ("B" if main_case == "A" else "A") if phase["block"] == "exit" else main_case
+    answers = {**ANSWERS, "case.id": f"{letter}-v1", "case.change": "10.20.0.0/16" if letter == "A" else "ISOLATED",
+               "case.lookup": "no route", "case.observation": "A3" if letter == "A" else "B2"}
+    return {item["id"]: answers[item["id"]] for item in phase["checkpoints"]}
 
 
 class DefinitionTests(unittest.TestCase):
@@ -150,6 +174,60 @@ class SessionTests(unittest.TestCase):
         request["expected_revision"] += 1
         with self.assertRaisesRegex(d.DeliveryError, "Stale"):
             d.act("learner", request)
+
+    def test_complete_day_both_case_assignments_and_staged_output(self):
+        for letter in ("A", "B"):
+            if letter == "B":
+                self.view = d.create_session("reversed", case="B")
+            ident = self.view["session_id"]
+            visited = []
+            while self.view["phase"]:
+                phase = self.view["phase"]
+                visited.append(phase["id"])
+                if phase["id"] == "c04.choose":
+                    self.assertNotIn("both transport paths use the same", phase["prompt"])
+                    self.assertNotIn("failures.jsonl", phase["prompt"])
+                if phase["id"] == "c05.round1":
+                    self.assertEqual([v["id"] for v in phase["evidence"]], ["incident.round1"])
+                if phase["id"] in ("c06.receive", "exit.answer"):
+                    assigned = ("B" if letter == "A" else "A") if phase["block"] == "exit" else letter
+                    command = phase["evidence"][0]["command"]
+                    self.assertIn(f"case-{assigned.lower()}.json", command)
+                    self.assertTrue(any(shlex.split(line) == shlex.split(command)
+                                        for line in phase["prompt"].splitlines() if line.startswith("jq ")))
+                    self.assertNotIn(f"case-{('B' if assigned == 'A' else 'A').lower()}.json", phase["prompt"])
+                if phase["kind"] in ("prediction", "reflection", "checkpoint"):
+                    action = "answer"
+                    payload = dict(text="Scripted rehearsal response; claims need human review.", answers=answers_for(phase, letter))
+                elif phase["kind"] == "feedback":
+                    action, payload = "feedback", {"wanted_to_know": 4, "manageable": 4}
+                else:
+                    action, payload = "continue", {}
+                request = dict(request_id=f"run-{self.view['revision']}", expected_revision=self.view["revision"], phase_id=phase["id"], action=action, payload=payload)
+                self.view = d.act(ident, request)
+                if action != "continue":
+                    self.assertNotEqual(self.view["result"].get("learning_result"), "incorrect")
+                    request = dict(request_id=f"run-{self.view['revision']}", expected_revision=self.view["revision"], phase_id=phase["id"], action="continue", payload={})
+                    self.view = d.act(ident, request)
+            self.assertEqual(len(visited), 36)
+            self.assertTrue(self.view["completion"]["delivery_finished"])
+            self.assertTrue(self.view["completion"]["objective_checks_satisfied"])
+            self.assertFalse(self.view["completion"]["self_reviewed_completion"])
+            old = d.session_status(ident, "c06.review")
+            request = dict(request_id="main-reveal", expected_revision=old["revision"], phase_id="c06.review", action="reveal", payload={})
+            review = d.act(ident, request)["result"]["text"]
+            self.assertIn(f"Case {letter}-v1", review)
+            self.assertNotIn(f"Case {'B' if letter == 'A' else 'A'}-v1", review)
+
+    def test_terminal_saves_an_answer_and_can_quit_without_advancing(self):
+        with contextlib.redirect_stdout(io.StringIO()) as output:
+            with mock.patch("sys.stdin.isatty", return_value=True), mock.patch("sys.stdout.isatty", return_value=True):
+                with mock.patch("builtins.input", side_effect=("a", "My first prediction.", "q")):
+                    self.assertEqual(d.learn("learner"), 0)
+        resumed = d.session_status("learner")
+        self.assertEqual(resumed["phase"]["id"], "opening.predict")
+        self.assertEqual(resumed["phase"]["progress"]["submissions"][0]["text"], "My first prediction.")
+        self.assertIn("Resume with ./course learn", output.getvalue())
 
 
 class HeadlessTests(unittest.TestCase):

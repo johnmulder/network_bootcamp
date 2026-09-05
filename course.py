@@ -204,17 +204,18 @@ def guided_course() -> int:
 
     while True:
         print("\nWhat would you like to do?")
-        print("  1. Start the six-hour challenge course (recommended)")
+        print("  1. Start or resume the six-hour course (recommended)")
         print("  2. Browse the module reference library")
         print("  3. Practice a topic")
         print("  4. Explore the incident timeline")
         print("  5. Verify the course")
-        choice = ask_number(5)
+        print("  6. Read the challenge briefs without saving progress")
+        choice = ask_number(6)
         if choice == "quit":
             return 0
         if choice == 1:
-            if browse_day() == "quit":
-                return 0
+            import delivery
+            delivery.cli(["learn"])
         elif choice == 2:
             module_number = choose_module()
             if module_number == "quit":
@@ -231,8 +232,10 @@ def guided_course() -> int:
                 run_script(workbench_path(module_number), "menu")
         elif choice == 4:
             timeline(None)
-        else:
+        elif choice == 5:
             verify()
+        elif browse_day() == "quit":
+            return 0
 
 
 def dashboard() -> int:
@@ -250,6 +253,7 @@ def dashboard() -> int:
     print()
     print("Start here")
     print("  Setup:     ./prerequisites/setup.sh")
+    print("  Learn:     ./course learn --id bootcamp")
     print("  One day:   ./course day")
     print("  Challenge: ./course challenge 1")
     print("  Reference: ./course module 1")
@@ -332,6 +336,15 @@ def verify() -> int:
         result = run_script(script, *arguments)
         if status == 0 and result != 0:
             status = result
+    try:
+        import delivery
+        data = delivery.definition()
+        if not all(phase["implemented"] for phase in data["phases"]):
+            raise delivery.DeliveryError("Delivery contains unfinished phases")
+        print(f"\nDelivery verified: {len(data['phases'])} phases, 360 teaching minutes.")
+    except (delivery.DeliveryError, OSError, ValueError, KeyError, TypeError) as error:
+        print(f"\nDelivery verification failed: {error}", file=sys.stderr)
+        status = status or 1
     if status:
         print("\nCourse verification failed.", file=sys.stderr)
     else:
@@ -342,6 +355,9 @@ def verify() -> int:
 def parser() -> argparse.ArgumentParser:
     result = argparse.ArgumentParser(prog="./course", description=__doc__)
     commands = result.add_subparsers(dest="command")
+    commands.add_parser("learn", help="start or resume guided delivery; use learn --help")
+    commands.add_parser("session", help="JSON session operations; use session --help")
+    commands.add_parser("doctor", help="check delivery capabilities; use doctor --help")
 
     commands.add_parser("day", help="show the six-hour schedule and start instructions")
     challenge = commands.add_parser("challenge", help="read a one-day challenge")
@@ -379,7 +395,7 @@ def parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else argv
-    if argv and argv[0] in {"session", "doctor"}:
+    if argv and argv[0] in {"session", "doctor", "learn"}:
         import delivery
         return delivery.cli(argv)
     args = parser().parse_args(argv)

@@ -58,12 +58,22 @@
       "minutes": 5,
       "kind": "prediction",
       "prerequisites": [],
-      "implemented": false,
-      "content": [],
+      "implemented": true,
+      "content": [
+        {
+          "path": "challenges/README.md",
+          "fragment": "opening.predict"
+        }
+      ],
       "evidence": [],
       "checkpoints": [],
       "hints": [],
-      "solutions": [],
+      "solutions": [
+        {
+          "path": "facilitator/solutions.md",
+          "fragment": "opening.solution"
+        }
+      ],
       "artifacts": []
     },
     {
@@ -74,12 +84,26 @@
       "prerequisites": [
         "opening.predict"
       ],
-      "implemented": false,
-      "content": [],
+      "implemented": true,
+      "content": [
+        {
+          "path": "challenges/README.md",
+          "fragment": "opening.diagnostic"
+        }
+      ],
       "evidence": [],
-      "checkpoints": [],
+      "checkpoints": [
+        "opening.local",
+        "opening.dns",
+        "opening.application"
+      ],
       "hints": [],
-      "solutions": [],
+      "solutions": [
+        {
+          "path": "facilitator/solutions.md",
+          "fragment": "opening.solution"
+        }
+      ],
       "artifacts": []
     },
     {
@@ -90,12 +114,22 @@
       "prerequisites": [
         "opening.diagnostic"
       ],
-      "implemented": false,
-      "content": [],
+      "implemented": true,
+      "content": [
+        {
+          "path": "challenges/README.md",
+          "fragment": "opening.reflect"
+        }
+      ],
       "evidence": [],
       "checkpoints": [],
       "hints": [],
-      "solutions": [],
+      "solutions": [
+        {
+          "path": "facilitator/solutions.md",
+          "fragment": "opening.solution"
+        }
+      ],
       "artifacts": []
     },
     {
@@ -106,13 +140,42 @@
       "prerequisites": [
         "opening.reflect"
       ],
-      "implemented": false,
-      "content": [],
+      "implemented": true,
+      "content": [
+        {
+          "path": "challenges/01-be-the-packet.md",
+          "fragment": "c01.brief"
+        },
+        {
+          "path": "challenges/01-be-the-packet.md",
+          "fragment": "c01.model"
+        }
+      ],
       "evidence": [],
       "checkpoints": [],
-      "hints": [],
-      "solutions": [],
-      "artifacts": []
+      "hints": [
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c01.hint1"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c01.hint2"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c01.hint3"
+        }
+      ],
+      "solutions": [
+        {
+          "path": "facilitator/solutions.md",
+          "fragment": "c01.solution"
+        }
+      ],
+      "artifacts": [
+        "packet-path.md"
+      ]
     },
     {
       "id": "c01.inspect",
@@ -122,13 +185,42 @@
       "prerequisites": [
         "c01.model"
       ],
-      "implemented": false,
-      "content": [],
-      "evidence": [],
+      "implemented": true,
+      "content": [
+        {
+          "path": "challenges/01-be-the-packet.md",
+          "fragment": "c01.inspect"
+        }
+      ],
+      "evidence": [
+        "dhcp",
+        "foundations.summary",
+        "foundations.fields"
+      ],
       "checkpoints": [],
-      "hints": [],
-      "solutions": [],
-      "artifacts": []
+      "hints": [
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c01.hint1"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c01.hint2"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c01.hint3"
+        }
+      ],
+      "solutions": [
+        {
+          "path": "facilitator/solutions.md",
+          "fragment": "c01.solution"
+        }
+      ],
+      "artifacts": [
+        "packet-path.md"
+      ]
     },
     {
       "id": "c01.change",
@@ -138,13 +230,45 @@
       "prerequisites": [
         "c01.inspect"
       ],
-      "implemented": false,
-      "content": [],
-      "evidence": [],
-      "checkpoints": [],
-      "hints": [],
-      "solutions": [],
-      "artifacts": []
+      "implemented": true,
+      "content": [
+        {
+          "path": "challenges/01-be-the-packet.md",
+          "fragment": "c01.change"
+        }
+      ],
+      "evidence": [
+        "routes"
+      ],
+      "checkpoints": [
+        "m1.routes.10.0.20.40",
+        "m1.convergence.remove-host-route",
+        "route.before-hops",
+        "route.after-hops"
+      ],
+      "hints": [
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c01.hint1"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c01.hint2"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c01.hint3"
+        }
+      ],
+      "solutions": [
+        {
+          "path": "facilitator/solutions.md",
+          "fragment": "c01.solution"
+        }
+      ],
+      "artifacts": [
+        "packet-path.md"
+      ]
     },
     {
       "id": "c01.review",
@@ -154,13 +278,38 @@
       "prerequisites": [
         "c01.change"
       ],
-      "implemented": false,
-      "content": [],
+      "implemented": true,
+      "content": [
+        {
+          "path": "challenges/01-be-the-packet.md",
+          "fragment": "c01.review"
+        }
+      ],
       "evidence": [],
       "checkpoints": [],
-      "hints": [],
-      "solutions": [],
-      "artifacts": []
+      "hints": [
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c01.hint1"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c01.hint2"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c01.hint3"
+        }
+      ],
+      "solutions": [
+        {
+          "path": "facilitator/solutions.md",
+          "fragment": "c01.solution"
+        }
+      ],
+      "artifacts": [
+        "packet-path.md"
+      ]
     },
     {
       "id": "c02.predict",
@@ -344,13 +493,44 @@
       "prerequisites": [
         "c02.review"
       ],
-      "implemented": false,
-      "content": [],
-      "evidence": [],
+      "implemented": true,
+      "content": [
+        {
+          "path": "challenges/03-pull-one-link.md",
+          "fragment": "c03.brief"
+        },
+        {
+          "path": "challenges/03-pull-one-link.md",
+          "fragment": "c03.predict"
+        }
+      ],
+      "evidence": [
+        "ospf"
+      ],
       "checkpoints": [],
-      "hints": [],
-      "solutions": [],
-      "artifacts": []
+      "hints": [
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c03.hint1"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c03.hint2"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c03.hint3"
+        }
+      ],
+      "solutions": [
+        {
+          "path": "facilitator/solutions.md",
+          "fragment": "c03.solution"
+        }
+      ],
+      "artifacts": [
+        "packet-path.md"
+      ]
     },
     {
       "id": "c03.reconstruct",
@@ -360,13 +540,44 @@
       "prerequisites": [
         "c03.predict"
       ],
-      "implemented": false,
-      "content": [],
-      "evidence": [],
-      "checkpoints": [],
-      "hints": [],
-      "solutions": [],
-      "artifacts": []
+      "implemented": true,
+      "content": [
+        {
+          "path": "challenges/03-pull-one-link.md",
+          "fragment": "c03.reconstruct"
+        }
+      ],
+      "evidence": [
+        "route-events"
+      ],
+      "checkpoints": [
+        "m1.convergence.interval",
+        "m1.convergence.next-hop",
+        "m1.convergence.application"
+      ],
+      "hints": [
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c03.hint1"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c03.hint2"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c03.hint3"
+        }
+      ],
+      "solutions": [
+        {
+          "path": "facilitator/solutions.md",
+          "fragment": "c03.solution"
+        }
+      ],
+      "artifacts": [
+        "packet-path.md"
+      ]
     },
     {
       "id": "c03.compare",
@@ -376,13 +587,45 @@
       "prerequisites": [
         "c03.reconstruct"
       ],
-      "implemented": false,
-      "content": [],
-      "evidence": [],
-      "checkpoints": [],
-      "hints": [],
-      "solutions": [],
-      "artifacts": []
+      "implemented": true,
+      "content": [
+        {
+          "path": "challenges/03-pull-one-link.md",
+          "fragment": "c03.compare"
+        }
+      ],
+      "evidence": [
+        "bgp",
+        "vrfs"
+      ],
+      "checkpoints": [
+        "routing.bgp-peer",
+        "routing.corp-route",
+        "routing.ot-route"
+      ],
+      "hints": [
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c03.hint1"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c03.hint2"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c03.hint3"
+        }
+      ],
+      "solutions": [
+        {
+          "path": "facilitator/solutions.md",
+          "fragment": "c03.solution"
+        }
+      ],
+      "artifacts": [
+        "packet-path.md"
+      ]
     },
     {
       "id": "c03.review",
@@ -392,13 +635,38 @@
       "prerequisites": [
         "c03.compare"
       ],
-      "implemented": false,
-      "content": [],
+      "implemented": true,
+      "content": [
+        {
+          "path": "challenges/03-pull-one-link.md",
+          "fragment": "c03.review"
+        }
+      ],
       "evidence": [],
       "checkpoints": [],
-      "hints": [],
-      "solutions": [],
-      "artifacts": []
+      "hints": [
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c03.hint1"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c03.hint2"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c03.hint3"
+        }
+      ],
+      "solutions": [
+        {
+          "path": "facilitator/solutions.md",
+          "fragment": "c03.solution"
+        }
+      ],
+      "artifacts": [
+        "packet-path.md"
+      ]
     },
     {
       "id": "c04.requirements",
@@ -408,13 +676,45 @@
       "prerequisites": [
         "c03.review"
       ],
-      "implemented": false,
-      "content": [],
-      "evidence": [],
+      "implemented": true,
+      "content": [
+        {
+          "path": "challenges/04-resilience-budget.md",
+          "fragment": "c04.brief"
+        },
+        {
+          "path": "challenges/04-resilience-budget.md",
+          "fragment": "c04.requirements"
+        }
+      ],
+      "evidence": [
+        "enterprise",
+        "components"
+      ],
       "checkpoints": [],
-      "hints": [],
-      "solutions": [],
-      "artifacts": []
+      "hints": [
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c04.hint1"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c04.hint2"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c04.hint3"
+        }
+      ],
+      "solutions": [
+        {
+          "path": "facilitator/solutions.md",
+          "fragment": "c04.solution"
+        }
+      ],
+      "artifacts": [
+        "architecture.md"
+      ]
     },
     {
       "id": "c04.flows",
@@ -424,13 +724,47 @@
       "prerequisites": [
         "c04.requirements"
       ],
-      "implemented": false,
-      "content": [],
-      "evidence": [],
-      "checkpoints": [],
-      "hints": [],
-      "solutions": [],
-      "artifacts": []
+      "implemented": true,
+      "content": [
+        {
+          "path": "challenges/04-resilience-budget.md",
+          "fragment": "c04.flows"
+        }
+      ],
+      "evidence": [
+        "flows",
+        "vrfs",
+        "cloud"
+      ],
+      "checkpoints": [
+        "m2.cloud.corp-vpc.10.0.20.40",
+        "m2.cloud.on-prem.10.20.5.10",
+        "flows.server-ot",
+        "flows.user-ot"
+      ],
+      "hints": [
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c04.hint1"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c04.hint2"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c04.hint3"
+        }
+      ],
+      "solutions": [
+        {
+          "path": "facilitator/solutions.md",
+          "fragment": "c04.solution"
+        }
+      ],
+      "artifacts": [
+        "architecture.md"
+      ]
     },
     {
       "id": "c04.choose",
@@ -440,13 +774,40 @@
       "prerequisites": [
         "c04.flows"
       ],
-      "implemented": false,
-      "content": [],
+      "implemented": true,
+      "content": [
+        {
+          "path": "challenges/04-resilience-budget.md",
+          "fragment": "c04.choose"
+        }
+      ],
       "evidence": [],
-      "checkpoints": [],
-      "hints": [],
-      "solutions": [],
-      "artifacts": []
+      "checkpoints": [
+        "budget.options"
+      ],
+      "hints": [
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c04.hint1"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c04.hint2"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c04.hint3"
+        }
+      ],
+      "solutions": [
+        {
+          "path": "facilitator/solutions.md",
+          "fragment": "c04.solution"
+        }
+      ],
+      "artifacts": [
+        "architecture.md"
+      ]
     },
     {
       "id": "c04.predict",
@@ -456,13 +817,41 @@
       "prerequisites": [
         "c04.choose"
       ],
-      "implemented": false,
-      "content": [],
-      "evidence": [],
+      "implemented": true,
+      "content": [
+        {
+          "path": "challenges/04-resilience-budget.md",
+          "fragment": "c04.predict"
+        }
+      ],
+      "evidence": [
+        "wan",
+        "failures.hidden"
+      ],
       "checkpoints": [],
-      "hints": [],
-      "solutions": [],
-      "artifacts": []
+      "hints": [
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c04.hint1"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c04.hint2"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c04.hint3"
+        }
+      ],
+      "solutions": [
+        {
+          "path": "facilitator/solutions.md",
+          "fragment": "c04.solution"
+        }
+      ],
+      "artifacts": [
+        "architecture.md"
+      ]
     },
     {
       "id": "c04.outcomes",
@@ -472,13 +861,40 @@
       "prerequisites": [
         "c04.predict"
       ],
-      "implemented": false,
-      "content": [],
-      "evidence": [],
+      "implemented": true,
+      "content": [
+        {
+          "path": "challenges/04-resilience-budget.md",
+          "fragment": "c04.outcomes"
+        }
+      ],
+      "evidence": [
+        "failures.outcomes"
+      ],
       "checkpoints": [],
-      "hints": [],
-      "solutions": [],
-      "artifacts": []
+      "hints": [
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c04.hint1"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c04.hint2"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c04.hint3"
+        }
+      ],
+      "solutions": [
+        {
+          "path": "facilitator/solutions.md",
+          "fragment": "c04.solution"
+        }
+      ],
+      "artifacts": [
+        "architecture.md"
+      ]
     },
     {
       "id": "c04.twist",
@@ -488,13 +904,38 @@
       "prerequisites": [
         "c04.outcomes"
       ],
-      "implemented": false,
-      "content": [],
+      "implemented": true,
+      "content": [
+        {
+          "path": "challenges/04-resilience-budget.md",
+          "fragment": "c04.twist"
+        }
+      ],
       "evidence": [],
       "checkpoints": [],
-      "hints": [],
-      "solutions": [],
-      "artifacts": []
+      "hints": [
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c04.hint1"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c04.hint2"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c04.hint3"
+        }
+      ],
+      "solutions": [
+        {
+          "path": "facilitator/solutions.md",
+          "fragment": "c04.solution"
+        }
+      ],
+      "artifacts": [
+        "architecture.md"
+      ]
     },
     {
       "id": "c04.review",
@@ -504,13 +945,38 @@
       "prerequisites": [
         "c04.twist"
       ],
-      "implemented": false,
-      "content": [],
+      "implemented": true,
+      "content": [
+        {
+          "path": "challenges/04-resilience-budget.md",
+          "fragment": "c04.review"
+        }
+      ],
       "evidence": [],
       "checkpoints": [],
-      "hints": [],
-      "solutions": [],
-      "artifacts": []
+      "hints": [
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c04.hint1"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c04.hint2"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c04.hint3"
+        }
+      ],
+      "solutions": [
+        {
+          "path": "facilitator/solutions.md",
+          "fragment": "c04.solution"
+        }
+      ],
+      "artifacts": [
+        "architecture.md"
+      ]
     },
     {
       "id": "c05.predict",
@@ -520,13 +986,43 @@
       "prerequisites": [
         "c04.review"
       ],
-      "implemented": false,
-      "content": [],
+      "implemented": true,
+      "content": [
+        {
+          "path": "challenges/05-suspicious-is-not-proven.md",
+          "fragment": "c05.brief"
+        },
+        {
+          "path": "challenges/05-suspicious-is-not-proven.md",
+          "fragment": "c05.predict"
+        }
+      ],
       "evidence": [],
       "checkpoints": [],
-      "hints": [],
-      "solutions": [],
-      "artifacts": []
+      "hints": [
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c05.hint1"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c05.hint2"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c05.hint3"
+        }
+      ],
+      "solutions": [
+        {
+          "path": "facilitator/solutions.md",
+          "fragment": "c05.solution"
+        }
+      ],
+      "artifacts": [
+        "incident.md",
+        "evidence-ledger.csv"
+      ]
     },
     {
       "id": "c05.round1",
@@ -536,13 +1032,41 @@
       "prerequisites": [
         "c05.predict"
       ],
-      "implemented": false,
-      "content": [],
-      "evidence": [],
+      "implemented": true,
+      "content": [
+        {
+          "path": "challenges/05-suspicious-is-not-proven.md",
+          "fragment": "c05.round1"
+        }
+      ],
+      "evidence": [
+        "incident.round1"
+      ],
       "checkpoints": [],
-      "hints": [],
-      "solutions": [],
-      "artifacts": []
+      "hints": [
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c05.hint1"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c05.hint2"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c05.hint3"
+        }
+      ],
+      "solutions": [
+        {
+          "path": "facilitator/solutions.md",
+          "fragment": "c05.solution"
+        }
+      ],
+      "artifacts": [
+        "incident.md",
+        "evidence-ledger.csv"
+      ]
     },
     {
       "id": "c05.round2",
@@ -552,13 +1076,44 @@
       "prerequisites": [
         "c05.round1"
       ],
-      "implemented": false,
-      "content": [],
-      "evidence": [],
-      "checkpoints": [],
-      "hints": [],
-      "solutions": [],
-      "artifacts": []
+      "implemented": true,
+      "content": [
+        {
+          "path": "challenges/05-suspicious-is-not-proven.md",
+          "fragment": "c05.round2"
+        }
+      ],
+      "evidence": [
+        "incident.round2"
+      ],
+      "checkpoints": [
+        "incident.utc",
+        "incident.auth-record"
+      ],
+      "hints": [
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c05.hint1"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c05.hint2"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c05.hint3"
+        }
+      ],
+      "solutions": [
+        {
+          "path": "facilitator/solutions.md",
+          "fragment": "c05.solution"
+        }
+      ],
+      "artifacts": [
+        "incident.md",
+        "evidence-ledger.csv"
+      ]
     },
     {
       "id": "c05.round3",
@@ -568,13 +1123,42 @@
       "prerequisites": [
         "c05.round2"
       ],
-      "implemented": false,
-      "content": [],
-      "evidence": [],
+      "implemented": true,
+      "content": [
+        {
+          "path": "challenges/05-suspicious-is-not-proven.md",
+          "fragment": "c05.round3"
+        }
+      ],
+      "evidence": [
+        "incident.round3",
+        "flows"
+      ],
       "checkpoints": [],
-      "hints": [],
-      "solutions": [],
-      "artifacts": []
+      "hints": [
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c05.hint1"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c05.hint2"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c05.hint3"
+        }
+      ],
+      "solutions": [
+        {
+          "path": "facilitator/solutions.md",
+          "fragment": "c05.solution"
+        }
+      ],
+      "artifacts": [
+        "incident.md",
+        "evidence-ledger.csv"
+      ]
     },
     {
       "id": "c05.narrative",
@@ -584,13 +1168,41 @@
       "prerequisites": [
         "c05.round3"
       ],
-      "implemented": false,
-      "content": [],
-      "evidence": [],
+      "implemented": true,
+      "content": [
+        {
+          "path": "challenges/05-suspicious-is-not-proven.md",
+          "fragment": "c05.narrative"
+        }
+      ],
+      "evidence": [
+        "incident.packets"
+      ],
       "checkpoints": [],
-      "hints": [],
-      "solutions": [],
-      "artifacts": []
+      "hints": [
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c05.hint1"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c05.hint2"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c05.hint3"
+        }
+      ],
+      "solutions": [
+        {
+          "path": "facilitator/solutions.md",
+          "fragment": "c05.solution"
+        }
+      ],
+      "artifacts": [
+        "incident.md",
+        "evidence-ledger.csv"
+      ]
     },
     {
       "id": "c05.review",
@@ -600,13 +1212,41 @@
       "prerequisites": [
         "c05.narrative"
       ],
-      "implemented": false,
-      "content": [],
-      "evidence": [],
+      "implemented": true,
+      "content": [
+        {
+          "path": "challenges/05-suspicious-is-not-proven.md",
+          "fragment": "c05.review"
+        }
+      ],
+      "evidence": [
+        "incident.timeline"
+      ],
       "checkpoints": [],
-      "hints": [],
-      "solutions": [],
-      "artifacts": []
+      "hints": [
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c05.hint1"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c05.hint2"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c05.hint3"
+        }
+      ],
+      "solutions": [
+        {
+          "path": "facilitator/solutions.md",
+          "fragment": "c05.solution"
+        }
+      ],
+      "artifacts": [
+        "incident.md",
+        "evidence-ledger.csv"
+      ]
     },
     {
       "id": "c06.receive",
@@ -616,13 +1256,47 @@
       "prerequisites": [
         "c05.review"
       ],
-      "implemented": false,
-      "content": [],
-      "evidence": [],
+      "implemented": true,
+      "content": [
+        {
+          "path": "challenges/06-the-shift-handoff.md",
+          "fragment": "c06.brief"
+        },
+        {
+          "path": "challenges/06-the-shift-handoff.md",
+          "fragment": "c06.receive"
+        }
+      ],
+      "evidence": [
+        "case.main"
+      ],
       "checkpoints": [],
-      "hints": [],
-      "solutions": [],
-      "artifacts": []
+      "hints": [
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c06.hint1"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c06.hint2"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c06.hint3"
+        }
+      ],
+      "solutions": [
+        {
+          "path": "facilitator/solutions.md",
+          "fragment": "c06.case-{main}.solution"
+        }
+      ],
+      "artifacts": [
+        "packet-path.md",
+        "architecture.md",
+        "incident.md",
+        "evidence-ledger.csv"
+      ]
     },
     {
       "id": "c06.analyze",
@@ -632,13 +1306,48 @@
       "prerequisites": [
         "c06.receive"
       ],
-      "implemented": false,
-      "content": [],
-      "evidence": [],
-      "checkpoints": [],
-      "hints": [],
-      "solutions": [],
-      "artifacts": []
+      "implemented": true,
+      "content": [
+        {
+          "path": "challenges/06-the-shift-handoff.md",
+          "fragment": "c06.analyze"
+        }
+      ],
+      "evidence": [
+        "case.main"
+      ],
+      "checkpoints": [
+        "case.id",
+        "case.change",
+        "case.lookup",
+        "case.observation"
+      ],
+      "hints": [
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c06.hint1"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c06.hint2"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c06.hint3"
+        }
+      ],
+      "solutions": [
+        {
+          "path": "facilitator/solutions.md",
+          "fragment": "c06.case-{main}.solution"
+        }
+      ],
+      "artifacts": [
+        "packet-path.md",
+        "architecture.md",
+        "incident.md",
+        "evidence-ledger.csv"
+      ]
     },
     {
       "id": "c06.handoff",
@@ -648,13 +1357,41 @@
       "prerequisites": [
         "c06.analyze"
       ],
-      "implemented": false,
-      "content": [],
+      "implemented": true,
+      "content": [
+        {
+          "path": "challenges/06-the-shift-handoff.md",
+          "fragment": "c06.handoff"
+        }
+      ],
       "evidence": [],
       "checkpoints": [],
-      "hints": [],
-      "solutions": [],
-      "artifacts": []
+      "hints": [
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c06.hint1"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c06.hint2"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c06.hint3"
+        }
+      ],
+      "solutions": [
+        {
+          "path": "facilitator/solutions.md",
+          "fragment": "c06.case-{main}.solution"
+        }
+      ],
+      "artifacts": [
+        "packet-path.md",
+        "architecture.md",
+        "incident.md",
+        "evidence-ledger.csv"
+      ]
     },
     {
       "id": "c06.exchange",
@@ -664,13 +1401,41 @@
       "prerequisites": [
         "c06.handoff"
       ],
-      "implemented": false,
-      "content": [],
+      "implemented": true,
+      "content": [
+        {
+          "path": "challenges/06-the-shift-handoff.md",
+          "fragment": "c06.exchange"
+        }
+      ],
       "evidence": [],
       "checkpoints": [],
-      "hints": [],
-      "solutions": [],
-      "artifacts": []
+      "hints": [
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c06.hint1"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c06.hint2"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c06.hint3"
+        }
+      ],
+      "solutions": [
+        {
+          "path": "facilitator/solutions.md",
+          "fragment": "c06.case-{main}.solution"
+        }
+      ],
+      "artifacts": [
+        "packet-path.md",
+        "architecture.md",
+        "incident.md",
+        "evidence-ledger.csv"
+      ]
     },
     {
       "id": "c06.review",
@@ -680,13 +1445,41 @@
       "prerequisites": [
         "c06.exchange"
       ],
-      "implemented": false,
-      "content": [],
+      "implemented": true,
+      "content": [
+        {
+          "path": "challenges/06-the-shift-handoff.md",
+          "fragment": "c06.review"
+        }
+      ],
       "evidence": [],
       "checkpoints": [],
-      "hints": [],
-      "solutions": [],
-      "artifacts": []
+      "hints": [
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c06.hint1"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c06.hint2"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c06.hint3"
+        }
+      ],
+      "solutions": [
+        {
+          "path": "facilitator/solutions.md",
+          "fragment": "c06.case-{main}.solution"
+        }
+      ],
+      "artifacts": [
+        "packet-path.md",
+        "architecture.md",
+        "incident.md",
+        "evidence-ledger.csv"
+      ]
     },
     {
       "id": "exit.answer",
@@ -696,13 +1489,45 @@
       "prerequisites": [
         "c06.review"
       ],
-      "implemented": false,
-      "content": [],
-      "evidence": [],
-      "checkpoints": [],
-      "hints": [],
-      "solutions": [],
-      "artifacts": []
+      "implemented": true,
+      "content": [
+        {
+          "path": "challenges/06-the-shift-handoff.md",
+          "fragment": "exit.answer"
+        }
+      ],
+      "evidence": [
+        "case.exit"
+      ],
+      "checkpoints": [
+        "case.id",
+        "case.change",
+        "case.lookup",
+        "case.observation"
+      ],
+      "hints": [
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c06.hint1"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c06.hint2"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c06.hint3"
+        }
+      ],
+      "solutions": [
+        {
+          "path": "facilitator/solutions.md",
+          "fragment": "c06.case-{exit}.solution"
+        }
+      ],
+      "artifacts": [
+        "incident.md"
+      ]
     },
     {
       "id": "exit.review",
@@ -712,13 +1537,38 @@
       "prerequisites": [
         "exit.answer"
       ],
-      "implemented": false,
-      "content": [],
+      "implemented": true,
+      "content": [
+        {
+          "path": "challenges/06-the-shift-handoff.md",
+          "fragment": "exit.review"
+        }
+      ],
       "evidence": [],
       "checkpoints": [],
-      "hints": [],
-      "solutions": [],
-      "artifacts": []
+      "hints": [
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c06.hint1"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c06.hint2"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c06.hint3"
+        }
+      ],
+      "solutions": [
+        {
+          "path": "facilitator/solutions.md",
+          "fragment": "c06.case-{exit}.solution"
+        }
+      ],
+      "artifacts": [
+        "incident.md"
+      ]
     },
     {
       "id": "exit.feedback",
@@ -728,13 +1578,38 @@
       "prerequisites": [
         "exit.review"
       ],
-      "implemented": false,
-      "content": [],
+      "implemented": true,
+      "content": [
+        {
+          "path": "challenges/06-the-shift-handoff.md",
+          "fragment": "exit.feedback"
+        }
+      ],
       "evidence": [],
       "checkpoints": [],
-      "hints": [],
-      "solutions": [],
-      "artifacts": []
+      "hints": [
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c06.hint1"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c06.hint2"
+        },
+        {
+          "path": "challenges/hints.md",
+          "fragment": "c06.hint3"
+        }
+      ],
+      "solutions": [
+        {
+          "path": "facilitator/solutions.md",
+          "fragment": "c06.case-{exit}.solution"
+        }
+      ],
+      "artifacts": [
+        "incident.md"
+      ]
     }
   ]
 }

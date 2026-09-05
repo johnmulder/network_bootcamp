@@ -1,3 +1,4 @@
+<!-- delivery:start c03.brief -->
 # Pull One Link
 
 **Module 1 · 40 minutes · Deliverable: `work/bootcamp/packet-path.md`**
@@ -8,7 +9,9 @@ table changes, and what still needs to happen for users to recover.
 
 Prerequisite: prefix matching and next hops from Challenge 1. The
 [reference card](reference.md) explains OSPF, BGP, ECMP, and VRFs.
+<!-- delivery:end c03.brief -->
 
+<!-- delivery:start c03.predict -->
 ## Freeze and Predict — 5 Minutes
 
 ```sh
@@ -19,7 +22,9 @@ Draw the next-hop choices for `10.0.20.0/24`. The link to `10.255.0.2` now
 fails. Before opening the event log, predict what information must change and
 whether existing sessions necessarily survive. These are modeled router
 snapshots, not the forwarding table used to build the foundations capture.
+<!-- delivery:end c03.predict -->
 
+<!-- delivery:start c03.reconstruct -->
 ## Reconstruct the Transition — 15 Minutes
 
 ```sh
@@ -34,7 +39,9 @@ Do the timestamps measure packet loss, detection delay before the first log,
 TCP recovery, or an application's first successful response? Choose one
 additional observation to measure service recovery. Trace what an asymmetric
 return path could mean for a stateful firewall.
+<!-- delivery:end c03.reconstruct -->
 
+<!-- delivery:start c03.compare -->
 ## Compare Policy and Context — 10 Minutes
 
 ```sh
@@ -50,7 +57,9 @@ prefix establish installed reachability?
 Now look up `198.51.100.77` in CORP and OT. The same device can hold both
 tables. Explain why its physical presence does not merge their routes, and
 why a route would still not prove policy permission or a valid return path.
+<!-- delivery:end c03.compare -->
 
+<!-- delivery:start c03.review -->
 ## Debrief and Checkpoint — 10 Minutes
 
 Each learner explains one transition without using “the network converged” as
@@ -62,3 +71,4 @@ claims. Use [hints](hints.md#challenge-3) or the
 [worked review](../facilitator/solutions.md#challenge-3) afterward.
 
 Next after lunch: [Spend Your Resilience Budget](04-resilience-budget.md).
+<!-- delivery:end c03.review -->

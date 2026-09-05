@@ -4,13 +4,16 @@ Reveal only after the relevant attempt. These are defensible examples, not
 required wording. Use the [rubric](README.md#assessment) to evaluate the
 reasoning and accept other well-supported actions.
 
+<!-- delivery:start opening.solution -->
 ## Opening Diagnostic
 
 `10.0.10.23/24` and `10.0.10.53` are in the same IPv4 subnet. DNS success
 establishes a returned answer, not server reachability. SYN/SYN-ACK/ACK
 supports transport establishment at the observation point; it does not prove
 TLS, a healthy application, or successful large transfers.
+<!-- delivery:end opening.solution -->
 
+<!-- delivery:start c01.solution -->
 ## Challenge 1
 
 - DHCP OFFER/ACK supply `.23/24`, gateway `.1`, and resolver `.53`. They do
@@ -34,6 +37,7 @@ TLS, a healthy application, or successful large transfers.
 Common misconception: copying the CSV's next hop into the PCAP explanation.
 These are deliberately different instructional snapshots; require source
 labels, not a fabricated combined topology.
+<!-- delivery:end c01.solution -->
 
 <!-- delivery:start c02.solution -->
 ## Challenge 2
@@ -60,6 +64,7 @@ handling, then test appropriately sized data and application success. A
 specific permanent configuration fix is not established by this fixture.
 <!-- delivery:end c02.solution -->
 
+<!-- delivery:start c03.solution -->
 ## Challenge 3
 
 `route-events.jsonl` shows link-down at 0 ms, LSA at 50 ms, FIB installation at
@@ -73,7 +78,9 @@ despite its longer AS path in this example. The rejected advertisement does
 not establish installed reachability. CORP has a default for the external
 destination; OT does not. A route in one table does not become a route in the
 other. Neither result alone settles policy and return-state questions.
+<!-- delivery:end c03.solution -->
 
+<!-- delivery:start c04.solution -->
 ## Challenge 4
 
 F3 permits `10.0.20.40` to the historian over TCP/443; F4 denies the workstation
@@ -100,7 +107,9 @@ loss measurement. “VPN up means zero loss” is unsupported. The shared-power
 twist is an additional hypothetical condition, not an original recorded event.
 Require dependency checks, a named owner, validation, rollback, and residual
 risk. No token combination warrants a blanket availability guarantee.
+<!-- delivery:end c04.solution -->
 
+<!-- delivery:start c05.solution -->
 ## Challenge 5
 
 Round 1 establishes an alert derived from flow and endpoint sources, three
@@ -144,9 +153,11 @@ An example initial action is evidence preservation plus an owned review or
 restriction of the workstation's external/SMB access, with service impact,
 validation, and rollback documented. Do not infer a need to isolate OT systems
 or disable a shared account from this evidence alone.
+<!-- delivery:end c05.solution -->
 
 ## Challenge 6
 
+<!-- delivery:start c06.case-a.solution -->
 ### Case A-v1
 
 The forward `10.0.0.0/8` route still reaches on-prem. Before the change,
@@ -161,7 +172,9 @@ factory services. The change's intent is unknown. Have network operations
 check the change record and restore an authorized return route if unintended;
 validate both TCP and TLS/application health, with rollback if the change
 introduces new impairment. No post-repair success has been observed yet.
+<!-- delivery:end c06.case-a.solution -->
 
+<!-- delivery:start c06.case-b.solution -->
 ### Case B-v1
 
 The ingress context changes from CORP to ISOLATED. CORP's default is irrelevant
@@ -176,6 +189,7 @@ Check whether reassignment was intentional containment before returning it to
 CORP. If unintended, coordinate the correction, validate the full service,
 and preserve a rollback to the isolated state. Do not import a blanket default
 into an isolation context just to make the probe work.
+<!-- delivery:end c06.case-b.solution -->
 
 ## Provenance and Evidence Boundaries
 

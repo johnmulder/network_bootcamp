@@ -36,7 +36,7 @@ Facilitators use the [teaching guide](facilitator/README.md), solutions, and
 pilot worksheet. The [module library](modules/README.md) remains available for
 extended study.
 
-From the repository root, install the course tools and generate the local
+From the repository root, install the course tools and verify the saved
 evidence fixtures:
 
 ```bash
@@ -62,18 +62,21 @@ The setup process and each command are explained in the
 
 ## Course Navigator
 
-`./course` opens a numbered menu when run in a terminal. Press Enter to follow
-the six-hour challenge path, or choose the module reference library, short
-practice, incident timeline, or verification. Each challenge returns to a
-numbered list with the next challenge preselected. Use b for the main menu.
-Long guides use the terminal pager, so they can be read without losing your
-place.
+`./course` opens a numbered menu when run in a terminal. Press Enter to start
+or resume the six-hour course. The runner presents one phase at a time, offers
+named evidence views and hints, and saves accepted responses. Quit with q and
+return later. Edit the three deliverables in the displayed session directory.
+The menu also offers the reference library, optional practice, full timeline,
+verification, and read-only challenge browsing.
 
 Direct commands remain available for repeatable facilitation and scripting:
 
 | Goal | Command |
 | --- | --- |
 | Open the guided course | `./course` |
+| Start or resume a named session | `./course learn --id my-session` |
+| Check core tool capabilities | `./course doctor --json` |
+| Inspect a saved session from a script | `./course session status --id my-session --json` |
 | Read the one-day schedule and start instructions | `./course day` |
 | Read a challenge | `./course challenge 1` |
 | List a module's sections | `./course module 1` |
@@ -86,10 +89,13 @@ Direct commands remain available for repeatable facilitation and scripting:
 | Filter the timeline to one source | `./course timeline --source endpoint` |
 | Verify fixtures and all workbenches | `./course verify` |
 
-The navigator calculates the hierarchy from the module directories and reads
-titles and content from the checked-in Markdown. It does not track progress or
-write learner data. `python3 course.py ...` remains a supported equivalent for
-automation.
+Reference navigation reads the existing directory hierarchy and Markdown.
+Guided delivery uses [36 defined phases](delivery/course.json), with content
+fragments in those same documents. Progress and learner responses are stored
+locally under `work/<session-id>/`, which Git ignores. No upload occurs.
+`python3 course.py ...` remains a supported equivalent for automation. See the
+[delivery guide](delivery/README.md) for JSON requests, version matching,
+reviews, and recovery. A successful command is not a passing assessment.
 
 ## Reference Library
 
@@ -116,6 +122,8 @@ combining each guide, its saved evidence, and the interactive workbench.
 ├── agenda.md          # Authoritative curriculum and completion standards
 ├── course             # Natural guided-course command
 ├── course.py          # Short course navigation and practice commands
+├── delivery.py        # Saved sessions, evidence actions, and assessment state
+├── delivery/          # Course definition and automation contract
 ├── prerequisites/    # Mac setup, tool roles, and readiness checks
 ├── labs/             # Fixture builder and reproducible saved evidence
 ├── challenges/       # One-day briefs, reference card, hints, and templates

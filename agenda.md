@@ -66,6 +66,12 @@ extended study, not 104 required assignments.
 | 15:45–16:00 | 15 | Individual exit, revision, feedback | Transfer of understanding to a different case |
 | **Total** | **360** | **Seven elapsed hours** | |
 
+The local [delivery definition](delivery/course.json) divides these blocks into
+36 phases. `./course learn --id <label>` preserves the schedule and staged
+reveals while saving accepted responses. The [automation contract](delivery/README.md)
+uses the same phases without a terminal. Suggested times are advisory; a learner
+advances explicitly. Direct Markdown browsing remains available for manual use.
+
 Keep at least 210 minutes for active prediction, inspection, explanation, and
 peer discussion. Explanations should not run uninterrupted beyond ten minutes.
 If learners need more foundation support, shorten recognition tours and repeated

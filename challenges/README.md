@@ -10,29 +10,41 @@ pairs, remotely, or alone. You need no previous vendor configuration experience.
 Install and check the [prerequisites](../prerequisites/README.md) beforehand;
 installation is additional time. All required evidence is local.
 
-Open `./course` for the guided route, `./course day` for this overview, or
-`./course challenge 1` for the first brief. The module commands still open the
-reference library. No progress data or learner answers are stored by the CLI.
+Open `./course` for saved guided delivery, or use
+`./course learn --id my-session`. The runner creates a workspace and preserves
+accepted answers between sessions. `./course day` shows this manual overview;
+`./course challenge 1` prints a complete brief. The module commands still open
+the reference library. Manual browsing does not record completion.
 
 ## Start the Shift — 15 Minutes
 
-1. Write a private first prediction: “A dashboard opens, but a transfer stalls.
+<!-- delivery:start opening.predict -->
+Write a private first prediction: “A dashboard opens, but a transfer stalls.
    My first hypothesis is [write it]; I would request [evidence] because [reason].”
-2. Without looking anything up, answer: is `10.0.10.53` local to
+<!-- delivery:end opening.predict -->
+
+<!-- delivery:start opening.diagnostic -->
+Without looking anything up, answer: is `10.0.10.53` local to
    `10.0.10.23/24`? Does resolving a name prove its server is reachable? What
    does a completed TCP handshake prove about an application?
-3. Inspect this decoded observation from the transfer drill: packets 1–3 show
+<!-- delivery:end opening.diagnostic -->
+
+<!-- delivery:start opening.reflect -->
+Inspect this decoded observation from the transfer drill: packets 1–3 show
    SYN, SYN-ACK, ACK between `10.0.10.23` and `203.0.113.20:443`. Revise one
    hypothesis. Which unanswered question matters next?
 
 No score yet. Consult the [reference card](reference.md) for unfamiliar terms.
 The factory and its service requirements are fictional; the captures are
 constructed teaching evidence, not records of a real attack.
+<!-- delivery:end opening.reflect -->
 
 ## Prepare Three Deliverables
 
-Run from the repository root. Copy each template only once; return to your
-existing files on later sessions. These commands preserve existing answers.
+Guided delivery creates these files under `work/<session-id>/` automatically.
+For manual study, run the following from the repository root. Copy each
+template only once; return to your existing files on later sessions. These
+commands preserve existing answers. Keep manual and guided workspaces separate.
 
 ```sh
 mkdir -p work/bootcamp

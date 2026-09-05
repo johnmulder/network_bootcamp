@@ -9,6 +9,7 @@ import fcntl
 import functools
 import hashlib
 import importlib.util
+import itertools
 import json
 import os
 import platform
@@ -18,6 +19,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -119,7 +121,8 @@ def validate_definition(data: dict) -> None:
             if not phase["content"]:
                 raise DeliveryError(f"Missing teaching content: {name}")
             for reference in phase["content"] + phase["hints"] + phase["solutions"]:
-                read_fragment(reference)
+                for case in ("A", "B"):
+                    read_fragment(resolve_reference(reference, {"case": case}))
             if any(view not in EVIDENCE for view in phase["evidence"]):
                 raise DeliveryError(f"Unknown evidence view: {name}")
             if any(check not in checkpoint_ids() for check in phase["checkpoints"]):
@@ -136,7 +139,37 @@ EVIDENCE = {
     "transfer.fields": ["tshark", "-r", "labs/fixtures/challenges/transfer.pcap", "-Y", "tcp || icmp", "-T", "fields", "-E", "header=y", "-e", "frame.number", "-e", "frame.time_relative", "-e", "ip.src", "-e", "ip.dst", "-e", "ip.len", "-e", "ip.hdr_len", "-e", "tcp.hdr_len", "-e", "tcp.len", "-e", "tcp.seq", "-e", "tcp.options.mss_val", "-e", "icmp.type", "-e", "icmp.code", "-e", "icmp.mtu"],
     "transfer.icmp": ["tshark", "-r", "labs/fixtures/challenges/transfer.pcap", "-Y", "icmp", "-V"],
 }
-CHECKPOINTS = {"transfer.payload"}
+EVIDENCE.update({
+    'dhcp': ['jq', '.', 'labs/fixtures/network/dhcp.jsonl'],
+    'foundations.summary': ['tshark', '-r', 'labs/fixtures/pcaps/foundations.pcap'],
+    'foundations.fields': ['tshark', '-r', 'labs/fixtures/pcaps/foundations.pcap', '-T', 'fields', '-E', 'header=y', '-e', 'frame.number', '-e', 'vlan.id', '-e', 'eth.src', '-e', 'eth.dst', '-e', 'ip.src', '-e', 'ip.dst', '-e', 'tcp.flags', '-e', 'dns.qry.name', '-e', 'http.response.code'],
+    'routes': ['column', '-s,', '-t', 'labs/fixtures/routing/route-candidates.csv'],
+    'ospf': ['jq', '.', 'labs/fixtures/routing/ospf.json'],
+    'route-events': ['jq', '-c', '.', 'labs/fixtures/routing/route-events.jsonl'],
+    'bgp': ['jq', '.', 'labs/fixtures/routing/bgp.json'],
+    'vrfs': ['jq', '.', 'labs/fixtures/routing/vrfs.json'],
+    'enterprise': ['cat', 'labs/fixtures/architecture/enterprise.md'],
+    'components': ['jq', '.', 'labs/fixtures/architecture/components.json'],
+    'flows': ['column', '-s,', '-t', 'labs/fixtures/architecture/traffic-flows.csv'],
+    'cloud': ['jq', '.', 'labs/fixtures/architecture/cloud-routes.json'],
+    'wan': ['jq', '.', 'labs/fixtures/architecture/wan.json'],
+    'failures.hidden': ['jq', '-c', 'del(.affected)', 'labs/fixtures/architecture/failures.jsonl'],
+    'failures.outcomes': ['jq', '-c', '{component, affected}', 'labs/fixtures/architecture/failures.jsonl'],
+    'incident.round1': ['jq', '.', 'labs/fixtures/challenges/incident-round-1.json'],
+    'incident.round2': ['jq', '.', 'labs/fixtures/challenges/incident-round-2.json'],
+    'incident.round3': ['jq', '.', 'labs/fixtures/challenges/incident-round-3.json'],
+    'incident.packets': ['tshark', '-r', 'labs/fixtures/pcaps/incident.pcap', '-Y', 'dns || tls.handshake.type == 1', '-T', 'fields', '-E', 'header=y', '-e', 'frame.number', '-e', 'ip.src', '-e', 'ip.dst', '-e', 'dns.qry.name', '-e', 'tls.handshake.extensions_server_name'],
+    'case.main': ['jq', '.', 'labs/fixtures/challenges/case-a.json'],
+    'case.exit': ['jq', '.', 'labs/fixtures/challenges/case-b.json'],
+    "incident.timeline": [sys.executable, "-B", "course.py", "timeline"],
+})
+CHECKPOINTS = {
+    "opening.local", "opening.dns", "opening.application", "transfer.payload",
+    "route.before-hops", "route.after-hops", "routing.bgp-peer", "routing.corp-route",
+    "routing.ot-route", "flows.server-ot", "flows.user-ot", "budget.options",
+    "incident.utc", "incident.auth-record", "case.id", "case.change", "case.lookup",
+    "case.observation",
+}
 
 WORK_ROOT = ROOT / "work"
 SESSION_ID = re.compile(r"[a-z0-9][a-z0-9-]{0,47}\Z")
@@ -233,7 +266,19 @@ def run_tool(argv: list[str], timeout: float = 15) -> dict:
 
 
 def evidence_command(view: str, state: dict) -> list[str]:
-    return list(EVIDENCE[view])
+    command = list(EVIDENCE[view])
+    if view in {"case.main", "case.exit"}:
+        letter = state["case"] if view == "case.main" else other_case(state)
+        command[-1] = f"labs/fixtures/challenges/case-{letter.lower()}.json"
+    return command
+
+
+def other_case(state: dict) -> str:
+    return "B" if state["case"] == "A" else "A"
+
+
+def resolve_reference(reference: dict, state: dict) -> dict:
+    return {**reference, "fragment": reference["fragment"].replace("{main}", state["case"].lower()).replace("{exit}", other_case(state).lower())}
 
 
 def doctor() -> dict:
@@ -403,6 +448,67 @@ def checkpoint_items(phase: dict, state: dict) -> list[dict]:
                                  explanation="1200 minus the two 20-byte headers leaves 1160 payload bytes.",
                                  answer="1160 bytes", answers={"1160 bytes", "1160 byte", "1160 b"}),
     }
+    def add(name, prompt, answer, evidence, aliases=()):
+        items[name] = workbench(1).question("delivery", prompt, answer,
+            f"Compare this answer with {evidence}; your explanation still requires review.",
+            evidence, aliases, question_id=name)
+    requested = set(phase["checkpoints"])
+    if any(name.startswith("opening.") for name in requested):
+        add("opening.local", "Is 10.0.10.53 local to 10.0.10.23/24? (yes/no)", "yes", "opening diagnostic: /24 subnet", ("y",))
+        add("opening.dns", "Does resolving a name prove the server is reachable? (yes/no)", "no", "opening diagnostic: DNS dependency", ("n",))
+        add("opening.application", "Does a completed TCP handshake prove application success? (yes/no)", "no", "opening diagnostic: transport boundary", ("n",))
+    if any(name.startswith("route.") for name in requested):
+        rows = workbench(1).route_rows()
+        for stage, candidates in (("before", rows), ("after", [r for r in rows if r["prefix"] != "10.0.20.40/32"])):
+            hops = sorted({r["next_hop"] for r in workbench(1).select_routes("10.0.20.40", candidates)})
+            add(f"route.{stage}-hops", f"List every eligible next hop for 10.0.20.40 {stage} removing its /32 route; separate IPs with commas.",
+                ", ".join(hops), "routing/route-candidates.csv", tuple(", ".join(order) for order in itertools.permutations(hops)))
+    if any(name.startswith("routing.") for name in requested):
+        bgp = workbench(1).read_json("routing/bgp.json")
+        candidates = [r for r in bgp["routes"] if r["accepted"] and r["prefix"] == "198.51.100.0/24"]
+        peer = max(candidates, key=lambda r: r["local_pref"])["peer"]
+        add("routing.bgp-peer", "Which accepted peer wins for 198.51.100.0/24 under the supplied BGP attributes?", peer, "routing/bgp.json")
+        tables = workbench(1).read_json("routing/vrfs.json")
+        for context in ("CORP", "OT"):
+            route = workbench(1).best_vrf_route(context, "198.51.100.77", tables)
+            add(f"routing.{context.lower()}-route", f"What prefix matches 198.51.100.77 in {context}, or 'no route'?",
+                route["prefix"] if route else "no route", f"routing/vrfs.json: {context}", ("none",) if not route else ())
+    if any(name.startswith("flows.") for name in requested):
+        flows = {r["id"]: r for r in workbench(2).read_csv("architecture/traffic-flows.csv")}
+        for name, flow in (("server-ot", "F3"), ("user-ot", "F4")):
+            answer = flows[flow]["intended"]
+            add(f"flows.{name}", f"What is the intended decision for {flow}: allow or deny?", answer, f"architecture/traffic-flows.csv: {flow}", ("allowed" if answer == "allow" else "denied",))
+    if "budget.options" in requested:
+        options = ("state-sync", "backup-path", "monitoring", "management")
+        pairs = [", ".join(pair) for pair in itertools.permutations(options, 2)]
+        add("budget.options", "Choose exactly two different option IDs: state-sync, backup-path, monitoring, management. Explain the tradeoff in your text.",
+            pairs[0], "Challenge 4: two-token table", tuple(pairs))
+        items["budget.options"]["explanation"] = "Two valid choices recorded. Their merits and residual risk require rubric review."
+        items["budget.options"]["answer"] = "Any two distinct option IDs; no pair satisfies every requirement."
+    if "incident.utc" in requested:
+        timestamp = workbench(3).parse_time("2026-08-15T10:04:01-06:00").astimezone(timezone.utc)
+        add("incident.utc", "Normalize 2026-08-15T10:04:01-06:00 to UTC (YYYY-MM-DDTHH:MM:SSZ).", timestamp.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "incident/auth.jsonl", (timestamp.isoformat(), timestamp.strftime("%Y-%m-%dT%H:%M:%S.000Z")))
+        records = workbench(3).read_jsonl("incident/auth.jsonl")
+        record = next(i for i, r in enumerate(records, 1) if workbench(3).parse_time(r["time"]) == timestamp)
+        add("incident.auth-record", "Which original authentication record has that timestamp? Enter its one-based record number.", str(record), "incident/auth.jsonl")
+    if any(name.startswith("case.") for name in requested):
+        letter = other_case(state) if phase["block"] == "exit" else state["case"]
+        case = workbench(1).read_json(f"challenges/case-{letter.lower()}.json")
+        evidence = f"challenges/case-{letter.lower()}.json"
+        add("case.id", "Enter the exact ID of your assigned case.", case["case"], evidence)
+        if letter == "A":
+            missing = [r["prefix"] for r in case["before"]["routes"]["on-prem"] if r not in case["after"]["routes"]["on-prem"]]
+            add("case.change", "What exact return-route prefix was removed?", missing[0], evidence + ": before/after on-prem")
+            route = workbench(1).best_vrf_route("on-prem", case["flow"]["src"], case["after"]["routes"])
+            prompt = "What prefix matches the returning reply's destination in on-prem after the change, or 'no route'?"
+        else:
+            add("case.change", "What ingress VRF became active after the change?", case["after"]["ingress_vrf"], evidence + ": after.ingress_vrf")
+            route = workbench(1).best_vrf_route(case["after"]["ingress_vrf"], case["flow"]["dst"], case["routes"])
+            prompt = "What prefix matches the outbound destination in the active VRF, or 'no route'?"
+        add("case.lookup", prompt, route["prefix"] if route else "no route", evidence + ": routes", ("none",) if not route else ())
+        record = next(r for r in case["observations"] if "no matching" in r["event"])
+        add("case.observation", "Which observation ID directly records the failed route lookup?", record["id"], evidence + ": observations")
     for name in phase["checkpoints"]:
         if name.startswith(("m1.", "m2.", "m3.")):
             number = int(name[1])
@@ -418,8 +524,19 @@ def public_checkpoint(item: dict) -> dict:
 
 
 def render_references(references: list[dict], state: dict) -> str:
-    return "\n\n".join(read_fragment(reference) for reference in references).replace(
-        "work/bootcamp", f"work/{state['id']}")
+    chunks = []
+    for reference in references:
+        text = read_fragment(resolve_reference(reference, state))
+        if reference["fragment"] == "c06.receive":
+            text = text.replace("Choose **A** for the team capstone; reserve **B** for the individual exit task.\nA facilitator may reverse them, but do not read the reserved case early.",
+                                f"Your assigned main capstone is **{state['case']}**. Reserve the other case for the individual exit.")
+            text = text.replace("case-a.json", f"case-{state['case'].lower()}.json")
+        if reference["fragment"] == "exit.answer":
+            text = text.replace("case-b.json", f"case-{other_case(state).lower()}.json")
+            text = text.replace("If your group used B,\nuse A instead.", "")
+        text = re.sub(r"\[([^\]]+)\]\([^)]*(?:facilitator/solutions|hints)\.md[^)]*\)", r"\1 (use the hint or reveal action)", text)
+        chunks.append(text.replace("work/bootcamp", f"work/{state['id']}"))
+    return "\n\n".join(chunks)
 
 
 def allowed_actions(phase: dict) -> list[str]:
@@ -436,6 +553,8 @@ def allowed_actions(phase: dict) -> list[str]:
         actions.append("review")
     if phase["kind"] == "feedback":
         actions.append("feedback")
+    if phase["id"] in ("c03.review", "c04.review", "c05.review"):
+        actions.append("practice")
     return actions
 
 
@@ -450,8 +569,8 @@ def completion(state: dict, data: dict) -> dict:
                 facilitator_reviewed_completion=False)
 
 
-def status_result(state: dict, data: dict, result: dict | None = None) -> dict:
-    current = state["current"]
+def status_result(state: dict, data: dict, result: dict | None = None, view_phase: str | None = None) -> dict:
+    current = view_phase or state["current"]
     view = None
     if current:
         phase = phase_by_id(data, current)
@@ -461,14 +580,36 @@ def status_result(state: dict, data: dict, result: dict | None = None) -> dict:
                     evidence=[dict(id=name, command=shlex.join(evidence_command(name, state))) for name in phase["evidence"]],
                     allowed_actions=allowed_actions(phase),
                     progress=copy.deepcopy(state["phases"][current]))
+        block = next(b for b in data["blocks"] if b["id"] == phase["block"])
+        view["block_title"] = block["title"]
+        next_position = state["order"].index(current) + 1
+        end_of_block = next_position == len(state["order"]) or phase_by_id(data, state["order"][next_position])["block"] != phase["block"]
+        view["break_after_minutes"] = block["break_after"] if end_of_block else 0
+        view["mode_prompt"] = "Write your own explanation before continuing." if state["mode"] == "solo" else "Swap evidence-reader and skeptical-reviewer roles; record your own answer. The exit is individual."
+        if "practice" in view["allowed_actions"]:
+            view["practice"] = [workbench(number).public_question(item) for number, item in practice_items(phase, state)]
+    released = state["order"][:state["order"].index(state["current"]) + 1] if state["current"] else state["order"]
     return dict(protocol_version=1, status="ok", session_id=state["id"], revision=state["revision"],
                 phase=view, completion=completion(state, data), result=result,
+                current_phase_id=state["current"],
+                released_phases=[dict(id=name, status=state["phases"][name]["status"]) for name in released],
                 workspace=f"work/{state['id']}")
 
 
-def session_status(ident: str) -> dict:
+def session_status(ident: str, phase_id: str | None = None) -> dict:
     data = definition()
-    return status_result(load_state(session_dir(ident), data), data)
+    state = load_state(session_dir(ident), data)
+    if phase_id is not None:
+        released = state["order"][:state["order"].index(state["current"]) + 1] if state["current"] else state["order"]
+        if phase_id not in released:
+            raise DeliveryError("This phase has not been released yet", 3)
+    return status_result(state, data, view_phase=phase_id)
+
+
+def practice_items(phase: dict, state: dict) -> list[tuple[int, dict]]:
+    number = {"c03.review": 1, "c04.review": 2, "c05.review": 3}[phase["id"]]
+    available = {item["id"]: item for group in workbench(number).all_questions().values() for item in group}
+    return [(number, available[name]) for name in state["question_ids"][str(number)]]
 
 
 def require_text(value, label="text") -> str:
@@ -570,6 +711,23 @@ def act(ident: str, request: dict) -> dict:
             if "text" in payload:
                 progress["feedback"]["text"] = require_text(payload["text"])
             result["learning_result"] = "recorded"
+        elif action == "practice":
+            items = practice_items(phase, state)
+            answers = payload.get("answers", {})
+            reveal = payload.get("reveal", False)
+            if (type(reveal) is not bool or not isinstance(answers, dict)
+                    or (not reveal and set(answers) != {item["id"] for _, item in items})):
+                raise DeliveryError("Practice needs all displayed answer IDs, or reveal: true")
+            prior = progress.setdefault("practice", [])
+            exposed = any(attempt["revealed"] for attempt in prior)
+            results = []
+            for number, item in items:
+                answer = "" if reveal else require_text(answers[item["id"]])
+                evaluated = workbench(number).evaluate_question(item, answer, revealed=reveal)
+                evaluated["independent"] = evaluated["correct"] and not exposed
+                results.append(evaluated)
+            prior.append(dict(at=now(), answers=answers, revealed=reveal, results=results))
+            result.update(learning_result="revealed" if reveal else "practice", results=results)
         elif action in ("continue", "skip"):
             if action == "skip":
                 progress["skip_reason"] = require_text(payload.get("reason"), "reason")
@@ -614,6 +772,109 @@ class JsonParser(argparse.ArgumentParser):
         raise DeliveryError(message)
 
 
+def learn(ident: str, mode: str = "solo", case: str = "A", pair_label: str | None = None) -> int:
+    if not sys.stdin.isatty() or not sys.stdout.isatty():
+        raise DeliveryError("learn needs a terminal; use session commands with --json for automation")
+    if not session_dir(ident).exists():
+        create_session(ident, mode, case, pair_label)
+    print(f"\nNetwork Bootcamp · answers are saved under {session_dir(ident)}")
+    print(f"Copyable commands assume: cd {shlex.quote(str(ROOT))}")
+    print("Edit the three Markdown deliverables and ledger in your editor as you go.")
+    print("Hints are free. Suggested times do not force a reveal. q saves your place and exits.")
+    target = last_phase = None
+    try:
+        while True:
+            view = session_status(ident, target)
+            phase = view["phase"]
+            if phase is None:
+                print("\nYou reached the end of the delivery path. Review status:")
+                for name, passed in view["completion"].items():
+                    print(f"  {name.replace('_', ' ')}: {passed}")
+                action = input("g: revisit a phase for revision/review · q: quit [q]: ").strip().lower() or "q"
+            else:
+                if phase["id"] != last_phase:
+                    print(f"\n{phase['block_title']} · {phase['minutes']} suggested minutes\n")
+                    print(phase["prompt"])
+                    print(f"\n{phase['mode_prompt']}")
+                    print("Artifacts: " + ", ".join(str(session_dir(ident) / name) for name in phase["artifacts"]))
+                    if phase["break_after_minutes"]:
+                        print(f"Take a {phase['break_after_minutes']}-minute break after this phase.")
+                    last_phase = phase["id"]
+                answered = phase["progress"]["submissions"] and all(check["correct"] for check in phase["progress"]["checks"].values())
+                default = "r" if phase["kind"] == "review" and not phase["progress"]["reviews"] else "f" if phase["kind"] == "feedback" and "feedback" not in phase["progress"] else "c" if answered or phase["kind"] in ("review", "feedback") else "a"
+                keys = {"a": "answer", "c": "continue", "s": "skip", "e": "evidence", "h": "hint", "v": "reveal", "r": "review", "f": "feedback", "p": "practice"}
+                choices = [f"{key}: {value}" for key, value in keys.items() if value in phase["allowed_actions"]]
+                action = input("\n" + " · ".join(choices) + f" · g: revisit · q: quit [{default}]: ").strip().lower() or default
+            if action == "q":
+                print(f"Saved. Resume with ./course learn --id {ident}")
+                return 0
+            if action == "g":
+                print("\n".join(f"{p['id']}: {p['status']}" for p in view["released_phases"]))
+                target = input("Phase ID (Enter returns to your current phase): ").strip() or None
+                if target and target not in {p["id"] for p in view["released_phases"]}:
+                    print("Choose a released phase ID.")
+                    target = None
+                last_phase = None
+                continue
+            if phase is None or action not in keys or keys[action] not in phase["allowed_actions"]:
+                print("Choose an available action.")
+                continue
+            operation, payload = keys[action], {}
+            try:
+                if operation in ("answer", "predict"):
+                    answers = {item["id"]: input(item["prompt"] + "\nAnswer: ") for item in phase["checkpoints"]}
+                    payload = dict(text=input("Your prediction/explanation (one paragraph; artifacts can be edited separately): "), answers=answers)
+                elif operation == "evidence":
+                    for i, item in enumerate(phase["evidence"], 1):
+                        print(f"{i}. {item['id']}: {item['command']}")
+                    selected = int(input("Evidence view [1]: ").strip() or "1")
+                    if not 1 <= selected <= len(phase["evidence"]):
+                        raise DeliveryError("Choose a listed evidence number")
+                    payload = {"view": phase["evidence"][selected - 1]["id"]}
+                elif operation == "skip":
+                    payload = {"reason": input("What remains unfinished, and why are you skipping it? ")}
+                elif operation == "review":
+                    print("Score mechanism, evidence, uncertainty, and action: 0 missing, 1 partial, 2 demonstrated.")
+                    reviewer = input("Reviewer: self or facilitator [self]: ").strip() or "self"
+                    scores = {name: int(input(f"{name} (0–2): ")) for name in DIMENSIONS}
+                    payload = dict(reviewer=reviewer, scores=scores, feedback=input("Feedback and next revision: "))
+                elif operation == "feedback":
+                    for key, prompt in (("wanted_to_know", "I wanted to find out what happened next"), ("manageable", "The challenge felt manageable")):
+                        value = input(f"{prompt} (1–5, Enter to omit): ").strip()
+                        payload[key] = int(value) if value else None
+                    text = input("What dragged, or needed more explanation? (optional): ").strip()
+                    if text:
+                        payload["text"] = text
+                elif operation == "practice":
+                    payload = {"answers": {item["id"]: input(item["prompt"] + "\nAnswer: ") for item in phase["practice"]}}
+                elif operation == "continue":
+                    value = input("Self-reported minutes for this phase (optional): ").strip()
+                    if value:
+                        payload["minutes"] = float(value)
+                request = dict(request_id=uuid.uuid4().hex, expected_revision=view["revision"], phase_id=phase["id"], action=operation, payload=payload)
+                response = act(ident, request)
+                result = response["result"]
+                if "output" in result:
+                    print(result["output"]["stdout"])
+                    if result["output"].get("stderr"):
+                        print(result["output"]["stderr"], file=sys.stderr)
+                if "text" in result:
+                    print(result["text"])
+                for name, check in result.get("checks", {}).items():
+                    print(f"{name}: {check['feedback']}")
+                for check in result.get("results", []):
+                    print(f"{check['id']}: {check['learning_result']} · {check['feedback']}")
+                if result.get("learning_result"):
+                    print(result["learning_result"].replace("_", " "))
+                if operation in ("continue", "skip"):
+                    target = None
+            except (DeliveryError, OSError, ValueError) as error:
+                print(f"Could not record that action: {error}")
+    except (EOFError, KeyboardInterrupt):
+        print(f"\nAccepted responses are saved. Resume with ./course learn --id {ident}")
+        return 0
+
+
 def cli(argv: list[str]) -> int:
     """New commands have a strict JSON error path, including parser errors."""
     json_mode = "--json" in argv
@@ -622,6 +883,11 @@ def cli(argv: list[str]) -> int:
         commands = parser.add_subparsers(dest="command", required=True)
         ready = commands.add_parser("doctor", help="read-only capability and evidence check")
         ready.add_argument("--json", action="store_true")
+        terminal = commands.add_parser("learn", help="start or resume guided delivery")
+        terminal.add_argument("--id", default="bootcamp")
+        terminal.add_argument("--mode", choices=("solo", "pair"), default="solo")
+        terminal.add_argument("--case", choices=("A", "B"), default="A")
+        terminal.add_argument("--pair-label")
         session = commands.add_parser("session", help="saved course delivery")
         operations = session.add_subparsers(dest="operation", required=True)
         for name in ("create", "status", "act", "export"):
@@ -635,9 +901,13 @@ def cli(argv: list[str]) -> int:
                 operation.add_argument("--seed", type=int, default=1)
             if name == "act":
                 operation.add_argument("--input", required=True, help="JSON request file, or - for stdin")
+            if name == "status":
+                operation.add_argument("--phase", help="revisit a released phase without advancing")
             if name == "export":
                 operation.add_argument("--format", choices=("json",), default="json")
         args = parser.parse_args(argv)
+        if args.command == "learn":
+            return learn(args.id, args.mode, args.case, args.pair_label)
         if args.command == "doctor":
             result = dict(protocol_version=1, status="ok", **doctor())
             code = 0 if result["ready"] else 4
@@ -646,7 +916,7 @@ def cli(argv: list[str]) -> int:
             if args.operation == "create":
                 result = create_session(args.id, args.mode, args.case, args.pair_label, args.seed)
             elif args.operation == "status":
-                result = session_status(args.id)
+                result = session_status(args.id, args.phase)
             elif args.operation == "export":
                 result = export_session(args.id)
             else:
