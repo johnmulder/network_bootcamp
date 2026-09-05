@@ -7,6 +7,15 @@ Copy this worksheet under `work/` for each pilot. Use anonymous participant
 labels. Record beginner/experienced background and solo/pair mode; avoid
 collecting names or other unnecessary personal data.
 
+For guided delivery, export progress with `./course session export --id LABEL
+--format csv` (put the command on one line). Use `--format json` for ratings,
+versions, and separate self/facilitator review status. Default exports omit
+answers and review comments. Explicit `--include-artifacts` with JSON or
+Markdown includes the four learner files and response/review history for review.
+The [delivery guide](../delivery/README.md) explains local exports and revisions.
+Timestamps and self-reported durations do not measure active learning; observe
+and record active minutes here. Scripted rehearsal scores are not learner data.
+
 Date / facilitator / participant count / modes: ___
 
 ## Observations

@@ -5,11 +5,13 @@ from __future__ import annotations
 import argparse
 import contextlib
 import copy
+import csv
 import fcntl
 import functools
 import hashlib
 import importlib.util
 import itertools
+import io
 import json
 import os
 import platform
@@ -72,9 +74,14 @@ def fragments(path: Path) -> dict[str, str]:
     return result
 
 
-def read_fragment(reference: dict) -> str:
+def read_fragment(reference: dict, cache: dict | None = None) -> str:
     path = confined(ROOT, reference["path"])
-    content = fragments(path)
+    if cache is None:
+        content = fragments(path)
+    else:
+        if path not in cache:
+            cache[path] = fragments(path)
+        content = cache[path]
     if reference["fragment"] not in content:
         raise DeliveryError(f"Missing fragment: {reference['fragment']}")
     return content[reference["fragment"]]
@@ -105,6 +112,8 @@ def validate_definition(data: dict) -> None:
     if agenda_minutes != minutes:
         raise DeliveryError("Delivery schedule differs from agenda.md")
     seen = set()
+    content_cache = {}
+    known_checkpoints = checkpoint_ids()
     totals = dict.fromkeys([block["id"] for block in blocks], 0)
     previous = None
     for phase in data["phases"]:
@@ -122,10 +131,10 @@ def validate_definition(data: dict) -> None:
                 raise DeliveryError(f"Missing teaching content: {name}")
             for reference in phase["content"] + phase["hints"] + phase["solutions"]:
                 for case in ("A", "B"):
-                    read_fragment(resolve_reference(reference, {"case": case}))
+                    read_fragment(resolve_reference(reference, {"case": case}), content_cache)
             if any(view not in EVIDENCE for view in phase["evidence"]):
                 raise DeliveryError(f"Unknown evidence view: {name}")
-            if any(check not in checkpoint_ids() for check in phase["checkpoints"]):
+            if any(check not in known_checkpoints for check in phase["checkpoints"]):
                 raise DeliveryError(f"Unknown checkpoint: {name}")
         totals[phase["block"]] += phase["minutes"]
         seen.add(name)
@@ -563,10 +572,17 @@ def completion(state: dict, data: dict) -> dict:
     objective = all(state["phases"][p["id"]]["checks"].get(name, {}).get("independent", False)
                     for p in checked for name in p["checkpoints"])
     required = all(value["status"] in ("complete", "pending_review") for value in state["phases"].values())
+    if required:
+        required = all(validate_artifacts(session_dir(state["id"]), phase, state)["valid"]
+                       for phase in data["phases"] if phase["kind"] == "review")
     finished = state["current"] is None and all(p["implemented"] for p in data["phases"])
+    reviews = review_statuses(state, data)
+    self_reviewed = all(value["self"]["valid_pass"] for value in reviews.values())
+    facilitator_reviewed = all(value["facilitator"]["valid_pass"] for value in reviews.values())
     return dict(delivery_finished=finished, required_work_recorded=required,
-                objective_checks_satisfied=objective, self_reviewed_completion=False,
-                facilitator_reviewed_completion=False)
+                objective_checks_satisfied=objective,
+                self_reviewed_completion=finished and required and objective and self_reviewed,
+                facilitator_reviewed_completion=finished and required and objective and facilitator_reviewed)
 
 
 def status_result(state: dict, data: dict, result: dict | None = None, view_phase: str | None = None) -> dict:
@@ -586,6 +602,9 @@ def status_result(state: dict, data: dict, result: dict | None = None, view_phas
         end_of_block = next_position == len(state["order"]) or phase_by_id(data, state["order"][next_position])["block"] != phase["block"]
         view["break_after_minutes"] = block["break_after"] if end_of_block else 0
         view["mode_prompt"] = "Write your own explanation before continuing." if state["mode"] == "solo" else "Swap evidence-reader and skeptical-reviewer roles; record your own answer. The exit is individual."
+        if phase["kind"] == "review":
+            view["artifact_hashes"] = artifact_hashes(session_dir(state["id"]), phase["artifacts"])
+            view["artifact_check"] = validate_artifacts(session_dir(state["id"]), phase, state)
         if "practice" in view["allowed_actions"]:
             view["practice"] = [workbench(number).public_question(item) for number, item in practice_items(phase, state)]
     released = state["order"][:state["order"].index(state["current"]) + 1] if state["current"] else state["order"]
@@ -593,6 +612,7 @@ def status_result(state: dict, data: dict, result: dict | None = None, view_phas
                 phase=view, completion=completion(state, data), result=result,
                 current_phase_id=state["current"],
                 released_phases=[dict(id=name, status=state["phases"][name]["status"]) for name in released],
+                reviews=review_statuses(state, data),
                 workspace=f"work/{state['id']}")
 
 
@@ -619,7 +639,152 @@ def require_text(value, label="text") -> str:
 
 
 def artifact_hashes(directory: Path, names: list[str]) -> dict:
-    return {name: hashlib.sha256(session_file(directory, name).read_bytes()).hexdigest() for name in names}
+    hashes = {}
+    for name in names:
+        path = session_file(directory, name)
+        hashes[name] = hashlib.sha256(path.read_bytes()).hexdigest() if path.is_file() and path.stat().st_size <= 2 * 1024 * 1024 else None
+    return hashes
+
+
+REVIEW_SECTIONS = {
+    "c01.review": {"packet-path.md": ["Healthy Path — Challenge 1"]},
+    "c02.review": {"packet-path.md": ["Transfer Diagnosis — Challenge 2"]},
+    "c03.review": {"packet-path.md": ["Link Failure — Challenge 3"]},
+    "c04.review": {"architecture.md": ["Boundary Map — Challenge 4", "Two-Token Decision"]},
+    "c05.review": {"incident.md": ["Investigation — Challenge 5"]},
+    "c06.review": {"packet-path.md": ["Capstone Revision"], "architecture.md": ["Capstone Revision"], "incident.md": ["Shift Handoff — Challenge 6"]},
+    "exit.review": {"incident.md": ["Individual Exit"]},
+}
+
+
+def markdown_sections(text: str) -> dict[str, str]:
+    parts = re.split(r"^## (.+)\n", text.replace("\r\n", "\n"), flags=re.M)
+    names = parts[1::2]
+    if len(names) != len(set(names)):
+        raise DeliveryError("Duplicate artifact section heading")
+    return dict(zip(names, parts[2::2]))
+
+
+def artifact_text(directory: Path, name: str) -> str:
+    path = session_file(directory, name)
+    if not path.is_file() or path.stat().st_size > 2 * 1024 * 1024:
+        raise DeliveryError(f"{name} is missing or exceeds 2 MiB")
+    with path.open(encoding="utf-8", newline="") as handle:
+        return handle.read()
+
+
+def ledger_errors(text: str, state: dict, require_capstone: bool = False) -> list[str]:
+    errors, identifiers, original, main_case_count = [], set(), 0, 0
+    reader = csv.DictReader(io.StringIO(text), strict=True)
+    if reader.fieldnames != workbench(3).LEDGER_FIELDS:
+        return ["Ledger must retain the exact ten-field header"]
+    try:
+        for number, row in enumerate(reader, 2):
+            prefix = f"Ledger row {number}: "
+            if None in row or any(not isinstance(value, str) or not value.strip() for value in row.values()):
+                errors.append(prefix + "fill all ten fields; use unknown for missing observations")
+                continue
+            source, evidence_id = row["source"], row["evidence_id"]
+            if evidence_id in identifiers:
+                errors.append(prefix + "duplicate evidence ID")
+            identifiers.add(evidence_id)
+            try:
+                if source in workbench(3).LOGS.values():
+                    if not evidence_id.startswith(source + "#"):
+                        raise ValueError("use source-filename#record-number as evidence_id")
+                    record_number = int(evidence_id.rsplit("#", 1)[1])
+                    records = workbench(3).read_jsonl(source)
+                    if not 1 <= record_number <= len(records):
+                        raise ValueError("record number is outside the source")
+                    record = records[record_number - 1]
+                    original += 1
+                elif source in {f"challenges/case-{letter}.json" for letter in ("a", "b")}:
+                    main = source == f"challenges/case-{state['case'].lower()}.json"
+                    released = state["current"] is None or state["order"].index(state["current"]) >= state["order"].index("exit.answer")
+                    if not main and not released:
+                        raise ValueError("the reserved exit case has not been released")
+                    case = workbench(1).read_json(source)
+                    record = next((r for r in case["observations"] if r["id"] == evidence_id), None)
+                    if record is None:
+                        raise ValueError("unknown case observation ID")
+                    main_case_count += int(main)
+                else:
+                    raise ValueError("use an original incident JSONL source or an assigned case file")
+                raw = record.get("time", record.get("start"))
+                if row["raw_time"] != raw:
+                    raise ValueError("raw_time must preserve the referenced record's timestamp")
+                normalized = workbench(3).parse_time(row["normalized_time"])
+                if normalized.utcoffset() is None or normalized.utcoffset().total_seconds() != 0 or normalized != workbench(3).parse_time(raw):
+                    raise ValueError("normalized_time must represent that same instant in UTC")
+                if row["classification"].lower() not in {"observed", "inferred", "hypothesized", "unknown"}:
+                    raise ValueError("unknown evidence classification")
+            except (ValueError, TypeError, KeyError) as error:
+                errors.append(prefix + str(error))
+    except csv.Error as error:
+        errors.append(f"Invalid ledger CSV: {error}")
+    if not 6 <= original <= 8:
+        errors.append("Select six to eight original incident records; keep case rows additional")
+    if require_capstone and not main_case_count:
+        errors.append("Add at least one observation from the assigned main capstone")
+    return errors
+
+
+def validate_artifacts(directory: Path, phase: dict, state: dict) -> dict:
+    errors = []
+    for name, headings in REVIEW_SECTIONS.get(phase["id"], {}).items():
+        try:
+            sections = markdown_sections(artifact_text(directory, name))
+            original = markdown_sections((ROOT / ARTIFACTS[name]).read_text())
+            for heading in headings:
+                body = sections.get(heading, "")
+                if not body.strip() or body.strip() == original[heading].strip():
+                    errors.append(f"{name}: complete the {heading} section")
+                elif "___" in body or re.search(r"\|[ \t]*\|", body):
+                    errors.append(f"{name}: fill placeholders and empty table cells in {heading}; unknown with a reason is acceptable")
+                if phase["id"] == "c06.review" and f"{state['case']}-v1" not in body:
+                    errors.append(f"{name}: identify the assigned main case in {heading}")
+            marker = "narrative" if phase["id"] == "c05.review" else "handoff" if phase["id"] == "c06.review" else None
+            if marker and name == "incident.md":
+                matches = re.findall(rf"<!-- {marker}:start -->\n(.*?)\n<!-- {marker}:end -->", artifact_text(directory, name).replace("\r\n", "\n"), re.S)
+                if len(matches) != 1 or not matches[0].strip() or len(matches[0].split()) > 150:
+                    errors.append(f"incident.md: preserve one {marker} start/end pair and write 1–150 words inside it")
+        except (OSError, ValueError, DeliveryError) as error:
+            errors.append(str(error))
+    if "evidence-ledger.csv" in phase["artifacts"]:
+        try:
+            errors.extend(ledger_errors(artifact_text(directory, "evidence-ledger.csv"), state, phase["id"] == "c06.review"))
+        except (OSError, ValueError, DeliveryError) as error:
+            errors.append(str(error))
+    return dict(valid=not errors, errors=errors,
+                scope="Structure and references only; the rubric assesses reasoning.")
+
+
+def response_hash(state: dict, block: str) -> str:
+    relevant = {name: {key: value[key] for key in ("submissions", "checks", "status")}
+                for name, value in state["phases"].items() if name.startswith(block + ".") and name != block + ".review" and name != "exit.feedback"}
+    return hashlib.sha256(json.dumps(relevant, sort_keys=True).encode()).hexdigest()
+
+
+def review_statuses(state: dict, data: dict) -> dict:
+    reports = {}
+    directory = session_dir(state["id"])
+    for phase in data["phases"]:
+        if phase["kind"] != "review" or not phase["implemented"]:
+            continue
+        records = state["phases"][phase["id"]]["reviews"]
+        current_hashes = artifact_hashes(directory, phase["artifacts"]) if records else {}
+        reports[phase["id"]] = {}
+        for reviewer in ("self", "facilitator"):
+            matches = [review for review in records if review["reviewer"] == reviewer]
+            if not matches:
+                report = dict(status="pending", valid_pass=False)
+            else:
+                latest = matches[-1]
+                stale = latest["artifact_hashes"] != current_hashes or latest["response_sha256"] != response_hash(state, phase["block"])
+                report = dict(status="stale" if stale else "passed" if latest["passed"] else "needs_revision",
+                              valid_pass=latest["passed"] and not stale, scores=latest["scores"], at=latest["at"])
+            reports[phase["id"]][reviewer] = report
+    return reports
 
 
 def act(ident: str, request: dict) -> dict:
@@ -697,12 +862,20 @@ def act(ident: str, request: dict) -> dict:
             if (payload.get("reviewer") not in ("self", "facilitator") or not isinstance(scores, dict)
                     or set(scores) != set(DIMENSIONS) or any(type(v) is not int or not 0 <= v <= 2 for v in scores.values())):
                 raise DeliveryError("Review needs reviewer self/facilitator and four integer scores from 0 to 2")
+            current_hashes = artifact_hashes(directory, phase["artifacts"])
+            if payload.get("expected_artifact_hashes") != current_hashes:
+                raise DeliveryError("Artifact versions changed or hashes were omitted; fetch status and review the current files", 3)
             review = dict(at=now(), reviewer=payload["reviewer"], scores=scores,
                           feedback=require_text(payload.get("feedback"), "feedback"),
-                          artifact_hashes=artifact_hashes(directory, phase["artifacts"]))
-            review["passed"] = sum(scores.values()) >= 6 and min(scores.values()) > 0
+                          artifact_hashes=current_hashes,
+                          response_sha256=response_hash(state, phase["block"]),
+                          artifact_check=validate_artifacts(directory, phase, state))
+            review["passed"] = sum(scores.values()) >= 6 and min(scores.values()) > 0 and review["artifact_check"]["valid"]
+            if current_hashes != artifact_hashes(directory, phase["artifacts"]):
+                raise DeliveryError("Artifacts changed during review; fetch status and retry", 3)
             progress["reviews"].append(review)
             result["learning_result"] = "reviewed" if review["passed"] else "needs_revision"
+            result["artifact_check"] = review["artifact_check"]
         elif action == "feedback":
             for key in ("wanted_to_know", "manageable"):
                 if payload.get(key) is not None and (type(payload[key]) is not int or not 1 <= payload[key] <= 5):
@@ -758,13 +931,64 @@ def act(ident: str, request: dict) -> dict:
         return response
 
 
-def export_session(ident: str) -> dict:
+def export_session(ident: str, include_artifacts: bool = False) -> dict:
     data = definition()
-    state = load_state(session_dir(ident), data)
-    return dict(protocol_version=1, status="ok", session_id=ident, versions=state["versions"],
-                completion=completion(state, data),
-                phases=[dict(id=name, status=p["status"], checks=p["checks"], hints=p["hints"],
-                             revealed=p["exposed"], attempts=len(p["submissions"])) for name, p in state["phases"].items()])
+    directory = session_dir(ident)
+    state = load_state(directory, data)
+    result = dict(protocol_version=1, status="ok", session_id=ident, revision=state["revision"], versions=state["versions"],
+                  mode=state["mode"], pair_label=state["pair_label"], main_case=state["case"], exit_case=other_case(state),
+                  created_at=state["created_at"], updated_at=state["updated_at"],
+                  completion=completion(state, data), reviews=review_statuses(state, data),
+                  review_history={name: [dict(at=r["at"], reviewer=r["reviewer"], scores=r["scores"], passed_at_review=r["passed"], artifact_hashes=r["artifact_hashes"])
+                                        for r in p["reviews"]] for name, p in state["phases"].items() if p["reviews"]},
+                  artifact_hashes=artifact_hashes(directory, list(ARTIFACTS)),
+                  phases=[dict(id=name, status=p["status"], checks=p["checks"], hints=p["hints"],
+                               revealed=p["exposed"], attempts=len(p["submissions"]),
+                               self_reported_minutes=p.get("self_reported_minutes"),
+                               practice_attempts=len(p.get("practice", []))) for name, p in state["phases"].items()],
+                  feedback={key: state["phases"]["exit.feedback"].get("feedback", {}).get(key) for key in ("wanted_to_know", "manageable")},
+                  included_files=[], timing_note="Timestamps and self-reported durations do not measure active learning.")
+    if include_artifacts:
+        result["artifacts"] = {name: artifact_text(directory, name) for name in ARTIFACTS}
+        if {name: hashlib.sha256(text.encode("utf-8")).hexdigest() for name, text in result["artifacts"].items()} != result["artifact_hashes"]:
+            raise DeliveryError("Artifacts changed during export; retry", 3)
+        result["included_files"] = list(ARTIFACTS)
+        result["responses"] = {name: {key: p.get(key) for key in ("submissions", "reviews", "skip_reason", "practice", "feedback")}
+                               for name, p in state["phases"].items()}
+    return result
+
+
+def format_export(result: dict, format_name: str) -> str:
+    if format_name == "json":
+        return json.dumps(result, indent=2, ensure_ascii=False, allow_nan=False) + "\n"
+    if format_name == "csv":
+        stream = io.StringIO(newline="")
+        writer = csv.writer(stream)
+        writer.writerow(["session", "phase", "status", "attempts", "hints", "revealed", "correct", "checkpoints", "self_reported_minutes", "self_review", "facilitator_review"])
+        for phase in result["phases"]:
+            reviews = result["reviews"].get(phase["id"], {})
+            writer.writerow([result["session_id"], phase["id"], phase["status"], phase["attempts"], phase["hints"], phase["revealed"],
+                             sum(check["correct"] for check in phase["checks"].values()), len(phase["checks"]), phase["self_reported_minutes"],
+                             reviews.get("self", {}).get("status", ""), reviews.get("facilitator", {}).get("status", "")])
+        return stream.getvalue()
+    lines = [f"# Course Review: {result['session_id']}", "", f"Course version: {result['versions']['course']}",
+             f"Content SHA-256: {result['versions']['content_sha256']}", f"Fixture manifest SHA-256: {result['versions']['fixtures_sha256']}", "",
+             f"Main case: {result['main_case']}; individual exit: {result['exit_case']}.", "",
+             "These are local records. Self and facilitator reviews are separate.", result["timing_note"], ""]
+    lines.extend(f"- {key.replace('_', ' ')}: {value}" for key, value in result["completion"].items())
+    lines += ["", "| Phase | Status | Attempts | Hints | Self review | Facilitator review |", "| --- | --- | ---: | ---: | --- | --- |"]
+    for phase in result["phases"]:
+        reviews = result["reviews"].get(phase["id"], {})
+        lines.append(f"| {phase['id']} | {phase['status']} | {phase['attempts']} | {phase['hints']} | {reviews.get('self', {}).get('status', '')} | {reviews.get('facilitator', {}).get('status', '')} |")
+    lines += ["", f"Wanted to know what happened: {result['feedback']['wanted_to_know']}", f"Manageable challenge: {result['feedback']['manageable']}"]
+    for name, content in result.get("artifacts", {}).items():
+        fence = "`" * (max((len(match) for match in re.findall(r"`+", content)), default=2) + 1)
+        lines += ["", f"## Included File: {name}", "", fence, content.rstrip(), fence]
+    if "responses" in result:
+        raw = json.dumps(result["responses"], indent=2, ensure_ascii=False)
+        fence = "`" * max(3, max((len(match) for match in re.findall(r"`+", raw)), default=2) + 1)
+        lines += ["", "## Included Response and Review History", "", fence + "json", raw, fence]
+    return "\n".join(lines) + "\n"
 
 
 class JsonParser(argparse.ArgumentParser):
@@ -837,7 +1061,8 @@ def learn(ident: str, mode: str = "solo", case: str = "A", pair_label: str | Non
                     print("Score mechanism, evidence, uncertainty, and action: 0 missing, 1 partial, 2 demonstrated.")
                     reviewer = input("Reviewer: self or facilitator [self]: ").strip() or "self"
                     scores = {name: int(input(f"{name} (0–2): ")) for name in DIMENSIONS}
-                    payload = dict(reviewer=reviewer, scores=scores, feedback=input("Feedback and next revision: "))
+                    payload = dict(reviewer=reviewer, scores=scores, feedback=input("Feedback and next revision: "),
+                                   expected_artifact_hashes=phase["artifact_hashes"])
                 elif operation == "feedback":
                     for key, prompt in (("wanted_to_know", "I wanted to find out what happened next"), ("manageable", "The challenge felt manageable")):
                         value = input(f"{prompt} (1–5, Enter to omit): ").strip()
@@ -866,6 +1091,8 @@ def learn(ident: str, mode: str = "solo", case: str = "A", pair_label: str | Non
                     print(f"{check['id']}: {check['learning_result']} · {check['feedback']}")
                 if result.get("learning_result"):
                     print(result["learning_result"].replace("_", " "))
+                for error in result.get("artifact_check", {}).get("errors", []):
+                    print(f"  {error}")
                 if operation in ("continue", "skip"):
                     target = None
             except (DeliveryError, OSError, ValueError) as error:
@@ -904,7 +1131,9 @@ def cli(argv: list[str]) -> int:
             if name == "status":
                 operation.add_argument("--phase", help="revisit a released phase without advancing")
             if name == "export":
-                operation.add_argument("--format", choices=("json",), default="json")
+                operation.add_argument("--format", choices=("json", "markdown", "csv"), default="json")
+                operation.add_argument("--include-artifacts", action="store_true", help="include answers, review feedback, and the four learner files")
+                operation.add_argument("--output", help="new filename under this session's exports directory; never overwrites")
         args = parser.parse_args(argv)
         if args.command == "learn":
             return learn(args.id, args.mode, args.case, args.pair_label)
@@ -918,7 +1147,26 @@ def cli(argv: list[str]) -> int:
             elif args.operation == "status":
                 result = session_status(args.id, args.phase)
             elif args.operation == "export":
-                result = export_session(args.id)
+                json_mode = args.json or args.format == "json"
+                if args.json and args.format != "json":
+                    raise DeliveryError("--json requires --format json")
+                if args.include_artifacts and args.format == "csv":
+                    raise DeliveryError("Use JSON or Markdown to include learner artifacts and answers")
+                result = export_session(args.id, args.include_artifacts)
+                output = format_export(result, args.format)
+                if args.output:
+                    directory = session_dir(args.id)
+                    target = confined(directory / "exports", args.output)
+                    target = session_file(directory, str(target.relative_to(directory)))
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    with target.open("x", encoding="utf-8", newline="") as handle:
+                        handle.write(output)
+                    result = dict(protocol_version=1, status="ok", output=str(target.relative_to(directory)),
+                                  included_files=result["included_files"])
+                    print(json.dumps(result) if json_mode else f"Wrote {target}")
+                else:
+                    print(output, end="")
+                return 0
             else:
                 with contextlib.nullcontext(sys.stdin) if args.input == "-" else open(args.input, encoding="utf-8") as handle:
                     raw = handle.read(131073)

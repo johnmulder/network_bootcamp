@@ -2,9 +2,11 @@
 
 import copy
 import contextlib
+import csv
 import io
 import json
 import shlex
+import re
 import subprocess
 import sys
 import tempfile
@@ -35,6 +37,32 @@ def answers_for(phase, main_case):
     answers = {**ANSWERS, "case.id": f"{letter}-v1", "case.change": "10.20.0.0/16" if letter == "A" else "ISOLATED",
                "case.lookup": "no route", "case.observation": "A3" if letter == "A" else "B2"}
     return {item["id"]: answers[item["id"]] for item in phase["checkpoints"]}
+
+
+def fill_rehearsal_artifacts(directory, case="A"):
+    """Synthetic structural fixtures, never examples of graded learner prose."""
+    for name in ("packet-path.md", "architecture.md", "incident.md"):
+        path = directory / name
+        text = (d.ROOT / d.ARTIFACTS[name]).read_text().replace("___", f"{case}-v1 PRIVATE REHEARSAL TEXT")
+        text = re.sub(r"(?<=\|)[ \t]*(?=\|)", " Unknown; rehearsal entry ", text)
+        path.write_text(text)
+    with (directory / "evidence-ledger.csv").open("w", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=d.workbench(3).LEDGER_FIELDS)
+        writer.writeheader()
+        references = [("flows", 1), ("endpoint", 1), ("endpoint", 2), ("auth", 2), ("firewall", 1), ("siem", 1)]
+        rows = []
+        for source, number in references:
+            filename = f"incident/{source}.jsonl"
+            record = d.workbench(3).read_jsonl(filename)[number - 1]
+            rows.append((filename, f"{filename}#{number}", record.get("time", record.get("start"))))
+        data = d.workbench(1).read_json(f"challenges/case-{case.lower()}.json")
+        decisive = next(r for r in data["observations"] if r["id"] == ("A3" if case == "A" else "B2"))
+        rows.append((f"challenges/case-{case.lower()}.json", decisive["id"], decisive["time"]))
+        for source, evidence_id, raw in rows:
+            writer.writerow(dict(evidence_id=evidence_id, source=source, collection_point="unknown",
+                                 raw_time=raw, normalized_time=raw, entity="fixture entity",
+                                 observation="Scripted observation, not a learner result", classification="observed",
+                                 limitation="Reasoning quality requires human review", confidence="medium"))
 
 
 class DefinitionTests(unittest.TestCase):
@@ -98,6 +126,20 @@ class SessionTests(unittest.TestCase):
     def reach_transfer(self):
         while self.view["phase"]["id"] != "c02.predict":
             self.act("skip", {"reason": "Test setup for transfer slice"})
+
+    def finish_day(self):
+        while self.view["phase"]:
+            phase = self.view["phase"]
+            if phase["kind"] in ("prediction", "reflection", "checkpoint"):
+                self.act("answer", {"text": "PRIVATE REHEARSAL TEXT: inspect the record and qualify the claim.", "answers": answers_for(phase, "A")})
+            elif phase["kind"] == "feedback":
+                self.act("feedback", {})
+            self.act("continue")
+
+    def review(self, phase, reviewer="self", score=2, hashes=None):
+        view = d.session_status("learner", phase)
+        return self.act("review", dict(reviewer=reviewer, scores=dict.fromkeys(d.DIMENSIONS, score),
+                        feedback="PRIVATE REHEARSAL TEXT: synthetic review", expected_artifact_hashes=hashes if hashes is not None else view["phase"]["artifact_hashes"]), phase)
 
     def test_transfer_prediction_correction_resume_and_retry(self):
         self.reach_transfer()
@@ -228,6 +270,59 @@ class SessionTests(unittest.TestCase):
         self.assertEqual(resumed["phase"]["id"], "opening.predict")
         self.assertEqual(resumed["phase"]["progress"]["submissions"][0]["text"], "My first prediction.")
         self.assertIn("Resume with ./course learn", output.getvalue())
+
+    def test_artifacts_review_revisions_staleness_and_private_exports(self):
+        self.finish_day()
+        self.assertFalse(self.view["completion"]["required_work_recorded"])
+        blank = self.review("c01.review")
+        self.assertEqual(blank["result"]["learning_result"], "needs_revision")
+        self.assertTrue(blank["result"]["artifact_check"]["errors"])
+        directory = d.session_dir("learner")
+        fill_rehearsal_artifacts(directory)
+        self.review("c01.review", score=0)
+        for phase in d.REVIEW_SECTIONS:
+            self.review(phase)
+        status = d.session_status("learner")
+        self.assertTrue(status["completion"]["self_reviewed_completion"])
+        self.assertFalse(status["completion"]["facilitator_reviewed_completion"])
+        for phase in d.REVIEW_SECTIONS:
+            self.review(phase, reviewer="facilitator")
+        self.assertTrue(d.session_status("learner")["completion"]["facilitator_reviewed_completion"])
+        summary = d.export_session("learner")
+        self.assertNotIn("PRIVATE REHEARSAL TEXT", json.dumps(summary))
+        self.assertEqual(len(summary["review_history"]["c01.review"]), 4)
+        bundle = d.export_session("learner", True)
+        self.assertIn("PRIVATE REHEARSAL TEXT", json.dumps(bundle))
+        self.assertEqual(set(bundle["included_files"]), set(d.ARTIFACTS))
+        csv_rows = list(csv.DictReader(io.StringIO(d.format_export(summary, "csv"))))
+        self.assertEqual(len(csv_rows), 36)
+        self.assertIn("# Course Review: learner", d.format_export(bundle, "markdown"))
+        hashes = d.session_status("learner", "c01.review")["phase"]["artifact_hashes"]
+        path = directory / "packet-path.md"
+        path.write_text(path.read_text() + "\nRevised artifact.\n")
+        stale = d.session_status("learner")
+        self.assertFalse(stale["completion"]["self_reviewed_completion"])
+        self.assertEqual(stale["reviews"]["c01.review"]["self"]["status"], "stale")
+        with self.assertRaisesRegex(d.DeliveryError, "Artifact versions"):
+            self.review("c01.review", hashes=hashes)
+
+    def test_ledger_references_timestamps_and_narrative_limits(self):
+        self.finish_day()
+        directory = d.session_dir("learner")
+        fill_rehearsal_artifacts(directory)
+        state = d.load_state(directory, d.definition())
+        phase = d.phase_by_id(d.definition(), "c05.review")
+        self.assertTrue(d.validate_artifacts(directory, phase, state)["valid"])
+        ledger = (directory / "evidence-ledger.csv").read_text()
+        for changed in (ledger.replace("incident/flows.jsonl#1", "incident/flows.jsonl#99"),
+                        ledger.replace("observed", "proven-attack"),
+                        ledger.replace("2026-08-15", "2027-08-15"),
+                        ledger.replace("evidence_id,source", "id,source")):
+            self.assertTrue(d.ledger_errors(changed, state))
+        path = directory / "incident.md"
+        text = path.read_text()
+        path.write_text(re.sub(r"(?<=<!-- narrative:start -->\n).*?(?=\n<!-- narrative:end -->)", "word " * 151, text, flags=re.S))
+        self.assertTrue(any("1–150" in error for error in d.validate_artifacts(directory, phase, state)["errors"]))
 
 
 class HeadlessTests(unittest.TestCase):

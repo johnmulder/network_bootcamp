@@ -86,6 +86,12 @@ not supplied. Do not invent sensor coverage, retention, or independent clocks.
 Build a selected timeline, two plausible explanations, confidence per claim,
 and a next evidence request. Write a narrative of at most 150 words.
 
+For automatic reference checks, use IDs such as `incident/firewall.jsonl#1`
+with source `incident/firewall.jsonl`. The suffix is the original record number,
+starting at 1. Preserve the record's exact raw timestamp and supply its UTC
+equivalent. Put the narrative inside the template's narrative markers. These
+checks validate structure and references; the rubric evaluates your claims.
+
 For a packet/log comparison, inspect a few selected records:
 
 ```sh

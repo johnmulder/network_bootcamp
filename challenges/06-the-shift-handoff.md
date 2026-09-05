@@ -42,6 +42,9 @@ Update each deliverable under a heading with the exact case ID:
 In pairs, each learner covers two viewpoints, then swaps explanations. Alone,
 write one sentence from each viewpoint. Use case-specific observation IDs in
 the ledger; do not merge the drill with the earlier incident timeline.
+Use the observation's supplied ID as `evidence_id` and the assigned case's
+exact filename as `source`. Keep six to eight original incident rows and
+append the assigned case's rows.
 <!-- delivery:end c06.analyze -->
 
 <!-- delivery:start c06.handoff -->
