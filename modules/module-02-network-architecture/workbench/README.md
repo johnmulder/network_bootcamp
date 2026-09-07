@@ -91,7 +91,7 @@ jq -c '.' labs/fixtures/architecture/failures.jsonl
 
 | Label | Use it when | Example |
 | --- | --- | --- |
-| Confirmed | A fixture directly records the fact | `F4` is denied at `ot-firewall-a` |
+| Confirmed | A fixture directly records the fact | `F4` is intended to be denied at `ot-firewall-a` |
 | Interpretation | A rule is correctly applied to recorded facts | `/8` beats the default route |
 | Assumption | The design expects a fact not present in evidence | The standby firewall has current state |
 | Unknown | Required evidence is absent | Loss on `internet-vpn-1` |
@@ -109,7 +109,7 @@ Compare `F3` and `F4` in `traffic-flows.csv`:
 1. Both target `10.0.30.50` over TCP/443.
 2. `F3` begins at `10.0.20.40` and is intended to be allowed.
 3. `F4` begins at `10.0.10.23` and is intended to be denied.
-4. Both decisions occur at `ot-firewall-a`.
+4. The table assigns both intended decisions to `ot-firewall-a`.
 
 Confirmed: the policy table distinguishes the two sources. Unknown: the table
 does not prove that the live firewall currently has the intended rules or

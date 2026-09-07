@@ -75,8 +75,9 @@ only when driven by a model.
 
 ## Expected Evidence
 
-* The healthy baseline completes ARP, DNS, TCP, HTTP response, and orderly TCP
-  close.
+* The healthy baseline shows ARP, DNS, a TCP handshake, and an HTTP response.
+  Frames 10–11 begin connection closure, but the final server ACK is absent;
+  the capture does not establish completed TCP closure.
 
 * The MTU case completes the handshake but fails after a 1400-byte payload and
   ICMP MTU 1200 response.

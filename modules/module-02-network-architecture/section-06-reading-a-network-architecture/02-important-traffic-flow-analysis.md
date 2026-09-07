@@ -75,8 +75,9 @@ flows are traced through it in both directions.
 * The diagram establishes named zones and relationships but relies on the flow
   table and VRF file for policy and route facts.
 
-* Flow `F3` is the only listed enterprise-to-OT application flow allowed
-  directly; flow `F4` is denied.
+* The policy table intends direct enterprise-to-OT application flow `F3` to be
+  allowed and `F4` to be denied. It does not establish live enforcement,
+  complete routing, or successful delivery.
 
 * The management path uses a distinct VRF and `jump-host-policy`, which must be
   shown as a management and trust boundary.

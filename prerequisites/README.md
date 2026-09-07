@@ -47,12 +47,17 @@ matching course copy; maintainers can deliberately regenerate them with
 `python3 labs/build_fixtures.py`. Saved delivery sessions reject changed course
 or evidence versions rather than mixing results from different versions.
 
-For the optional Zeek and iperf3 reference exercises:
+For the optional
+[Zeek reference exercise](../modules/module-03-incident-response-and-integration/section-02-network-security-telemetry/04-network-security-monitoring.md),
+install and check the extended tools:
 
 ```sh
 ./prerequisites/setup.sh --extended
 ./prerequisites/setup.sh --check --extended
 ```
+
+The extended set also includes iperf3 for self-directed local experiments.
+There is no assigned iperf3 exercise in this course.
 
 ## Tool Roles
 
@@ -62,7 +67,7 @@ For the optional Zeek and iperf3 reference exercises:
 | TShark | Decodes saved packet captures and optional local captures | Core | GPL-2.0-or-later |
 | Zeek | Produces and interprets network-security telemetry | Extended study | BSD-3-Clause |
 | jq | Filters JSON fixtures and structured logs | Core | MIT |
-| iperf3 | Generates TCP or UDP traffic for optional local experiments | Optional practice | BSD-3-Clause |
+| iperf3 | Traffic generation for self-directed local experiments; no assigned course exercise | Included with `--extended` | BSD-3-Clause |
 | macOS BSD tools | Inspect routes, neighbors, sockets, paths, and packet captures | Core and optional practice | Open source, included with macOS |
 
 Homebrew installs the command-line Wireshark formula for TShark; no GUI is

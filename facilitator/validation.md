@@ -1,8 +1,9 @@
 # Implementation Validation
 
-The local delivery implementation is complete. This records technical checks
-performed on September 5, 2026, not learner-pilot results or proof that a class
-will finish on schedule.
+The local delivery implementation is complete. This records the initial
+technical checks on September 5, 2026, and the documentation consistency
+follow-up on September 7. These are not learner-pilot results or proof that a
+class will finish on schedule.
 
 ## Checks Performed
 
@@ -43,6 +44,30 @@ will finish on schedule.
   passed. The CI workflow parses with both portable and Mac delivery jobs.
   Those jobs are configured but have not been observed running on GitHub.
 
+## Documentation Consistency Follow-Up — September 7, 2026
+
+The agenda now defines one completion policy, linked from student, facilitator,
+pilot, and delivery instructions. It distinguishes finished delivery, passing
+rubric reviews, and independent completion, including corrections after worked
+reveals. The opening lesson presents that distinction before learners choose
+a reveal. Capstone instructions preserve the template headings and put the
+case ID in its existing fields.
+
+All six troubleshooting guides now describe the observed start of TCP closure
+and the missing final server ACK. The architecture workbench and four related
+guides distinguish intended permission from observed enforcement. The module
+indexes identify the conceptual VXLAN/EVPN exception. Prerequisites link the
+existing Zeek exercise and explicitly identify iperf3 as an extended tool with
+no assigned course exercise.
+
+After these documentation changes, all 57 tests passed, as did course
+verification, all 25 real-tool evidence views, both complete fresh-process
+journeys, Markdown lint for 134 files, local links/anchors, and Git whitespace
+checks. The assessment code, fixtures, and schedule were unchanged. The archive
+rehearsal above records the September 5 build; no replacement archive or remote
+CI run was produced for this documentation follow-up. Learner-pilot validation
+remains outstanding.
+
 ## Reproduce the Main Checks
 
 Run from the repository root on a Mac with core tools installed:
@@ -70,9 +95,10 @@ instead of `--journey`. See the [delivery guide](../delivery/README.md) for
 request, recovery, review, and export contracts.
 
 Markdown lint is a maintainer tool, not a student prerequisite. Optional
-Zeek/iperf3 exercises use `setup.sh --extended`; they were not installed or
-tested for this core delivery validation. CI dependency installation occurs
-before the offline course checks. No release was published.
+Zeek reference work uses `setup.sh --extended`, which also includes iperf3 for
+self-directed experiments. Neither tool was installed or tested for this core
+delivery validation, and there is no assigned iperf3 exercise. CI dependency
+installation occurs before the offline course checks. No release was published.
 
 ## Learner Validation Still Needed
 

@@ -4,11 +4,14 @@ These modules turn the [course agenda](../agenda.md) into exact teaching and
 practice instructions. Everything runs on one Mac using the open-source tools
 described in the [prerequisites](../prerequisites/README.md).
 
-Each subsection guide names its evidence, provides runnable commands, explains
-the expected observations, assigns a unique submission path under `work/`, and
-defines completion. The [local lab dataset](../labs/README.md) supplies the
-shared evidence, and each module includes a Python workbench for immediate
-feedback.
+Most subsection guides name their evidence, provide runnable commands, explain
+the expected observations, assign a unique submission path under `work/`, and
+define completion. The
+[VXLAN/EVPN reference](module-02-network-architecture/section-05-modern-data-center-and-cloud-networking/02-underlays-overlays-vxlan-and-evpn.md)
+is a conceptual exception: it uses a hypothetical diagram and requests no
+separate submission. The [local lab dataset](../labs/README.md) supplies the
+evidence for practical exercises, and each module includes a Python workbench
+for immediate feedback.
 
 ## One-Day Route and Extended Study
 
@@ -37,7 +40,8 @@ Each module's final artifact becomes useful context for the next:
 
 ## Learning Workflow
 
-For optional extended study, use this sequence for a selected subsection:
+For optional extended study with saved evidence, use this sequence for a
+selected subsection. Conceptual references provide their own self-checks.
 
 1. **Orient:** Read the guide's objective, mental model, and named fixture
    paths before running commands.

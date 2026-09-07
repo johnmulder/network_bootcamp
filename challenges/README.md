@@ -39,6 +39,13 @@ answers before continuing. Consult the [reference card](reference.md) for
 unfamiliar terms.
 The factory and its service requirements are fictional; the captures are
 constructed teaching evidence, not records of a real attack.
+
+Hints and corrections after factual feedback retain independence. A worked
+reveal makes unanswered or incorrect checkpoints in that block demonstrated;
+you can finish the activities, but passing rubric reviews will not restore
+independent completion. Read the
+[completion policy](../agenda.md#completion-and-feedback) before choosing a
+worked reveal. It also explains the seven reviews and the required artifacts.
 <!-- delivery:end opening.reflect -->
 
 ## Prepare Three Deliverables

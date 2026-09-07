@@ -175,7 +175,9 @@ an annotated architecture diagram, and an evidence-backed incident narrative.
 Detailed readings and exercises are available in the
 [course module directory](modules/README.md).
 
-All exercises use the checksum-verified [local lab dataset](labs/README.md).
+Evidence exercises use the checksum-verified [local lab dataset](labs/README.md).
+Conceptual references identify hypothetical examples and the evidence that is
+not supplied; optional loopback observations are labeled separately.
 
 ## Reference Catalog
 
@@ -259,8 +261,9 @@ routes were not selected.
 * Dependencies between naming, transport, and application behavior
 
 **Exercise:** Use `labs/fixtures/pcaps/foundations.pcap` to trace the DNS query,
-TCP connection establishment, HTTP request and response, and connection
-teardown. Identify every dependency and the frames that prove it.
+TCP connection establishment, HTTP request and response, and the beginning of
+connection teardown. Identify the observed dependencies and their frames, and
+note that the capture omits the final server ACK needed to establish closure.
 
 **Output:** A dependency chain showing the traffic generated, the state created,
 and the evidence available at each step.

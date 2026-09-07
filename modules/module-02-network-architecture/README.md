@@ -2,8 +2,10 @@
 
 > **Theme:** Why networks are designed the way they are.
 
-Each subsection guide explains the technical model, then provides exact local
-commands, expected evidence, a submission path, and a completion standard.
+The subsection guides explain technical models and provide local evidence
+exercises with submission paths and completion standards. The
+[VXLAN/EVPN guide](section-05-modern-data-center-and-cloud-networking/02-underlays-overlays-vxlan-and-evpn.md)
+is a conceptual reference with a hypothetical diagram and a self-check.
 
 ## One-Day Route
 

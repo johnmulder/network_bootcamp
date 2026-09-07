@@ -196,8 +196,8 @@ from the learner pilot that remains to be conducted.
   and workbench relationships.
 - [Module index](modules/README.md): curriculum navigation and learning routine.
 - Module READMEs: section-by-section reading order and the relevant workbench.
-- Section guides: exact teaching instructions, evidence commands, expected
-  observations, questions, and completion checks.
+- Section guides: evidence exercises with commands and completion checks,
+  plus the explicitly conceptual VXLAN/EVPN reference.
 
 ## Maintainer Validation
 

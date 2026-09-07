@@ -9,7 +9,8 @@ submission for each of the 104 guides.
 
 - Send the prerequisites in advance; allow separate installation support time.
   Run `./prerequisites/setup.sh --check` and `./course verify`.
-  Zeek/iperf3 reference exercises additionally use setup with `--extended`.
+  The optional Zeek reference exercise uses setup with `--extended`; see the
+  [extended tool roles](../prerequisites/README.md#tool-roles).
 - Have each participant start `./course learn --id <anonymous-label>`, which
   creates the three templates and ledger. Manual delivery can still copy them
   using the one-day start instructions. Never overwrite prior learner work.
