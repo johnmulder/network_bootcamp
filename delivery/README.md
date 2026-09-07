@@ -124,8 +124,9 @@ for retry. It never runs shell text from an answer or Markdown code block.
 ## Artifacts and Review
 
 Retain the template section headings, fill empty table cells and placeholders,
-and preserve the narrative/handoff markers. Write unknown with a reason when
-evidence is absent. The incident narrative and written handoff each have a
+and preserve the narrative/handoff markers. Put the exact capstone ID in the
+existing case-ID fields, not in renamed section headings. Write unknown with a
+reason when evidence is absent. The incident narrative and written handoff have a
 150-word limit. Diagrams can be expressed as text and tables in the Markdown.
 
 The ledger retains its ten fields. Use an original filename such as
@@ -146,9 +147,9 @@ For `review`, `reviewer` is `self` or `facilitator`; `scores` maps `mechanism`,
 and copy the status response's `artifact_hashes` to `expected_artifact_hashes`.
 Also copy its `response_sha256` to `expected_response_sha256` so a review cannot
 silently assess responses changed after the reviewer read them.
-Scores are retained even when work needs revision. A valid pass needs at least
-6/8, no zero, and structurally complete artifacts. Reviewer type is a local
-label, not authenticated identity or certification.
+Scores are retained even when work needs revision. A valid rubric review needs
+at least 6/8, no zero, and structurally complete artifacts. Reviewer type is a
+local label, not authenticated identity or certification.
 
 Reviews snapshot the files and the block's submitted responses. Editing a file
 or revising those responses makes affected reviews stale. File hashes cover the
@@ -157,11 +158,29 @@ Use g in the terminal, or `status --phase c01.review` and a new review action.
 A facilitator using an exported bundle must use that bundle's artifact hashes;
 feedback for an older file version is rejected instead of applied to new work.
 
-Completion reports five separate facts: reaching the end of delivery,
-recording all required work, independently satisfying factual checks, satisfying
-all self-reviews, and satisfying all facilitator reviews. Skips, demonstrations,
-missing artifacts, pending reviews, and stale reviews cannot become a passing
-assessment merely because the process exited zero.
+The [course completion policy](../agenda.md#completion-and-feedback) applies to
+both manual and guided delivery. The JSON response reports:
+
+| Field | Requirement |
+| --- | --- |
+| `delivery_finished` | Reached the end of all 36 implemented phases; skips or demonstrations can remain. |
+| `required_work_recorded` | All phases are complete or pending rubric review, with valid artifact structure; no skipped, incomplete, or demonstrated phases remain. |
+| `objective_checks_satisfied` | Every required checkpoint has a correct independent answer. |
+| `self_reviewed_completion` | All three conditions above and passing, current self-reviews for Challenges 1–6 and the exit. |
+| `facilitator_reviewed_completion` | All three conditions above and passing, current facilitator reviews at those same seven points. |
+
+A worked reveal marks unanswered or incorrect checkpoints in the block as
+exposed. A later correct answer can advance delivery but remains demonstrated;
+repeated attempts and passing rubric reviews do not restore its independence.
+For example, revealing the payload calculation after an incorrect answer and
+then correcting it to 1160 bytes leaves `objective_checks_satisfied` false,
+even if all rubric reviews pass. Reaching the end sets `delivery_finished`
+true while both completion flags remain false. Export the learning history;
+the runner has no fresh-assessment or override operation. A facilitator's
+separate assessment of a different example belongs alongside that export.
+
+Hints and corrections without a worked reveal retain independence. Standalone
+quizzes and the optional `practice` action do not affect these completion fields.
 
 ## Local Exports
 

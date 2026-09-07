@@ -97,6 +97,8 @@ locally under `work/<session-id>/`, which Git ignores. No upload occurs.
 `python3 course.py ...` remains a supported equivalent for automation. See the
 [delivery guide](delivery/README.md) for JSON requests, version matching,
 reviews, and recovery. A successful command is not a passing assessment.
+The [completion policy](agenda.md#completion-and-feedback) distinguishes
+finished delivery, passing rubric reviews, and independent completion.
 
 ## Reference Library
 

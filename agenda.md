@@ -46,9 +46,10 @@ before class. No networking or vendor configuration experience is added as a
 hidden prerequisite. Use the pocket reference and worked first hop for novices.
 
 Follow the [one-day challenge path](challenges/README.md). Participants create
-three connected deliverables under `work/bootcamp/`: a packet-path sheet, an
-architecture assessment, and an incident dossier with the existing ten-field
-evidence ledger. The subsection library's separate submissions are optional
+three connected deliverables: a packet-path sheet, an architecture assessment,
+and an incident dossier with the existing ten-field evidence ledger. Guided
+delivery stores them under `work/<session-id>/`; manual study uses
+`work/bootcamp/`. The subsection library's separate submissions are optional
 extended study, not 104 required assignments.
 
 | Time | Teaching minutes | Required activity | Core practice |
@@ -92,18 +93,44 @@ outside the required day. The optional library remains intact.
 
 ### Completion and Feedback
 
-Score mechanism, evidence, uncertainty, and action/handoff from 0 to 2 each:
-unsupported/missing, partially demonstrated, or demonstrated with precise
-support. Complete at 6/8 with no zero after feedback and revision, plus an
-individual explanation of the reserved exit case. The
-[facilitator rubric](facilitator/README.md#assessment) defines examples.
-Multiple defensible designs and qualified unresolved conclusions can pass.
+Use the same assessment policy for guided and manual delivery. Course
+completion requires:
 
-Keep workbench quizzes low-stakes. Hints are free, predictions are private
-before discussion, and revision is encouraged. Separate student briefs from
-worked answers by reveal convention. The [pilot worksheet](facilitator/pilot.md)
-records actual timing, individual learning, and engagement; proposed targets
-are not claims of measured outcomes.
+1. Finish the required phases, including the individual exit explanation, and
+   resolve skipped work. Complete the three artifact bundles with their
+   required fields, tables, evidence references, and narrative limits.
+2. Correct all required factual checkpoints, including the opening diagnostic,
+   without using a worked answer to supply an unanswered or incorrect result.
+   The [delivery definition](delivery/course.json) identifies these checkpoints.
+3. Record a passing review for each of Challenges 1–6 and the individual exit.
+   These seven reviews assess the same three bundles as they develop; they
+   do not require seven separate deliverables. Score mechanism, evidence,
+   uncertainty, and action/handoff from 0–2 each. Each review needs at least
+   6/8 with no zero, after feedback and revision, against the current work.
+   Refresh affected reviews after editing artifacts or submitted answers.
+
+The [facilitator rubric](facilitator/README.md#assessment) defines the dimensions.
+Report self-reviewed and facilitator-reviewed completion separately; each
+requires all seven reviews from that reviewer type plus the other conditions
+above. Multiple defensible designs and qualified unresolved conclusions can
+meet the rubric. Passing a rubric review alone does not establish completion.
+
+Hints and corrections after factual feedback are encouraged and retain
+independence. A worked reveal exposes unanswered or incorrect checkpoints in
+that block. Correcting them afterward records demonstrated learning, but cannot
+turn those known answers into independent results in the same session. Finish
+the activities, retain the correction and rubric feedback, and report delivery
+finished with independent completion unmet. The runner has no fresh-assessment
+or override path; a facilitator may assess a different example separately and
+record that assessment alongside the export. Repeating known answers in a new
+session must not be presented as fresh evidence of independent attainment.
+
+The opening diagnostic is formative: revise misconceptions before continuing;
+it does not receive a rubric score. Standalone workbench quizzes and optional
+practice do not affect completion. Keep first predictions private before
+discussion. The [pilot worksheet](facilitator/pilot.md) records actual timing,
+learning, and engagement, including reviewed progress that has not met the
+independence condition. Its targets are not claims of measured outcomes.
 
 ## Lab Environment and Constraints
 

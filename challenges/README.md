@@ -34,7 +34,9 @@ Inspect this decoded observation from the transfer drill: packets 1–3 show
    SYN, SYN-ACK, ACK between `10.0.10.23` and `203.0.113.20:443`. Revise one
    hypothesis. Which unanswered question matters next?
 
-No score yet. Consult the [reference card](reference.md) for unfamiliar terms.
+The diagnostic has no rubric score. Use factual feedback to correct your
+answers before continuing. Consult the [reference card](reference.md) for
+unfamiliar terms.
 The factory and its service requirements are fictional; the captures are
 constructed teaching evidence, not records of a real attack.
 <!-- delivery:end opening.reflect -->
@@ -83,13 +85,24 @@ your mind and acknowledging uncertainty are part of the work.
 
 ## Completion
 
-Each deliverable is reviewed for mechanism, cited evidence, uncertainty, and a
-useful next action. Score each dimension 0–2: missing/unsupported, partial, or
-demonstrated. Aim for 6/8 with no zero after feedback and revision, and explain
-the individual exit case. The full rubric and worked examples are in the
-[facilitator guide](../facilitator/README.md#assessment).
+Follow the [completion policy](../agenda.md#completion-and-feedback): finish the
+required phases and artifacts, independently correct the required factual
+checkpoints, and record seven current reviews, one for each challenge and the
+individual exit. Each review needs 6/8 with no zero for mechanism, evidence,
+uncertainty, and action. Self-review and facilitator review are reported
+separately. The [facilitator guide](../facilitator/README.md#assessment) explains
+the rubric.
 
-Exact-answer workbench quizzes are optional practice, not the final grade.
+Hints and corrections are encouraged. If you reveal a worked answer before
+correctly answering a checkpoint, you can still finish the activities and
+improve your rubric scores, but that answer remains demonstrated rather than
+independent. The session then records delivery finished without independent
+completion. Keep that history; the completion policy explains separate
+reassessment. Reaching the end or earning a passing rubric score alone does
+not establish course completion.
+
+Standalone workbench quizzes are optional practice, not the required factual
+checkpoints in guided delivery.
 Open the [worked solutions](../facilitator/solutions.md) after your attempt.
 These materials use an ordinary reveal convention; nothing is locked.
 

@@ -47,6 +47,9 @@ Which command, term, or evidence selection caused avoidable friction? ___
 Targets: first observation within 15 minutes; 360 teaching minutes; at least
 210 active minutes; 80% at 6/8 with no zero after one revision; median 4/5 on
 both feedback questions. Keep individual and group results distinct.
+The rubric target measures improvement after review; it is separate from
+[independent course completion](../agenda.md#completion-and-feedback). Record
+worked reveals and the exported completion fields alongside the rubric scores.
 
 Ask each learner what dragged and where they needed more explanation. Compare
 opening and exit answers by mechanism and evidence quality using equivalent,

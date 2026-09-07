@@ -28,7 +28,10 @@ the specified flow; that does not assert global knowledge of the network.
 ## Analyze — 20 Minutes
 
 Use the case's flow, before/after state, policy conditions, and observations.
-Update each deliverable under a heading with the exact case ID:
+Keep the existing template headings: `Capstone Revision` in the packet-path
+and architecture sheets, and `Shift Handoff — Challenge 6` in the incident
+dossier. Fill their case-ID fields with the exact assigned ID, such as `A-v1`
+or `B-v1`; do not rename the headings. Update each deliverable:
 
 - **Engineering:** Trace forward and return decisions. Name the specific
   change, table, and observation that explain the behavior.
@@ -52,8 +55,9 @@ append the assigned case's rows.
 
 Give the next shift an observation, impact, evidence, confidence, and next
 step. Include the relevant return path, an alternative explanation or unknown,
-validation, and rollback. Keep the spoken handoff under two minutes or the
-written version under 150 words.
+validation, and rollback. Record the handoff inside the incident template's
+handoff markers in at most 150 words. Present it in under two minutes or share
+the written version.
 <!-- delivery:end c06.handoff -->
 
 <!-- delivery:start c06.exchange -->
@@ -69,8 +73,10 @@ before opening the relevant [solution](../facilitator/solutions.md#challenge-6).
 ## Debrief — 10 Minutes
 
 Score mechanism, evidence, uncertainty, and action/handoff from 0–2. Revise
-one weak dimension. Pass at 6/8 with no zero after feedback, plus the individual
-exit explanation. Multiple proportionate actions may satisfy the rubric.
+one weak dimension. This review passes at 6/8 with no zero after feedback.
+Complete the individual exit, then check all remaining requirements in the
+[completion policy](../agenda.md#completion-and-feedback). Multiple
+proportionate actions may satisfy the rubric.
 Useful [hints](hints.md#challenge-6) remain available without penalty.
 <!-- delivery:end c06.review -->
 

@@ -72,9 +72,12 @@ without penalty and accept written alternatives to role-play or speaking.
 
 ## Assessment
 
-Apply this rubric to the three artifact bundles and to the capstone. The
-incident bundle includes the existing ten-field CSV. A score is a feedback
-aid, not a certification of operational competence.
+Apply this rubric at seven review points: Challenges 1–6 and the individual
+exit. Review the relevant portions of the same three artifact bundles as they
+develop; the incident bundle includes the ten-field CSV. Follow the
+[completion policy](../agenda.md#completion-and-feedback) for required work,
+factual independence, and separate self/facilitator results. A score is a
+feedback aid, not a certification of operational competence.
 
 | Dimension | 0 — Needs revision | 1 — Developing | 2 — Demonstrated |
 | --- | --- | --- | --- |
@@ -83,10 +86,19 @@ aid, not a certification of operational competence.
 | Uncertainty | Treats assumptions as facts | Names a limitation | Gives a plausible alternative or unresolved question and discriminating evidence |
 | Action and handoff | Vague or unjustified action | Useful action with incomplete validation | Proportionate step with owner, validation, and rollback where applicable |
 
-Completion: at least 6/8 with no zero after feedback and revision, and an
-individual explanation of the changed flow in the exit case. The rubric does
-not require a particular wording or a single architecture choice. A learner
-who correctly leaves a claim unresolved can earn full credit.
+A review passes at 6/8 with no zero after feedback and revision. Course
+completion additionally requires all seven current reviews of the relevant
+type, complete required work, and independent factual checkpoints, including
+the individual exit. The rubric does not require a particular wording or a
+single architecture choice. A learner who correctly leaves a claim unresolved
+can earn full rubric credit.
+
+A correction after a worked reveal can improve the rubric score without
+establishing independence. Record that progress even when the runner's
+completion flags remain false. A separate assessment using a different example
+can establish later understanding; record it alongside the export because the
+runner does not support reassessment or an override of exposed answers.
+After final artifact or answer revisions, refresh affected earlier reviews.
 
 ### Sample Graded Responses
 
