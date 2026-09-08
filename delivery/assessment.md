@@ -40,3 +40,24 @@ exam security boundary.
 Support replaces part of the current block's practice time: one support and
 reassessment cycle per family during class, another fresh attempt optionally
 after class. No claim of guaranteed six-hour mastery follows from the schedule.
+
+## Typed Learning Actions
+
+The transfer slice implements these operations behind the inactive contract.
+They use the existing request ID, revision, phase ID, action, and payload envelope.
+Assign a problem in its checkpoint phase; revisit that released phase later if
+needed. Assignment is saved before the prompt is returned. Status includes
+assigned prompts and attempt counts, never pre-attempt keys.
+
+| Action | Payload | Effect |
+| --- | --- | --- |
+| `support` | `family`, `level`: `orientation`, `practice`, or `worked` | Orientation gives process help; practice assigns a supported variant; worked shows that variant's explanation |
+| `reassess` | `family` | Assigns an unseen assessment variant or reports exhaustion |
+| `problem_answer` | `variant_id`, `answers` keyed by displayed question IDs | Records factual results; only a first unassisted correct assessment qualifies |
+| `problem_hint` | `variant_id` | Shows worked reasoning and permanently marks that variant exposed |
+
+Terminal keys are `u` for support, `n` for reassessment, `b` to answer the assigned
+problem, and `j` for its answer-bearing help. An unfinished assignment is returned
+again instead of rerolled. A repeated request ID returns its saved result.
+Supported corrections count as recorded work; default exports include result
+categories and parameters without learner answers or authored keys.

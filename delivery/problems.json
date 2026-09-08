@@ -1,0 +1,106 @@
+{
+  "version": 1,
+  "families": {
+    "transfer": [
+      {
+        "id": "transfer-supported",
+        "family": "transfer",
+        "use": "supported",
+        "parameters": {
+          "mtu": 1400,
+          "ipv4_header": 20,
+          "tcp_header": 32,
+          "small_payload": 128
+        },
+        "provenance": "Authored bounded IPv4/TCP model; not captured traffic.",
+        "prompt": "The path limit is 1400 bytes. Declared IPv4 header: 20 bytes; TCP header: 32 bytes. No other encapsulation. A small request carries 128 payload bytes. Calculate the largest payload, then decide whether the small request fits. Capacity alone does not establish ICMP delivery or application recovery.",
+        "questions": [
+          {
+            "id": "payload",
+            "type": "bytes",
+            "headers": [
+              20,
+              32
+            ],
+            "prompt": "Largest payload? Include bytes.",
+            "answer": "1348 bytes",
+            "explanation": "Subtract both headers: 1400 - 20 - 32 = 1348 bytes."
+          },
+          {
+            "id": "fits",
+            "type": "text",
+            "prompt": "Does the small request fit? yes/no",
+            "answer": "yes",
+            "explanation": "128 + 20 + 32 = 180, within 1400."
+          }
+        ]
+      },
+      {
+        "id": "transfer-r1",
+        "family": "transfer",
+        "use": "reassessment",
+        "parameters": {
+          "mtu": 1280,
+          "ipv4_header": 24,
+          "tcp_header": 32,
+          "small_payload": 256
+        },
+        "provenance": "Authored bounded IPv4/TCP model; not captured traffic.",
+        "prompt": "The path limit is 1280 bytes. Declared IPv4 header: 24 bytes; TCP header: 32 bytes. No other encapsulation. A small request carries 256 payload bytes. Calculate the largest payload, then decide whether the small request fits. Capacity alone does not establish ICMP delivery or application recovery.",
+        "questions": [
+          {
+            "id": "payload",
+            "type": "bytes",
+            "headers": [
+              24,
+              32
+            ],
+            "prompt": "Largest payload? Include bytes.",
+            "answer": "1224 bytes",
+            "explanation": "Subtract both headers: 1280 - 24 - 32 = 1224 bytes."
+          },
+          {
+            "id": "fits",
+            "type": "text",
+            "prompt": "Does the small request fit? yes/no",
+            "answer": "yes",
+            "explanation": "256 + 24 + 32 = 312, within 1280."
+          }
+        ]
+      },
+      {
+        "id": "transfer-r2",
+        "family": "transfer",
+        "use": "reassessment",
+        "parameters": {
+          "mtu": 1500,
+          "ipv4_header": 20,
+          "tcp_header": 40,
+          "small_payload": 400
+        },
+        "provenance": "Authored bounded IPv4/TCP model; not captured traffic.",
+        "prompt": "The path limit is 1500 bytes. Declared IPv4 header: 20 bytes; TCP header: 40 bytes. No other encapsulation. A small request carries 400 payload bytes. Calculate the largest payload, then decide whether the small request fits. Capacity alone does not establish ICMP delivery or application recovery.",
+        "questions": [
+          {
+            "id": "payload",
+            "type": "bytes",
+            "headers": [
+              20,
+              40
+            ],
+            "prompt": "Largest payload? Include bytes.",
+            "answer": "1440 bytes",
+            "explanation": "Subtract both headers: 1500 - 20 - 40 = 1440 bytes."
+          },
+          {
+            "id": "fits",
+            "type": "text",
+            "prompt": "Does the small request fit? yes/no",
+            "answer": "yes",
+            "explanation": "400 + 20 + 40 = 460, within 1500."
+          }
+        ]
+      }
+    ]
+  }
+}

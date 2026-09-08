@@ -2,7 +2,12 @@
 
 import json
 import unittest
+from unittest import mock
 from pathlib import Path
+
+import delivery as d
+import learning
+import test_delivery as journeys
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -28,6 +33,94 @@ class LearningContractTests(unittest.TestCase):
         self.assertEqual(occurrences, 29)
         self.assertEqual(len(objectives), 25)
         self.assertEqual(len(set(objectives)), len(objectives))
+
+    def test_semantic_quantities_and_misconceptions(self):
+        item = dict(id="transfer.payload", answer="1160 bytes", evidence="ip.hdr_len and tcp.hdr_len")
+        for answer in ("1160 bytes", "1160 B", "1160.0 Bytes"):
+            self.assertTrue(learning.evaluate(item, answer)["correct"])
+        for answer, code in (("1160 b", "wrong-units"), ("1160 bits", "wrong-units"),
+                             ("1200 bytes", "missing-both-headers"), ("1180 bytes", "missing-one-header")):
+            result = learning.evaluate(item, answer)
+            self.assertFalse(result["correct"])
+            self.assertEqual(result["feedback_code"], code)
+        self.assertFalse(learning.evaluate(item, "1160")["format_valid"])
+        hops = dict(id="route.after-hops", answer="10.0.0.1, 10.0.0.2")
+        self.assertTrue(learning.evaluate(hops, "10.0.0.2,10.0.0.1")["correct"])
+        self.assertFalse(learning.evaluate(hops, "10.0.0.1,10.0.0.1,10.0.0.2")["correct"])
+        time = dict(id="m1.convergence.interval", answer="80")
+        self.assertTrue(learning.evaluate(time, "0.080 seconds")["correct"])
+
+    def test_transfer_catalog_keys_and_public_view(self):
+        problems = learning.catalog()["families"]["transfer"]
+        self.assertEqual(len(problems), 3)
+        self.assertEqual({p["questions"][0]["answer"] for p in problems}, {"1348 bytes", "1224 bytes", "1440 bytes"})
+        for problem in problems:
+            public = json.dumps(learning.public_problem(problem))
+            self.assertNotIn('"answer"', public)
+            self.assertNotIn('"explanation"', public)
+            p = problem["parameters"]
+            self.assertLessEqual(p["small_payload"] + p["ipv4_header"] + p["tcp_header"], p["mtu"])
+
+
+class TransferLearningJourneyTests(unittest.TestCase):
+    request = journeys.SessionTests.request
+    act = journeys.SessionTests.act
+    reach_transfer = journeys.SessionTests.reach_transfer
+
+    def setUp(self):
+        journeys.SessionTests.setUp(self)
+        # Isolate the first slice while the public contract remains inactive.
+        data = d.definition()
+        data["learning_contract"]["enabled"] = True
+        next(p for p in data["phases"] if p["id"] == "c02.calculate")["learning_enabled"] = True
+        patch = mock.patch.object(d, "definition", return_value=data)
+        patch.start()
+        self.addCleanup(patch.stop)
+        self.reach_transfer()
+        for _ in range(2):
+            self.act("answer", {"text": "Prediction and evidence comparison"})
+            self.act("continue")
+
+    def test_wrong_feedback_help_resume_and_fresh_independent_success(self):
+        original = {"text": "A size bound alone does not prove recovery.", "answers": {"transfer.payload": "1200 bytes"}}
+        result = self.act("answer", original)
+        self.assertEqual(result["result"]["checks"]["transfer.payload"]["feedback_code"], "missing-both-headers")
+        self.act("reveal")
+        self.act("answer", {**original, "answers": {"transfer.payload": "1160 bytes"}})
+        self.assertFalse(self.view["result"]["checks"]["transfer.payload"]["independent"])
+        self.act("support", {"family": "transfer", "level": "worked"})
+        supported = self.view["result"]["problem_result"]["id"]
+        self.act("problem_answer", {"variant_id": supported, "answers": {"payload": "1348 bytes", "fits": "yes"}})
+        request = self.request("reassess", {"family": "transfer"})
+        assigned = d.act("learner", request)
+        self.assertEqual(d.act("learner", request), assigned)
+        variant = assigned["result"]["problem_result"]
+        resumed = d.session_status("learner")
+        self.assertEqual(resumed["phase"]["problems"][-1]["problem"], variant)
+        same = self.act("reassess", {"family": "transfer"})
+        self.assertEqual(same["result"]["problem_result"], variant)
+        payload = "1224 bytes" if variant["id"] == "transfer-r1" else "1440 bytes"
+        self.act("problem_answer", {"variant_id": variant["id"], "answers": {"payload": payload, "fits": "yes"}})
+        objective = next(o for o in self.view["objectives"] if o["family"] == "transfer")
+        self.assertTrue(objective["fresh_independent"])
+        self.assertFalse(objective["original_independent"])
+        self.assertFalse(self.view["completion"]["objective_checks_satisfied"])
+        exported = d.export_session("learner")
+        self.assertNotIn('"answers"', json.dumps(exported))
+        self.assertNotIn('"worked"', json.dumps(exported))
+
+    def test_invalid_input_does_not_consume_and_exposed_variants_exhaust(self):
+        before = d.session_status("learner")["revision"]
+        with self.assertRaises(d.DeliveryError):
+            self.act("answer", {"text": "Calculation", "answers": {"transfer.payload": "1160"}})
+        self.assertEqual(d.session_status("learner")["revision"], before)
+        for _ in range(2):
+            variant = self.act("reassess", {"family": "transfer"})["result"]["problem_result"]
+            self.act("problem_hint", {"variant_id": variant["id"]})
+            payload = "1224 bytes" if variant["id"] == "transfer-r1" else "1440 bytes"
+            result = self.act("problem_answer", {"variant_id": variant["id"], "answers": {"payload": payload, "fits": "yes"}})
+            self.assertFalse(result["result"]["problem_result"]["independent"])
+        self.assertTrue(self.act("reassess", {"family": "transfer"})["result"]["problem_result"]["exhausted"])
 
 
 if __name__ == "__main__":

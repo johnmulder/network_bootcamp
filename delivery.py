@@ -25,6 +25,8 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
+import learning
+
 ROOT = Path(__file__).resolve().parent
 DEFINITION = "delivery/course.json"
 ID = re.compile(r"[a-z0-9][a-z0-9.-]{0,79}\Z")
@@ -92,6 +94,8 @@ def definition() -> dict:
     try:
         data = json.loads((ROOT / DEFINITION).read_text(encoding="utf-8"))
         validate_definition(data)
+        for phase in data["phases"]:
+            phase["learning_enabled"] = data["learning_contract"]["enabled"]
         return data
     except (OSError, ValueError, KeyError, TypeError) as error:
         raise DeliveryError(f"Invalid delivery definition: {error}") from error
@@ -266,7 +270,7 @@ def evidence_integrity() -> None:
 
 
 def versions(data: dict) -> dict:
-    paths = {DEFINITION, "delivery.py", "course.py", "agenda.md", "challenges/reference.md", "facilitator/README.md", *ARTIFACTS.values()}
+    paths = {DEFINITION, "delivery.py", "learning.py", "delivery/problems.json", "course.py", "agenda.md", "challenges/reference.md", "facilitator/README.md", *ARTIFACTS.values()}
     paths.update(str(path.relative_to(ROOT)) for path in ROOT.glob("modules/*/workbench/*.py"))
     for phase in data["phases"]:
         for reference in phase["content"] + phase["hints"] + phase["solutions"]:
@@ -590,6 +594,8 @@ def render_references(references: list[dict], state: dict) -> str:
 
 def allowed_actions(phase: dict) -> list[str]:
     actions = ["answer", "continue", "skip"]
+    if phase.get("learning_enabled") and any(b["role"] == "conceptual" for b in phase["assessment"].values()):
+        actions += ["support", "reassess", "problem_answer", "problem_hint"]
     if phase["kind"] == "prediction":
         actions.insert(0, "predict")
     if phase["evidence"]:
@@ -611,7 +617,9 @@ def completion(state: dict, data: dict) -> dict:
     checked = [phase for phase in data["phases"] if phase["implemented"] and phase["checkpoints"]]
     objective = all(state["phases"][p["id"]]["checks"].get(name, {}).get("independent", False)
                     for p in checked for name in p["checkpoints"])
-    required = all(value["status"] in ("complete", "pending_review") for value in state["phases"].values())
+    if data["learning_contract"]["enabled"]:
+        objective = all(item["satisfied"] for item in objective_status(state, data))
+    required = all(value["status"] in ("complete", "pending_review", "demonstrated") for value in state["phases"].values())
     if required:
         required = all(validate_artifacts(session_dir(state["id"]), phase, state)["valid"]
                        for phase in data["phases"] if phase["kind"] == "review")
@@ -623,6 +631,20 @@ def completion(state: dict, data: dict) -> dict:
                 objective_checks_satisfied=objective,
                 self_reviewed_completion=finished and required and objective and self_reviewed,
                 facilitator_reviewed_completion=finished and required and objective and facilitator_reviewed)
+
+
+def objective_status(state: dict, data: dict) -> list[dict]:
+    result = []
+    for phase in data["phases"]:
+        for check, binding in phase["assessment"].items():
+            if binding["role"] != "conceptual":
+                continue
+            original = any(s["checks"].get(check, {}).get("independent", False)
+                           for s in state["phases"][phase["id"]]["submissions"])
+            fresh = learning.attained(state, binding["objective"])
+            result.append(dict(id=binding["objective"], phase=phase["id"], family=binding["family"],
+                               original_independent=original, fresh_independent=fresh, satisfied=original or fresh))
+    return result
 
 
 def status_result(state: dict, data: dict, result: dict | None = None, view_phase: str | None = None) -> dict:
@@ -642,6 +664,15 @@ def status_result(state: dict, data: dict, result: dict | None = None, view_phas
         end_of_block = next_position == len(state["order"]) or phase_by_id(data, state["order"][next_position])["block"] != phase["block"]
         view["break_after_minutes"] = block["break_after"] if end_of_block else 0
         view["mode_prompt"] = "Write your own explanation before continuing." if state["mode"] == "solo" else "Swap evidence-reader and skeptical-reviewer roles; record your own answer. The exit is individual."
+        if phase.get("learning_enabled"):
+            view["assessment"] = phase["assessment"]
+            view["problems"] = [dict(problem=learning.public_problem(learning.find_problem(a["variant_id"])),
+                                     exposed=a["exposed"], attempts=len(a["responses"]))
+                                for a in state.get("learning", []) if a["phase"] == current]
+            view["support_recommendations"] = list(dict.fromkeys(
+                b["family"] for check, b in phase["assessment"].items()
+                if b["role"] == "conceptual" and check in state["phases"][current]["checks"]
+                and not state["phases"][current]["checks"][check]["independent"]))
         if phase["kind"] == "review":
             view["artifact_hashes"] = artifact_hashes(session_dir(state["id"]), phase["artifacts"])
             view["response_sha256"] = response_hash(state, phase["block"])
@@ -654,6 +685,7 @@ def status_result(state: dict, data: dict, result: dict | None = None, view_phas
                 current_phase_id=state["current"],
                 released_phases=[dict(id=name, status=state["phases"][name]["status"]) for name in released],
                 reviews=review_statuses(state, data),
+                objectives=objective_status(state, data),
                 workspace=f"work/{state['id']}")
 
 
@@ -882,14 +914,30 @@ def act(ident: str, request: dict) -> dict:
             checks = {}
             for item in items:
                 answer = require_text(answers[item["id"]], item["id"])
-                evaluated = workbench(item.get("module", 1)).evaluate_question(item, answer)
+                evaluated = learning.evaluate(item, answer) if phase.get("learning_enabled") else workbench(item.get("module", 1)).evaluate_question(item, answer)
+                if not evaluated.get("format_valid", True):
+                    raise DeliveryError(evaluated["feedback"])
                 correct = evaluated["correct"]
-                checks[item["id"]] = dict(correct=correct, independent=correct and not progress["exposed"],
-                                          feedback="Correct." if correct else f"Reinspect {item['evidence']} and try again; include requested units.")
+                independent = correct and not progress["exposed"]
+                if phase.get("learning_enabled"):
+                    independent = independent and not any(item["id"] in s["checks"] for s in progress["submissions"])
+                checks[item["id"]] = dict(correct=correct, independent=independent,
+                                          feedback_code=evaluated.get("feedback_code", "correct" if correct else "unclassified"),
+                                          feedback=evaluated["feedback"])
             progress["checks"] = checks
             progress["submissions"].append(dict(at=now(), text=text, answers=answers, checks=copy.deepcopy(checks)))
             progress["status"] = "incomplete"
             result.update(learning_result="incorrect" if any(not c["correct"] for c in checks.values()) else "recorded", checks=checks)
+        elif action in ("support", "reassess", "problem_answer", "problem_hint"):
+            try:
+                result["problem_result"] = learning.problem_action(state, phase, action, payload, now())
+            except ValueError as error:
+                raise DeliveryError(str(error)) from error
+            if action == "support" and payload.get("level") == "worked":
+                progress["exposed"] = True
+                for entry in state.get("learning", []):
+                    if entry["phase"] == name and entry["family"] == payload["family"] and not entry["responses"]:
+                        entry["exposed"] = True
         elif action == "evidence":
             view = payload.get("view")
             if view not in phase["evidence"]:
@@ -904,6 +952,10 @@ def act(ident: str, request: dict) -> dict:
             index = progress["hints"]
             result["text"] = render_references(phase["hints"][index:index + 1], state) if index < len(phase["hints"]) else "No further hints; revise your response or request a worked reveal."
             progress["hints"] = min(index + 1, len(phase["hints"]))
+            if phase.get("learning_enabled"):
+                for peer in data["phases"]:
+                    if peer["block"] == phase["block"]:
+                        state["phases"][peer["id"]]["exposed"] = True
         elif action == "reveal":
             result["text"] = render_references(phase["solutions"], state)
             result["answers"] = {item["id"]: item["answer"] for item in checkpoint_items(phase, state)}
@@ -981,6 +1033,11 @@ def act(ident: str, request: dict) -> dict:
             if state["current"] == name:
                 state["current"] = state["order"][position + 1] if position + 1 < len(state["order"]) else None
             result["learning_result"] = progress["status"]
+        if phase.get("learning_enabled") and action in ("hint", "reveal"):
+            for entry in state.get("learning", []):
+                if phase_by_id(data, entry["phase"])["block"] == phase["block"] and not entry["responses"]:
+                    entry["exposed"] = True
+                    entry.setdefault("help", []).append(dict(at=now(), kind=action))
         state["revision"] += 1
         state["updated_at"] = now()
         response = status_result(state, data, result)
@@ -997,11 +1054,17 @@ def export_session(ident: str, include_artifacts: bool = False) -> dict:
                   mode=state["mode"], pair_label=state["pair_label"], main_case=state["case"], exit_case=other_case(state),
                   created_at=state["created_at"], updated_at=state["updated_at"],
                   completion=completion(state, data), reviews=review_statuses(state, data),
+                  objectives=objective_status(state, data),
+                  learning=[dict(variant_id=a["variant_id"], family=a["family"], phase=a["phase"], use=a["use"],
+                                 parameters=a["parameters"], presented_at=a["presented_at"], exposed=a["exposed"],
+                                 attempts=[dict(at=r["at"], independent=r["independent"], passed=r["passed"],
+                                                feedback_codes={k:v["feedback_code"] for k,v in r["results"].items()}) for r in a["responses"]])
+                            for a in state.get("learning", [])],
                   response_hashes={phase["id"]: response_hash(state, phase["block"]) for phase in data["phases"] if phase["kind"] == "review"},
                   review_history={name: [dict(at=r["at"], reviewer=r["reviewer"], scores=r["scores"], passed_at_review=r["passed"], artifact_hashes=r["artifact_hashes"])
                                         for r in p["reviews"]] for name, p in state["phases"].items() if p["reviews"]},
                   artifact_hashes=artifact_hashes(directory, list(ARTIFACTS)),
-                  phases=[dict(id=name, status=p["status"], checks=p["checks"], hints=p["hints"],
+                  phases=[dict(id=name, status=p["status"], checks={k: {field: v[field] for field in ("correct", "independent", "feedback_code")} for k, v in p["checks"].items()}, hints=p["hints"],
                                revealed=p["exposed"], attempts=len(p["submissions"]),
                                self_reported_minutes=p.get("self_reported_minutes"),
                                practice_attempts=len(p.get("practice", []))) for name, p in state["phases"].items()],
@@ -1085,7 +1148,7 @@ def learn(ident: str, mode: str = "solo", case: str = "A", pair_label: str | Non
                     last_phase = phase["id"]
                 answered = phase["progress"]["submissions"] and all(check["correct"] for check in phase["progress"]["checks"].values())
                 default = "r" if phase["kind"] == "review" and not phase["progress"]["reviews"] else "f" if phase["kind"] == "feedback" and "feedback" not in phase["progress"] else "c" if answered or phase["kind"] in ("review", "feedback") else "a"
-                keys = {"a": "answer", "c": "continue", "s": "skip", "e": "evidence", "h": "hint", "v": "reveal", "r": "review", "f": "feedback", "p": "practice"}
+                keys = {"a": "answer", "c": "continue", "s": "skip", "e": "evidence", "h": "hint", "v": "reveal", "r": "review", "f": "feedback", "p": "practice", "u": "support", "n": "reassess", "b": "problem_answer", "j": "problem_hint"}
                 choices = [f"{key}: {value}" for key, value in keys.items() if value in phase["allowed_actions"]]
                 action = input("\n" + " · ".join(choices) + f" · g: revisit · q: quit [{default}]: ").strip().lower() or default
             if action == "q":
@@ -1131,6 +1194,23 @@ def learn(ident: str, mode: str = "solo", case: str = "A", pair_label: str | Non
                         payload["text"] = text
                 elif operation == "practice":
                     payload = {"answers": {item["id"]: input(item["prompt"] + "\nAnswer: ") for item in phase["practice"]}}
+                elif operation in ("support", "reassess"):
+                    families = list(dict.fromkeys(b["family"] for b in phase["assessment"].values() if b["role"] == "conceptual"))
+                    print("Available families: " + ", ".join(families))
+                    print("Recommended after your attempts: " + ", ".join(phase["support_recommendations"]))
+                    payload = {"family": input(f"Family [{families[0]}]: ").strip() or families[0]}
+                    if operation == "support":
+                        payload["level"] = input("Support: orientation, practice, worked [practice]: ").strip() or "practice"
+                elif operation in ("problem_answer", "problem_hint"):
+                    for entry in phase["problems"]:
+                        print(json.dumps(entry, indent=2))
+                    variant = input("Assigned variant ID: ").strip()
+                    problem = next((a["problem"] for a in phase["problems"] if a["problem"]["id"] == variant), None)
+                    if problem is None:
+                        raise DeliveryError("Choose an assigned variant")
+                    payload = {"variant_id": variant}
+                    if operation == "problem_answer":
+                        payload["answers"] = {q["id"]: input(q["prompt"] + "\nAnswer: ") for q in problem["questions"]}
                 elif operation == "continue":
                     value = input("Self-reported minutes for this phase (optional): ").strip()
                     if value:
@@ -1144,6 +1224,8 @@ def learn(ident: str, mode: str = "solo", case: str = "A", pair_label: str | Non
                         print(result["output"]["stderr"], file=sys.stderr)
                 if "text" in result:
                     print(result["text"])
+                if "problem_result" in result:
+                    print(json.dumps(result["problem_result"], indent=2))
                 for name, check in result.get("checks", {}).items():
                     print(f"{name}: {check['feedback']}")
                 for check in result.get("results", []):
