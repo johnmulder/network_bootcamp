@@ -171,9 +171,10 @@ def journey(case):
         assert view["completion"]["delivery_finished"]
         assert not view["completion"]["self_reviewed_completion"]
         examples.fill_rehearsal_artifacts(directory, case)
-        for name in d.REVIEW_SECTIONS:
+        for name in [p["id"] for p in d.definition()["phases"] if p["kind"] == "review"]:
             review = call("session", "status", "--id", ident, "--phase", name, "--json")
             act("review", dict(reviewer="self", scores=dict.fromkeys(d.DIMENSIONS, 2),
+                               reasoning=examples.REASONING,
                                feedback="Synthetic review exercises the recording contract only.",
                                expected_artifact_hashes=review["phase"]["artifact_hashes"],
                                expected_response_sha256=review["phase"]["response_sha256"]), phase_id=name)

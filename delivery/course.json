@@ -913,10 +913,6 @@
         {
           "file": "architecture.md",
           "region": "c04"
-        },
-        {
-          "file": "architecture.md",
-          "region": "budget"
         }
       ]
     },
@@ -1003,10 +999,6 @@
         {
           "file": "architecture.md",
           "region": "c04"
-        },
-        {
-          "file": "architecture.md",
-          "region": "budget"
         }
       ]
     },
@@ -1064,10 +1056,6 @@
       "artifact_bindings": [
         {
           "file": "architecture.md",
-          "region": "c04"
-        },
-        {
-          "file": "architecture.md",
           "region": "budget"
         }
       ]
@@ -1117,10 +1105,6 @@
       ],
       "assessment": {},
       "artifact_bindings": [
-        {
-          "file": "architecture.md",
-          "region": "c04"
-        },
         {
           "file": "architecture.md",
           "region": "budget"
@@ -1173,10 +1157,6 @@
       "artifact_bindings": [
         {
           "file": "architecture.md",
-          "region": "c04"
-        },
-        {
-          "file": "architecture.md",
           "region": "budget"
         }
       ]
@@ -1223,10 +1203,6 @@
       ],
       "assessment": {},
       "artifact_bindings": [
-        {
-          "file": "architecture.md",
-          "region": "c04"
-        },
         {
           "file": "architecture.md",
           "region": "budget"

@@ -1621,5 +1621,31 @@
         ]
       }
     ]
-  }
+  },
+  "calibration": [
+    {
+      "id": "calibration-symptom",
+      "context": "An approved service request times out; no mechanism has yet been established.",
+      "response": "The network is down. Restart the firewall.",
+      "scores": {
+        "mechanism": 0,
+        "evidence": 0,
+        "uncertainty": 0,
+        "action": 0
+      },
+      "feedback": "Name the affected flow and a concrete observation. A broad restart has no supporting mechanism, owner, or validation."
+    },
+    {
+      "id": "calibration-partial",
+      "context": "Independent calibration example: record R3 at a router explicitly reports that a reply is dropped for lack of a route. The supplied complete before/after table shows its matching route removed. No change-intent or post-repair evidence is supplied.",
+      "response": "R3 says the return packet has no route. Restore the route.",
+      "scores": {
+        "mechanism": 2,
+        "evidence": 2,
+        "uncertainty": 0,
+        "action": 1
+      },
+      "feedback": "The mechanism and record are specific. Add the missing intent limitation and a discriminating check; name an owner, authorization condition, validation, and rollback for restoration."
+    }
+  ]
 }

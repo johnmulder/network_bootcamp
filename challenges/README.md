@@ -45,6 +45,10 @@ fresh equivalent reassessment satisfies a conceptual objective. Correcting an
 exposed original records supported work without erasing its history. Read the
 [completion policy](../agenda.md#completion-and-feedback) for the seven reviews,
 required artifacts, and finite reassessment opportunities.
+Before self-review, score the two short calibration examples with `calibrate`
+(terminal `k`) and compare your scores with the authored anchors. This is
+formative practice, not a completion gate. Keep the opening observation and
+calibration within this five-minute reflection period.
 <!-- delivery:end opening.reflect -->
 
 ## Prepare Three Deliverables
@@ -88,6 +92,21 @@ Predict before revealing the next evidence. In pairs, alternate choosing the
 next check and explaining why it matters. Solo learners write the explanation
 before opening the next section. Request [hints](hints.md) freely; changing
 your mind and acknowledging uncertainty are part of the work.
+
+## Record Once and Review the Relevant Work
+
+Edit the marked sections of your three artifacts as you work. Preserve each
+`artifact:start` and `artifact:end` line; the heading itself may change. Use
+`submit_artifact` (terminal `t`) to save a section as your explanation, then
+enter the short factual answers. You do not need to type the paragraph again.
+The runner snapshots your section and never overwrites it. Direct `answer`
+remains available. Keep six to eight assessed original IDs on the incident
+section's `Evidence IDs:` line and main-case IDs on the handoff's line.
+
+At review, point to your claim, supporting evidence, limitation, and next test.
+Use the four rubric scores and revise a weak dimension. Only assessed regions,
+cited ledger rows, and related responses affect that review; unrelated later
+work preserves it. Changed dependencies are listed in status.
 
 ## Completion
 

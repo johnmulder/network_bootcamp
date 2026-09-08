@@ -33,10 +33,10 @@ Request the case's state, observations, and conditions in your chosen order.
 State what changed in your diagnosis after each view. In manual delivery, use
 `jq '{before, after, routes, flow}'`, `jq '{observations}'`, and
 `jq '{conditions, limitations, path, scope}'` with the assigned case file.
-Keep the existing template headings: `Capstone Revision` in the packet-path
-and architecture sheets, and `Shift Handoff — Challenge 6` in the incident
-dossier. Fill their case-ID fields with the exact assigned ID, such as `A-v1`
-or `B-v1`; do not rename the headings. Update each deliverable:
+Preserve the template's stable artifact markers; headings may be renamed.
+The assigned case ID is already recorded by the runner, so put the reasoning
+in the marked sections rather than repeating a separate case-ID field.
+Update each deliverable:
 
 - **Engineering:** Trace forward and return decisions. Name the specific
   change, table, and observation that explain the behavior.

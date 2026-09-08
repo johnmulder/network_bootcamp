@@ -199,5 +199,81 @@ class ExperimentTests(unittest.TestCase):
         self.assertTrue(all(r["unknowns"] for r in (first, second, twist)))
 
 
+class ArtifactLearningTests(unittest.TestCase):
+    setUp = journeys.SessionTests.setUp
+    request = journeys.SessionTests.request
+    act = journeys.SessionTests.act
+    experiment = journeys.SessionTests.experiment
+    finish_day = journeys.SessionTests.finish_day
+    review = journeys.SessionTests.review
+    reach_transfer = journeys.SessionTests.reach_transfer
+
+    def test_scoped_reviews_ignore_unrelated_regions_and_ledger_rows(self):
+        self.finish_day()
+        directory = d.session_dir("learner")
+        journeys.fill_rehearsal_artifacts(directory)
+        for phase in ("c01.review", "c05.review", "c06.review"):
+            self.review(phase)
+        packet = directory / "packet-path.md"
+        original = packet.read_text()
+        packet.write_bytes(original.replace("## Healthy Path — Challenge 1", "## My renamed heading").replace("\n", "\r\n").encode())
+        self.assertTrue(d.session_status("learner")["reviews"]["c01.review"]["self"]["valid_pass"])
+        incident = directory / "incident.md"
+        incident.write_text(incident.read_text().replace("<!-- artifact:end exit -->", "Later exit revision.\n<!-- artifact:end exit -->"))
+        self.assertTrue(d.session_status("learner")["reviews"]["c05.review"]["self"]["valid_pass"])
+        self.assertTrue(d.session_status("learner")["reviews"]["c06.review"]["self"]["valid_pass"])
+        ledger = directory / "evidence-ledger.csv"
+        text = ledger.read_text()
+        # The main-case row is unrelated to the original incident review.
+        rows = text.splitlines(keepends=True)
+        ledger.write_text("".join(row.replace("fixture entity", "revised entity") if row.startswith("A3,") else row for row in rows))
+        status = d.session_status("learner")
+        self.assertTrue(status["reviews"]["c05.review"]["self"]["valid_pass"])
+        changed = status["reviews"]["c06.review"]["self"]["changed_dependencies"]
+        self.assertEqual(changed, ["evidence-ledger.csv#A3"])
+        saved = d.load_state(directory, d.definition())["phases"]["c06.review"]["reviews"][-1]
+        self.assertIn("fixture entity", saved["dependency_snapshots"]["evidence-ledger.csv#A3"])
+        ledger.write_text("".join(row for row in rows if not row.startswith("incident/auth.jsonl#2,")))
+        self.assertFalse(d.session_status("learner")["reviews"]["c05.review"]["self"]["valid_pass"])
+
+    def test_submit_region_records_snapshot_without_retyping_or_writing_file(self):
+        self.reach_transfer()
+        for _ in range(2):
+            self.act("answer", {"text": "Observation and competing hypotheses"})
+            self.act("continue")
+        directory = d.session_dir("learner")
+        journeys.fill_rehearsal_artifacts(directory)
+        region = d.session_status("learner")["phase"]["artifact_regions"][0]
+        path = directory / region["file"]
+        before = path.read_bytes()
+        payload = dict(file=region["file"], region=region["region"], expected_sha256=region["sha256"], answers={"transfer.payload": "1160 bytes"})
+        self.act("submit_artifact", payload)
+        self.assertEqual(path.read_bytes(), before)
+        saved = self.view["phase"]["progress"]["submissions"][-1]
+        self.assertEqual(saved["text"], region["text"])
+        self.assertEqual(saved["artifact_source"]["sha256"], region["sha256"])
+        path.write_text(path.read_text().replace("<!-- artifact:end c02 -->", "Revised claim.\n<!-- artifact:end c02 -->"))
+        revision = d.session_status("learner")["revision"]
+        with self.assertRaisesRegex(d.DeliveryError, "region changed"):
+            self.act("submit_artifact", payload)
+        self.assertEqual(d.session_status("learner")["revision"], revision)
+        with self.assertRaises(d.DeliveryError):
+            self.act("submit_artifact", {**payload, "file": "../elsewhere"})
+        for bad in ("<!-- artifact:start c02 -->\ntext", "<!-- artifact:start c02 -->\n<!-- artifact:start c02 -->"):
+            with self.assertRaisesRegex(d.DeliveryError, "artifact"):
+                d.artifact_regions(bad)
+
+    def test_calibration_is_formative_and_retains_scores_before_feedback(self):
+        self.act("skip", {"reason": "Reach calibration"})
+        self.act("skip", {"reason": "Reach calibration"})
+        self.assertNotIn('"scores"', json.dumps(self.view["phase"]["calibration"]))
+        for scores in (dict.fromkeys(d.DIMENSIONS, 1), dict(mechanism=2, evidence=2, uncertainty=0, action=1)):
+            result = self.act("calibrate", dict(example_id="calibration-partial", scores=scores))
+            self.assertTrue(result["result"]["calibration"]["formative"])
+            self.assertEqual(result["result"]["calibration"]["scores"], scores)
+        self.assertEqual(len(d.export_session("learner")["calibration"]), 2)
+        self.assertFalse(self.view["completion"]["objective_checks_satisfied"])
+
+
 if __name__ == "__main__":
     unittest.main()

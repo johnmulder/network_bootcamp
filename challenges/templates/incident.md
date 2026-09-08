@@ -12,14 +12,17 @@ as `A3` and source `challenges/case-a.json`; append them after the incident rows
 
 ## Investigation — Challenge 5
 
+<!-- artifact:start c05 -->
+
+Evidence IDs: ___
+
 | Round | Observation and exact source | Hypothesis / confidence | Alternative | Best next evidence and why |
 | --- | --- | --- | --- | --- |
 | 1 | | | | |
 | 2 | | | | |
 | 3 | | | | |
 
-Normalize the alternate display `2026-08-15T10:04:01-06:00` to UTC and locate
-the matching original authentication record: ___
+Time-normalization reasoning and source-correlation limitation: ___
 
 Which sources are derived rather than independent? ___
 
@@ -36,9 +39,15 @@ ___
 
 Next action / owner / operational effect / validation / rollback: ___
 
+<!-- artifact:end c05 -->
+
 ## Shift Handoff — Challenge 6
 
-Case ID: ___ (keep this drill separate from the original investigation)
+<!-- artifact:start c06-handoff -->
+
+Evidence IDs: ___
+
+Keep this assigned drill separate from the original investigation.
 
 | Viewpoint | Required answer |
 | --- | --- |
@@ -56,8 +65,13 @@ ___
 
 Recipient's next check, in their own words: ___
 
+<!-- artifact:end c06-handoff -->
+
 ## Individual Exit
+
+<!-- artifact:start exit -->
 
 My answer before comparing notes: ___
 
 Feedback, revision, and one remaining learning goal: ___
+<!-- artifact:end exit -->

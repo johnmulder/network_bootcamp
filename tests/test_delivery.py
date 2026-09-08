@@ -38,6 +38,8 @@ EXPERIMENTS = {
     "c04.outcomes": dict(options=["state-sync", "monitoring"], failure="session-sync-stale", twist=False),
     "c04.twist": dict(options=["backup-path", "management"], failure="power-loss", twist=True),
 }
+REASONING = dict(claim="Assessed region: mechanism field", evidence="Assessed region: cited source and record",
+                 limitation="Assessed region: unresolved alternative", next_test="Assessed region: owner and validation")
 
 
 def answers_for(phase, main_case):
@@ -49,15 +51,19 @@ def answers_for(phase, main_case):
 
 def fill_rehearsal_artifacts(directory, case="A"):
     """Synthetic structural fixtures, never examples of graded learner prose."""
+    references = [("flows", 1), ("endpoint", 1), ("endpoint", 2), ("auth", 2), ("firewall", 1), ("siem", 1)]
     for name in ("packet-path.md", "architecture.md", "incident.md"):
         path = directory / name
-        text = (d.ROOT / d.ARTIFACTS[name]).read_text().replace("___", f"{case}-v1 PRIVATE REHEARSAL TEXT")
+        text = (d.ROOT / d.ARTIFACTS[name]).read_text()
+        if name == "incident.md":
+            text = text.replace("Evidence IDs: ___", "Evidence IDs: " + ", ".join(f"incident/{source}.jsonl#{number}" for source, number in references), 1)
+            text = text.replace("Evidence IDs: ___", "Evidence IDs: " + ("A3" if case == "A" else "B2"), 1)
+        text = text.replace("___", f"{case}-v1 PRIVATE REHEARSAL TEXT")
         text = re.sub(r"(?<=\|)[ \t]*(?=\|)", " Unknown; rehearsal entry ", text)
         path.write_text(text)
     with (directory / "evidence-ledger.csv").open("w", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=d.workbench(3).LEDGER_FIELDS)
         writer.writeheader()
-        references = [("flows", 1), ("endpoint", 1), ("endpoint", 2), ("auth", 2), ("firewall", 1), ("siem", 1)]
         rows = []
         for source, number in references:
             filename = f"incident/{source}.jsonl"
@@ -156,6 +162,7 @@ class SessionTests(unittest.TestCase):
     def review(self, phase, reviewer="self", score=2, hashes=None):
         view = d.session_status("learner", phase)
         return self.act("review", dict(reviewer=reviewer, scores=dict.fromkeys(d.DIMENSIONS, score),
+                        reasoning=REASONING,
                         feedback="PRIVATE REHEARSAL TEXT: synthetic review", expected_artifact_hashes=hashes if hashes is not None else view["phase"]["artifact_hashes"],
                         expected_response_sha256=view["phase"]["response_sha256"]), phase)
 
@@ -308,12 +315,12 @@ class SessionTests(unittest.TestCase):
         directory = d.session_dir("learner")
         fill_rehearsal_artifacts(directory)
         self.review("c01.review", score=0)
-        for phase in d.REVIEW_SECTIONS:
+        for phase in [p["id"] for p in d.definition()["phases"] if p["kind"] == "review"]:
             self.review(phase)
         status = d.session_status("learner")
         self.assertTrue(status["completion"]["self_reviewed_completion"])
         self.assertFalse(status["completion"]["facilitator_reviewed_completion"])
-        for phase in d.REVIEW_SECTIONS:
+        for phase in [p["id"] for p in d.definition()["phases"] if p["kind"] == "review"]:
             self.review(phase, reviewer="facilitator")
         self.assertTrue(d.session_status("learner")["completion"]["facilitator_reviewed_completion"])
         summary = d.export_session("learner")
@@ -327,7 +334,9 @@ class SessionTests(unittest.TestCase):
         self.assertIn("# Course Review: learner", d.format_export(bundle, "markdown"))
         hashes = d.session_status("learner", "c01.review")["phase"]["artifact_hashes"]
         path = directory / "packet-path.md"
-        path.write_text(path.read_text() + "\nRevised artifact.\n")
+        path.write_text(path.read_text() + "\nUnrelated file note.\n")
+        self.assertTrue(d.session_status("learner")["completion"]["self_reviewed_completion"])
+        path.write_text(path.read_text().replace("<!-- artifact:end c01 -->", "Revised assessed region.\n<!-- artifact:end c01 -->"))
         stale = d.session_status("learner")
         self.assertFalse(stale["completion"]["self_reviewed_completion"])
         self.assertEqual(stale["reviews"]["c01.review"]["self"]["status"], "stale")

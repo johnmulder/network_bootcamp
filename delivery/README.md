@@ -151,12 +151,44 @@ Scores are retained even when work needs revision. A valid rubric review needs
 at least 6/8, no zero, and structurally complete artifacts. Reviewer type is a
 local label, not authenticated identity or certification.
 
-Reviews snapshot the files and the block's submitted responses. Editing a file
-or revising those responses makes affected reviews stale. File hashes cover the
-whole artifact, so refresh relevant reviews after final capstone/exit edits.
-Use g in the terminal, or `status --phase c01.review` and a new review action.
-A facilitator using an exported bundle must use that bundle's artifact hashes;
-feedback for an older file version is rejected instead of applied to new work.
+Reviews snapshot only their bound artifact regions, cited ledger rows, and the
+block's submitted responses and experiments. Headings outside region markers
+may be renamed. Adding an unrelated region or ledger row preserves an earlier
+review; changing or deleting assessed content makes it stale. Status identifies
+which dependency changed, and the earlier snapshot remains in review history.
+Only line endings are normalized for hashes. Copy the current review phase's
+`artifact_hashes` to `expected_artifact_hashes`; these keys are now scoped
+`file#region` or `evidence-ledger.csv#record-ID`, not whole-file hashes.
+Exports expose these separately as `review_dependency_hashes`; top-level
+`artifact_hashes` still verify the complete exported files.
+
+Use `submit_artifact` with `file`, `region`, `expected_sha256`, and `answers`
+from the current phase's `artifact_regions` and checkpoints. The runner snapshots
+that section as the explanation and checks the expected hash before accepting
+it; it never overwrites your Markdown. Terminal `t` selects the section, then
+asks only the short factual answers. The existing `answer` operation remains
+available. Short facts are recorded in session history, while artifact fields
+ask for reasoning. Exports place facts beside the submitted explanations.
+Preserve the `artifact:start` and `artifact:end` marker lines from each template;
+missing or duplicate markers produce a recovery message.
+
+In the incident investigation, list six to eight assessed original ledger IDs
+on the `Evidence IDs:` line. In the capstone handoff, list the main-case
+observation IDs supporting that review. Additional rows may remain in the
+ledger without becoming dependencies of those reviews. Keep the exact CSV
+header, source names, and raw timestamps. A cited row must be present and valid.
+
+Before self-review, use `calibrate` with a displayed `example_id` and four
+`scores`. Terminal `k` offers the same two examples. Your scores are saved
+before authored anchor scores and revision feedback are shown. This comparison
+is formative and never a completion gate. The partial example adapts the
+facilitator's graded response into a separate R3 case to keep A/B reserved.
+For each actual `review`, provide a `reasoning` object with nonempty `claim`,
+`evidence`, `limitation`, and `next_test` references to the relevant artifact
+fields or submitted explanation. Point to the existing work instead of copying
+paragraphs. Lower-scoring dimensions receive a specific revision prompt; human
+judgment still determines the scores. Calibration and review history retain
+scores before and after revision.
 
 The [course completion policy](../agenda.md#completion-and-feedback) applies to
 both manual and guided delivery. The JSON response reports:

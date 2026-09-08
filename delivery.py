@@ -605,6 +605,10 @@ def render_references(references: list[dict], state: dict) -> str:
 
 def allowed_actions(phase: dict) -> list[str]:
     actions = ["answer", "continue", "skip"]
+    if phase["artifact_bindings"] and phase["kind"] in ("prediction", "reflection", "checkpoint"):
+        actions.append("submit_artifact")
+    if phase["id"] == "opening.reflect" or phase["kind"] == "review":
+        actions.append("calibrate")
     if phase["id"] in ("c06.receive", "exit.answer"):
         actions.append("diagnose")
     if phase["id"] in EXPERIMENT_PHASES:
@@ -715,10 +719,11 @@ def status_result(state: dict, data: dict, result: dict | None = None, view_phas
             view["problems"] = [dict(problem=learning.public_problem(learning.find_problem(a["variant_id"])),
                                      exposed=a["exposed"], attempts=len(a["responses"]))
                                 for a in state.get("learning", []) if a["phase"] == current]
+            attained = {o["id"] for o in objective_status(state, data) if o["satisfied"]}
             view["support_recommendations"] = list(dict.fromkeys(
                 b["family"] for check, b in phase["assessment"].items()
                 if b["role"] == "conceptual" and check in state["phases"][current]["checks"]
-                and not state["phases"][current]["checks"][check]["independent"]))
+                and b["objective"] not in attained))
         initial = phase["id"] in ("c06.receive", "exit.answer") and "diagnosis" not in state["phases"][current]
         view["initial_diagnosis_required"] = initial
         if initial:
@@ -730,10 +735,22 @@ def status_result(state: dict, data: dict, result: dict | None = None, view_phas
             view["checkpoints"], view["evidence"] = [], []
             view["allowed_actions"] = ["diagnose", "skip"]
             view["next_evidence_choices"] = ["state", "observations", "conditions"]
+            view["assessment"] = {}
+            view["support_recommendations"] = []
         if phase["kind"] == "review":
-            view["artifact_hashes"] = artifact_hashes(session_dir(state["id"]), phase["artifacts"])
+            view["artifact_hashes"] = review_hashes(session_dir(state["id"]), phase)
             view["response_sha256"] = response_hash(state, phase["block"])
             view["artifact_check"] = validate_artifacts(session_dir(state["id"]), phase, state)
+            view["review_guide"] = REVIEW_GUIDE
+        view["artifact_regions"] = []
+        for binding in ([] if initial else phase["artifact_bindings"]):
+            try:
+                body = artifact_regions(artifact_text(session_dir(state["id"]), binding["file"]))[binding["region"]]
+                view["artifact_regions"].append(dict(**binding, text=body, sha256=hash_text(body)))
+            except (DeliveryError, OSError, KeyError) as error:
+                view["artifact_regions"].append(dict(**binding, error=f"Restore the {binding['region']} artifact markers: {error}"))
+        if "calibrate" in view["allowed_actions"]:
+            view["calibration"] = [{k: example[k] for k in ("id", "context", "response")} for example in learning.catalog()["calibration"]]
     released = state["order"][:state["order"].index(state["current"]) + 1] if state["current"] else state["order"]
     return dict(protocol_version=2, status="ok", session_id=state["id"], revision=state["revision"],
                 phase=view, completion=completion(state, data), result=result,
@@ -768,25 +785,6 @@ def artifact_hashes(directory: Path, names: list[str]) -> dict:
     return hashes
 
 
-REVIEW_SECTIONS = {
-    "c01.review": {"packet-path.md": ["Healthy Path — Challenge 1"]},
-    "c02.review": {"packet-path.md": ["Transfer Diagnosis — Challenge 2"]},
-    "c03.review": {"packet-path.md": ["Link Failure — Challenge 3"]},
-    "c04.review": {"architecture.md": ["Boundary Map — Challenge 4", "Two-Token Decision"]},
-    "c05.review": {"incident.md": ["Investigation — Challenge 5"]},
-    "c06.review": {"packet-path.md": ["Capstone Revision"], "architecture.md": ["Capstone Revision"], "incident.md": ["Shift Handoff — Challenge 6"]},
-    "exit.review": {"incident.md": ["Individual Exit"]},
-}
-
-
-def markdown_sections(text: str) -> dict[str, str]:
-    parts = re.split(r"^## (.+)\n", text.replace("\r\n", "\n"), flags=re.M)
-    names = parts[1::2]
-    if len(names) != len(set(names)):
-        raise DeliveryError("Duplicate artifact section heading")
-    return dict(zip(names, parts[2::2]))
-
-
 def artifact_text(directory: Path, name: str) -> str:
     path = session_file(directory, name)
     if not path.is_file() or path.stat().st_size > 2 * 1024 * 1024:
@@ -795,7 +793,93 @@ def artifact_text(directory: Path, name: str) -> str:
         return handle.read()
 
 
-def ledger_errors(text: str, state: dict, require_capstone: bool = False) -> list[str]:
+def hash_text(text: str) -> str:
+    return hashlib.sha256(text.replace("\r\n", "\n").replace("\r", "\n").encode()).hexdigest()
+
+
+def artifact_regions(text: str) -> dict[str, str]:
+    regions, active, lines = {}, None, []
+    for line in text.replace("\r\n", "\n").replace("\r", "\n").splitlines(keepends=True):
+        match = re.fullmatch(r"<!-- artifact:(start|end) ([a-z0-9-]+) -->\n?", line)
+        if not match:
+            if "<!-- artifact:" in line:
+                raise DeliveryError("Malformed artifact marker; restore the exact start/end lines from the template")
+            if active:
+                lines.append(line)
+            continue
+        operation, region = match.groups()
+        if operation == "start":
+            if active or region in regions:
+                raise DeliveryError(f"Overlapping or duplicate artifact region: {region}")
+            active, lines = region, []
+        elif active != region:
+            raise DeliveryError(f"Unmatched artifact end marker: {region}")
+        else:
+            regions[region], active = "".join(lines), None
+    if active:
+        raise DeliveryError(f"Missing artifact end marker: {active}")
+    return regions
+
+
+def ledger_records(text: str) -> tuple[str, dict[str, str]]:
+    """Keep exact CSV record text (including quoted newlines) for scoped hashes."""
+    text = text.replace("\r\n", "\n").replace("\r", "\n")
+    lines = text.splitlines(keepends=True)
+    reader = csv.reader(io.StringIO(text), strict=True)
+    try:
+        header = next(reader)
+        if header != workbench(3).LEDGER_FIELDS:
+            raise DeliveryError("Ledger must retain the exact ten-field header")
+        start, raw_header, records = reader.line_num, "".join(lines[:reader.line_num]), {}
+        for row in reader:
+            raw = "".join(lines[start:reader.line_num])
+            start = reader.line_num
+            if len(row) != len(header) or not row[0].strip():
+                raise DeliveryError("Ledger records need all ten columns and a nonempty evidence ID")
+            if row[0] in records:
+                raise DeliveryError(f"Duplicate ledger evidence ID: {row[0]}")
+            records[row[0]] = raw
+        return raw_header, records
+    except (csv.Error, StopIteration) as error:
+        raise DeliveryError(f"Cannot read ledger records: {error}") from error
+
+
+def review_dependencies(directory: Path, phase: dict) -> dict[str, str | None]:
+    dependencies, evidence_ids = {}, set()
+    for binding in phase["artifact_bindings"]:
+        name, region = binding["file"], binding["region"]
+        key = f"{name}#{region}"
+        try:
+            body = artifact_regions(artifact_text(directory, name))[region]
+            dependencies[key] = body
+            for ids in re.findall(r"^Evidence IDs: (.*)$", body, re.M):
+                evidence_ids.update(item.strip() for item in ids.split(",") if item.strip())
+        except (DeliveryError, OSError, KeyError):
+            dependencies[key] = None
+    if evidence_ids:
+        try:
+            header, records = ledger_records(artifact_text(directory, "evidence-ledger.csv"))
+            dependencies["evidence-ledger.csv#header"] = header
+            for ident in sorted(evidence_ids):
+                dependencies[f"evidence-ledger.csv#{ident}"] = records.get(ident)
+        except (DeliveryError, OSError):
+            dependencies["evidence-ledger.csv#header"] = None
+    return dependencies
+
+
+def review_hashes(directory: Path, phase: dict) -> dict:
+    return {key: hash_text(text) if text is not None else None for key, text in review_dependencies(directory, phase).items()}
+
+
+REVIEW_GUIDE = {
+    "claim": "Point to the explanation of the mechanism, including its relevant return or failure behavior.",
+    "evidence": "Point to the exact source/field and explain how it supports the claim.",
+    "limitation": "Point to a plausible alternative or unresolved question and the evidence that distinguishes it.",
+    "next_test": "Point to the proportionate next step, owner, validation, and rollback where applicable.",
+}
+
+
+def ledger_errors(text: str, state: dict, require_capstone: bool = False, require_original: bool = True) -> list[str]:
     errors, identifiers, original, main_case_count = [], set(), 0, 0
     reader = csv.DictReader(io.StringIO(text), strict=True)
     if reader.fieldnames != workbench(3).LEDGER_FIELDS:
@@ -844,7 +928,7 @@ def ledger_errors(text: str, state: dict, require_capstone: bool = False) -> lis
                 errors.append(prefix + str(error))
     except csv.Error as error:
         errors.append(f"Invalid ledger CSV: {error}")
-    if not 6 <= original <= 8:
+    if require_original and not 6 <= original <= 8:
         errors.append("Select six to eight original incident records; keep case rows additional")
     if require_capstone and not main_case_count:
         errors.append("Add at least one observation from the assigned main capstone")
@@ -853,44 +937,48 @@ def ledger_errors(text: str, state: dict, require_capstone: bool = False) -> lis
 
 def validate_artifacts(directory: Path, phase: dict, state: dict) -> dict:
     errors = []
-    for name, headings in REVIEW_SECTIONS.get(phase["id"], {}).items():
+    for binding in phase["artifact_bindings"]:
+        name, region = binding["file"], binding["region"]
         try:
-            sections = markdown_sections(artifact_text(directory, name))
-            original = markdown_sections((ROOT / ARTIFACTS[name]).read_text())
-            for heading in headings:
-                body = sections.get(heading, "")
-                if not body.strip() or body.strip() == original[heading].strip():
-                    errors.append(f"{name}: complete the {heading} section")
-                elif "___" in body or re.search(r"\|[ \t]*\|", body):
-                    errors.append(f"{name}: fill placeholders and empty table cells in {heading}; unknown with a reason is acceptable")
-                expected_tables = re.findall(r"(?:^\|[^\n]*\|\n?)+", original[heading], re.M)
-                actual_tables = re.findall(r"(?:^\|[^\n]*\|\n?)+", body, re.M)
-                for expected_table in expected_tables:
-                    expected_rows = [row.strip() for row in expected_table.splitlines()]
-                    matching = [table.splitlines() for table in actual_tables if table.splitlines()[0].strip() == expected_rows[0]]
-                    if not matching or len(matching[0]) < len(expected_rows) or any(len(row.split("|")) != len(expected_rows[0].split("|")) for row in matching[0]):
-                        errors.append(f"{name}: retain the table columns and required rows in {heading}")
-                paragraphs = [" ".join(paragraph.split()) for paragraph in body.split("\n\n")]
-                for paragraph in original[heading].split("\n\n"):
-                    if "___" not in paragraph or paragraph.lstrip().startswith(("|", "<!--")):
-                        continue
-                    label = " ".join(paragraph.split("___", 1)[0].split())
-                    if label and not any(p.startswith(label) and len(p) > len(label) for p in paragraphs):
-                        errors.append(f"{name}: keep and answer the field beginning '{label[:65]}'")
-                if phase["id"] == "c06.review" and f"{state['case']}-v1" not in body:
-                    errors.append(f"{name}: identify the assigned main case in {heading}")
-            marker = "narrative" if phase["id"] == "c05.review" else "handoff" if phase["id"] == "c06.review" else None
-            if marker and name == "incident.md":
-                matches = re.findall(rf"<!-- {marker}:start -->\n(.*?)\n<!-- {marker}:end -->", artifact_text(directory, name).replace("\r\n", "\n"), re.S)
+            sections = artifact_regions(artifact_text(directory, name))
+            original = artifact_regions((ROOT / ARTIFACTS[name]).read_text())
+            body = sections.get(region, "")
+            template = original[region]
+            if not body.strip() or body.strip() == template.strip():
+                errors.append(f"{name}: complete region {region}; preserve its artifact markers")
+            elif "___" in body or re.search(r"\|[ \t]*\|", body):
+                errors.append(f"{name}: fill placeholders and empty table cells in {region}; unknown with a reason is acceptable")
+            expected_tables = re.findall(r"(?:^\|[^\n]*\|\n?)+", template, re.M)
+            actual_tables = re.findall(r"(?:^\|[^\n]*\|\n?)+", body, re.M)
+            for expected_table in expected_tables:
+                expected_rows = [row.strip() for row in expected_table.splitlines()]
+                matching = [table.splitlines() for table in actual_tables if table.splitlines()[0].strip() == expected_rows[0]]
+                if not matching or len(matching[0]) < len(expected_rows) or any(len(row.split("|")) != len(expected_rows[0].split("|")) for row in matching[0]):
+                    errors.append(f"{name}: retain the table columns and required rows in {region}")
+            paragraphs = [" ".join(paragraph.split()) for paragraph in body.split("\n\n")]
+            for paragraph in template.split("\n\n"):
+                if "___" not in paragraph or paragraph.lstrip().startswith(("|", "<!--")):
+                    continue
+                label = " ".join(paragraph.split("___", 1)[0].split())
+                if label and not any(p.startswith(label) and len(p) > len(label) for p in paragraphs):
+                    errors.append(f"{name}: keep and answer the field beginning '{label[:65]}'")
+            marker = "narrative" if region == "c05" else "handoff" if region == "c06-handoff" else None
+            if marker:
+                matches = re.findall(rf"<!-- {marker}:start -->\n(.*?)\n<!-- {marker}:end -->", body, re.S)
                 if len(matches) != 1 or not matches[0].strip() or len(matches[0].split()) > 150:
                     errors.append(f"incident.md: preserve one {marker} start/end pair and write 1–150 words inside it")
         except (OSError, ValueError, DeliveryError) as error:
             errors.append(str(error))
-    if "evidence-ledger.csv" in phase["artifacts"]:
-        try:
-            errors.extend(ledger_errors(artifact_text(directory, "evidence-ledger.csv"), state, phase["id"] == "c06.review"))
-        except (OSError, ValueError, DeliveryError) as error:
-            errors.append(str(error))
+    if phase["id"] in ("c05.review", "c06.review"):
+        dependencies = review_dependencies(directory, phase)
+        selected = [value for key, value in dependencies.items() if key.startswith("evidence-ledger.csv#") and key != "evidence-ledger.csv#header"]
+        header = dependencies.get("evidence-ledger.csv#header")
+        if not header or not selected or any(value is None for value in selected):
+            errors.append("List assessed Evidence IDs in the bound incident region; every cited ID needs a unique ledger row with the exact ten-field header")
+        else:
+            errors.extend(ledger_errors(header + "".join(selected), state,
+                                        require_capstone=phase["id"] == "c06.review",
+                                        require_original=phase["id"] == "c05.review"))
     return dict(valid=not errors, errors=errors,
                 scope="Structure and references only; the rubric assesses reasoning.")
 
@@ -908,7 +996,7 @@ def review_statuses(state: dict, data: dict) -> dict:
         if phase["kind"] != "review" or not phase["implemented"]:
             continue
         records = state["phases"][phase["id"]]["reviews"]
-        current_hashes = artifact_hashes(directory, phase["artifacts"]) if records else {}
+        current_hashes = review_hashes(directory, phase) if records else {}
         reports[phase["id"]] = {}
         for reviewer in ("self", "facilitator"):
             matches = [review for review in records if review["reviewer"] == reviewer]
@@ -917,8 +1005,12 @@ def review_statuses(state: dict, data: dict) -> dict:
             else:
                 latest = matches[-1]
                 stale = latest["artifact_hashes"] != current_hashes or latest["response_sha256"] != response_hash(state, phase["block"])
+                changed = [key for key in sorted(set(latest["artifact_hashes"]) | set(current_hashes))
+                           if latest["artifact_hashes"].get(key) != current_hashes.get(key)]
+                if latest["response_sha256"] != response_hash(state, phase["block"]):
+                    changed.append(f"responses:{phase['block']}")
                 report = dict(status="stale" if stale else "passed" if latest["passed"] else "needs_revision",
-                              valid_pass=latest["passed"] and not stale, scores=latest["scores"], at=latest["at"])
+                              valid_pass=latest["passed"] and not stale, scores=latest["scores"], at=latest["at"], changed_dependencies=changed)
             reports[phase["id"]][reviewer] = report
     return reports
 
@@ -956,6 +1048,7 @@ def act(ident: str, request: dict) -> dict:
         if name in ("c06.receive", "exit.answer") and "diagnosis" not in progress and action not in ("diagnose", "skip"):
             raise DeliveryError("Record initial hypotheses, confidence, and next evidence before opening diagnostic material", 3)
         result = {"action": action, "phase_id": name}
+        submitted_source = None
         if action == "diagnose":
             hypotheses = payload.get("hypotheses")
             if (not isinstance(hypotheses, list) or len(hypotheses) != 2
@@ -1019,8 +1112,23 @@ def act(ident: str, request: dict) -> dict:
                         assigned["exposed"] = True
                         assigned.setdefault("help", []).append(dict(at=now(), kind="experiment-result"))
             result["experiment"] = copy.deepcopy(entry)
-        elif action in ("answer", "predict"):
-            text = require_text(payload.get("text"))
+        elif action in ("answer", "predict", "submit_artifact"):
+            if action == "submit_artifact":
+                if set(payload) != {"file", "region", "expected_sha256", "answers"}:
+                    raise DeliveryError("Artifact submission needs file, region, expected_sha256, and answers")
+                binding = dict(file=payload["file"], region=payload["region"])
+                if binding not in phase["artifact_bindings"]:
+                    raise DeliveryError("Choose a region bound to this phase")
+                try:
+                    text = artifact_regions(artifact_text(directory, binding["file"]))[binding["region"]]
+                except KeyError:
+                    raise DeliveryError("Missing artifact region; restore its exact start/end markers") from None
+                if hash_text(text) != payload["expected_sha256"]:
+                    raise DeliveryError("Artifact region changed; fetch status and submit the current region", 3)
+                require_text(text, "artifact region")
+                submitted_source = dict(**binding, sha256=hash_text(text))
+            else:
+                text = require_text(payload.get("text"))
             items = checkpoint_items(phase, state)
             answers = payload.get("answers", {})
             if not isinstance(answers, dict) or set(answers) != {item["id"] for item in items}:
@@ -1039,7 +1147,7 @@ def act(ident: str, request: dict) -> dict:
                                           feedback_code=evaluated.get("feedback_code", "correct" if correct else "unclassified"),
                                           feedback=evaluated["feedback"])
             progress["checks"] = checks
-            progress["submissions"].append(dict(at=now(), text=text, answers=answers, checks=copy.deepcopy(checks)))
+            progress["submissions"].append(dict(at=now(), text=text, answers=answers, checks=copy.deepcopy(checks), artifact_source=submitted_source))
             progress["status"] = "incomplete"
             result.update(learning_result="incorrect" if any(not c["correct"] for c in checks.values()) else "recorded", checks=checks)
         elif action in ("support", "reassess", "problem_answer", "problem_hint"):
@@ -1079,27 +1187,47 @@ def act(ident: str, request: dict) -> dict:
                     if not prior["checks"] or not all(c["correct"] for c in prior["checks"].values()):
                         prior["exposed"] = True
             result["learning_result"] = "revealed"
+        elif action == "calibrate":
+            examples = learning.catalog()["calibration"]
+            example = next((e for e in examples if e["id"] == payload.get("example_id")), None)
+            scores = payload.get("scores")
+            if (set(payload) != {"example_id", "scores"} or example is None or not isinstance(scores, dict)
+                    or set(scores) != set(DIMENSIONS) or any(type(v) is not int or not 0 <= v <= 2 for v in scores.values())):
+                raise DeliveryError("Calibration needs a displayed example_id and four integer scores from 0 to 2")
+            record = dict(at=now(), example_id=example["id"], scores=scores, anchor_scores=example["scores"],
+                          differences={k: scores[k]-example["scores"][k] for k in DIMENSIONS})
+            progress.setdefault("calibration", []).append(record)
+            result["calibration"] = dict(**record, feedback=example["feedback"], formative=True)
         elif action == "review":
             scores = payload.get("scores")
             if (payload.get("reviewer") not in ("self", "facilitator") or not isinstance(scores, dict)
                     or set(scores) != set(DIMENSIONS) or any(type(v) is not int or not 0 <= v <= 2 for v in scores.values())):
                 raise DeliveryError("Review needs reviewer self/facilitator and four integer scores from 0 to 2")
-            current_hashes = artifact_hashes(directory, phase["artifacts"])
+            current_hashes = review_hashes(directory, phase)
             if payload.get("expected_artifact_hashes") != current_hashes:
                 raise DeliveryError("Artifact versions changed or hashes were omitted; fetch status and review the current files", 3)
             if payload.get("expected_response_sha256") != response_hash(state, phase["block"]):
                 raise DeliveryError("Response version changed or hash was omitted; review the current responses", 3)
+            reasoning = payload.get("reasoning")
+            if not isinstance(reasoning, dict) or set(reasoning) != set(REVIEW_GUIDE):
+                raise DeliveryError("Review needs claim, evidence, limitation, and next_test references in reasoning")
+            reasoning = {key: require_text(value, key) for key, value in reasoning.items()}
+            snapshots = review_dependencies(directory, phase)
+            if {key: hash_text(value) if value is not None else None for key, value in snapshots.items()} != current_hashes:
+                raise DeliveryError("Assessed content changed while preparing review; fetch status and retry", 3)
             review = dict(at=now(), reviewer=payload["reviewer"], scores=scores,
                           feedback=require_text(payload.get("feedback"), "feedback"),
                           artifact_hashes=current_hashes,
+                          dependency_snapshots=snapshots, reasoning=reasoning,
                           response_sha256=response_hash(state, phase["block"]),
                           artifact_check=validate_artifacts(directory, phase, state))
             review["passed"] = sum(scores.values()) >= 6 and min(scores.values()) > 0 and review["artifact_check"]["valid"]
-            if current_hashes != artifact_hashes(directory, phase["artifacts"]):
+            if current_hashes != review_hashes(directory, phase):
                 raise DeliveryError("Artifacts changed during review; fetch status and retry", 3)
             progress["reviews"].append(review)
             result["learning_result"] = "reviewed" if review["passed"] else "needs_revision"
             result["artifact_check"] = review["artifact_check"]
+            result["revision_prompts"] = {dimension: list(REVIEW_GUIDE.values())[i] for i, dimension in enumerate(DIMENSIONS) if scores[dimension] < 2}
         elif action == "feedback":
             for key in ("wanted_to_know", "manageable"):
                 if payload.get(key) is not None and (type(payload[key]) is not int or not 1 <= payload[key] <= 5):
@@ -1137,6 +1265,10 @@ def act(ident: str, request: dict) -> dict:
                 if phase_by_id(data, entry["phase"])["block"] == phase["block"] and not entry["responses"]:
                     entry["exposed"] = True
                     entry.setdefault("help", []).append(dict(at=now(), kind=action))
+        if submitted_source:
+            current = artifact_regions(artifact_text(directory, submitted_source["file"])).get(submitted_source["region"])
+            if current is None or hash_text(current) != submitted_source["sha256"]:
+                raise DeliveryError("Artifact region changed during submission; fetch status and retry", 3)
         state["revision"] += 1
         state["updated_at"] = now()
         response = status_result(state, data, result)
@@ -1161,10 +1293,12 @@ def export_session(ident: str, include_artifacts: bool = False) -> dict:
                             for a in state.get("learning", [])],
                   experiments=[{key: value for key, value in entry.items() if key != "prediction"}
                                for phase in state["phases"].values() for entry in phase.get("experiments", [])],
+                  calibration=[entry for phase in state["phases"].values() for entry in phase.get("calibration", [])],
                   response_hashes={phase["id"]: response_hash(state, phase["block"]) for phase in data["phases"] if phase["kind"] == "review"},
                   review_history={name: [dict(at=r["at"], reviewer=r["reviewer"], scores=r["scores"], passed_at_review=r["passed"], artifact_hashes=r["artifact_hashes"])
                                         for r in p["reviews"]] for name, p in state["phases"].items() if p["reviews"]},
                   artifact_hashes=artifact_hashes(directory, list(ARTIFACTS)),
+                  review_dependency_hashes={phase["id"]: review_hashes(directory, phase) for phase in data["phases"] if phase["kind"] == "review"},
                   phases=[dict(id=name, status=p["status"], checks={k: {field: v[field] for field in ("correct", "independent", "feedback_code")} for k, v in p["checks"].items()}, hints=p["hints"],
                                revealed=p["exposed"], attempts=len(p["submissions"]),
                                self_reported_minutes=p.get("self_reported_minutes"),
@@ -1176,9 +1310,9 @@ def export_session(ident: str, include_artifacts: bool = False) -> dict:
         if {name: hashlib.sha256(text.encode("utf-8")).hexdigest() for name, text in result["artifacts"].items()} != result["artifact_hashes"]:
             raise DeliveryError("Artifacts changed during export; retry", 3)
         result["included_files"] = list(ARTIFACTS)
-        result["responses"] = {name: {key: p.get(key) for key in ("submissions", "reviews", "skip_reason", "practice", "feedback")}
+        result["responses"] = {name: {key: p.get(key) for key in ("submissions", "reviews", "skip_reason", "feedback", "diagnosis", "experiments", "calibration")}
                                for name, p in state["phases"].items()}
-        result["experiment_predictions"] = {entry["id"]: entry["prediction"] for p in state["phases"].values() for entry in p.get("experiments", [])}
+        result["learning_responses"] = [{"variant_id": a["variant_id"], "responses": [{k:v for k,v in r.items() if k != "results"} for r in a["responses"]]} for a in state.get("learning", [])]
     return result
 
 
@@ -1245,12 +1379,18 @@ def learn(ident: str, mode: str = "solo", case: str = "A", pair_label: str | Non
                     print(phase["prompt"])
                     print(f"\n{phase['mode_prompt']}")
                     print("Artifacts: " + ", ".join(str(session_dir(ident) / name) for name in phase["artifacts"]))
+                    for region in phase["artifact_regions"]:
+                        print(f"\nRegion {region['file']}#{region['region']}:\n{region.get('text', region.get('error'))}")
                     if phase["break_after_minutes"]:
                         print(f"Take a {phase['break_after_minutes']}-minute break after this phase.")
                     last_phase = phase["id"]
                 answered = phase["progress"]["submissions"] and all(check["correct"] for check in phase["progress"]["checks"].values())
-                default = "r" if phase["kind"] == "review" and not phase["progress"]["reviews"] else "f" if phase["kind"] == "feedback" and "feedback" not in phase["progress"] else "c" if answered or phase["kind"] in ("review", "feedback") else "a"
-                keys = {"a": "answer", "c": "continue", "s": "skip", "e": "evidence", "h": "hint", "v": "reveal", "r": "review", "f": "feedback", "d": "diagnose", "u": "support", "n": "reassess", "b": "problem_answer", "j": "problem_hint", "x": "experiment_predict", "z": "experiment_result"}
+                default = "d" if phase["initial_diagnosis_required"] else "r" if phase["kind"] == "review" and not phase["progress"]["reviews"] else "f" if phase["kind"] == "feedback" and "feedback" not in phase["progress"] else "c" if answered or phase["kind"] in ("review", "feedback") else "t" if "submit_artifact" in phase["allowed_actions"] else "a"
+                print("Selected evidence: " + ", ".join(phase["progress"]["views"]))
+                print("Outstanding facts: " + ", ".join(q["id"] for q in phase["checkpoints"] if not phase["progress"]["checks"].get(q["id"], {}).get("correct")))
+                if phase.get("experiment", {}).get("required") and not phase["experiment"]["recorded"]:
+                    print("Outstanding: predict and compare the bounded experiment (x, z).")
+                keys = {"a": "answer", "t": "submit_artifact", "k": "calibrate", "c": "continue", "s": "skip", "e": "evidence", "h": "hint", "v": "reveal", "r": "review", "f": "feedback", "d": "diagnose", "u": "support", "n": "reassess", "b": "problem_answer", "j": "problem_hint", "x": "experiment_predict", "z": "experiment_result"}
                 choices = [f"{key}: {value}" for key, value in keys.items() if value in phase["allowed_actions"]]
                 action = input("\n" + " · ".join(choices) + f" · g: revisit · q: quit [{default}]: ").strip().lower() or default
             if action == "q":
@@ -1272,6 +1412,23 @@ def learn(ident: str, mode: str = "solo", case: str = "A", pair_label: str | Non
                 if operation in ("answer", "predict"):
                     answers = {item["id"]: input(item["prompt"] + "\nAnswer: ") for item in phase["checkpoints"]}
                     payload = dict(text=input("Your prediction/explanation (one paragraph; artifacts can be edited separately): "), answers=answers)
+                elif operation == "submit_artifact":
+                    for i, region in enumerate(phase["artifact_regions"], 1):
+                        print(f"{i}. {region['file']}#{region['region']}")
+                    selected = int(input("Region [1]: ").strip() or "1")
+                    if not 1 <= selected <= len(phase["artifact_regions"]):
+                        raise DeliveryError("Choose a displayed region number")
+                    region = phase["artifact_regions"][selected-1]
+                    if "error" in region:
+                        raise DeliveryError(region["error"])
+                    print(region["text"])
+                    payload = dict(file=region["file"], region=region["region"], expected_sha256=region["sha256"],
+                                   answers={q["id"]: input(q["prompt"] + "\nAnswer: ") for q in phase["checkpoints"]})
+                elif operation == "calibrate":
+                    for example in phase["calibration"]:
+                        print(f"{example['id']}: {example['context']}\n{example['response']}")
+                    example_id = input("Example ID: ").strip()
+                    payload = dict(example_id=example_id, scores={name: int(input(f"{name} (0–2): ")) for name in DIMENSIONS})
                 elif operation == "diagnose":
                     payload = dict(hypotheses=[input("First hypothesis: "), input("Alternative hypothesis: ")],
                                    confidence=input("Confidence: low/medium/high: ").strip(),
@@ -1299,7 +1456,9 @@ def learn(ident: str, mode: str = "solo", case: str = "A", pair_label: str | Non
                     print("Score mechanism, evidence, uncertainty, and action: 0 missing, 1 partial, 2 demonstrated.")
                     reviewer = input("Reviewer: self or facilitator [self]: ").strip() or "self"
                     scores = {name: int(input(f"{name} (0–2): ")) for name in DIMENSIONS}
+                    reasoning = {key: input(f"{prompt}\nGive a region/field reference (no need to retype the explanation): ") for key, prompt in phase["review_guide"].items()}
                     payload = dict(reviewer=reviewer, scores=scores, feedback=input("Feedback and next revision: "),
+                                   reasoning=reasoning,
                                    expected_artifact_hashes=phase["artifact_hashes"], expected_response_sha256=phase["response_sha256"])
                 elif operation == "feedback":
                     for key, prompt in (("wanted_to_know", "I wanted to find out what happened next"), ("manageable", "The challenge felt manageable")):
@@ -1342,6 +1501,10 @@ def learn(ident: str, mode: str = "solo", case: str = "A", pair_label: str | Non
                     print(json.dumps(result["problem_result"], indent=2))
                 if "experiment" in result:
                     print(json.dumps(result["experiment"], indent=2))
+                if "calibration" in result:
+                    print(json.dumps(result["calibration"], indent=2))
+                for dimension, prompt in result.get("revision_prompts", {}).items():
+                    print(f"Revise {dimension}: {prompt}")
                 for name, check in result.get("checks", {}).items():
                     print(f"{name}: {check['feedback']}")
                 for check in result.get("results", []):

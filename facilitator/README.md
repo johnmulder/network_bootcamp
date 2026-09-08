@@ -106,7 +106,10 @@ follow mistakes, never speed. Learners who succeed may bypass support but must
 still investigate, explain, and complete the individual exit. Before either
 case, collect two hypotheses, confidence, and a next-evidence choice using
 `diagnose`; then allow state, observations, and conditions in any order.
-After final artifact or answer revisions, refresh affected earlier reviews.
+After revisions, refresh only reviews whose assessed regions, cited ledger
+rows, or related responses changed. Keep stable artifact markers; headings may
+change. The runner names stale dependencies and retains the old snapshot.
+Learners can submit a marked section without typing its paragraph again.
 
 ### Sample Graded Responses
 
@@ -115,6 +118,16 @@ After final artifact or answer revisions, refresh affected earlier reviews.
 | “The network is down. Restart the firewall.” | 0 / 0 / 0 / 0 | Identify the affected flow and an actual observation before prescribing a change. |
 | “A3 says the return packet has no route. Restore the route.” | 2 / 2 / 0 / 1 = 5 | Explain the missing intent information; name an owner, validation, and rollback. |
 | “In A-v1 the forward `/8` still reaches on-prem, but the return `/16` is absent. A2 shows a server reply; A3 records its route drop. The change's intent is unknown. Network operations should check the change record and restore the authorized return route if unintended, verify TCP plus the TLS health request, and roll back if validation fails.” | 2 / 2 / 2 / 2 = 8 | Clear mechanism, provenance, limit, and owned action. |
+
+During opening reflection, invite learners to score two short examples with
+`calibrate` (terminal `k`) before seeing the anchors. The runner uses the first
+sample above and adapts the partial sample to an independent R3 case so the A/B
+exit is not exposed. Comparison is formative, not a completion gate. Revisit
+calibration at a review if scores seem inflated or the rubric is unclear.
+The guided review asks learners to point to a claim, evidence, limitation, and
+next test already in their work. Judge the reasoning; field presence alone
+cannot justify a high score. Compare learner and facilitator scores during
+pilots, and record the reason for disagreements.
 
 Score before and after revision separately. For incident scope, distinguish
 observed activity on a host from confirmed compromise of that host. A successful
