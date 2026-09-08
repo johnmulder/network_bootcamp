@@ -1,9 +1,7 @@
 # Learning and Reassessment Contract
 
-Contract version 2 is being implemented in stages. The `enabled` field in
-`course.json` remains false until every conceptual checkpoint has an executable
-reassessment. This document describes the new contract; the existing runner
-continues to use the version 1 rules until activation.
+Contract version 2 is active. Course, state, and JSON protocol versions are
+explicitly updated. Every conceptual checkpoint has an executable reassessment.
 
 Every checkpoint occurrence has a stable objective, problem family, scoring
 field, and support reference in `course.json`. Case IDs, original record numbers,
@@ -31,7 +29,7 @@ completion, and facilitator-reviewed completion are separate outcomes. Supported
 corrections count toward recorded work. Self and facilitator reviews are separate
 unauthenticated local judgments; no automated prose grading is introduced.
 
-State and JSON protocol version 2 will reject older sessions without migration,
+State and JSON protocol version 2 reject older sessions without migration,
 reset, or regrading. Use the matching older course copy to resume or export old
 work; create a separate session for the new course. Default exports omit prose
 and answer keys. The local course remains an open learning environment, not an
@@ -43,7 +41,7 @@ after class. No claim of guaranteed six-hour mastery follows from the schedule.
 
 ## Typed Learning Actions
 
-The transfer slice implements these operations behind the inactive contract.
+All conceptual checkpoint phases implement these operations.
 They use the existing request ID, revision, phase ID, action, and payload envelope.
 Assign a problem in its checkpoint phase; revisit that released phase later if
 needed. Assignment is saved before the prompt is returned. Status includes

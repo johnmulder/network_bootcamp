@@ -1,6 +1,6 @@
 # Course Delivery Contract
 
-The runner delivers all 36 phases across eight teaching blocks. Start or resume
+The runner delivers all required phases across eight teaching blocks. Start or resume
 with `./course learn --id my-session`, or use the JSON session commands below.
 The default `./course` menu opens saved delivery; manual browsing is also kept.
 
@@ -38,8 +38,9 @@ are advisory, and an optional duration on `continue` is self-reported time.
 Case A is the main capstone and B the exit unless `--case B` was selected when
 creating the session. That assignment is saved. `--mode pair --pair-label team-1`
 adds pair instructions; each learner still needs their own session and exit.
-Optional saved practice appears at the Module 1, 2, and 3 review phases, after
-the relevant evidence has been released. It never changes the course grade.
+Support and fresh reassessment are available in conceptual checkpoint phases.
+Recommendations follow recorded mistakes. The fixed random-five saved practice
+is replaced; standalone workbench menus remain available for optional study.
 
 Reusing an identical request ID returns its original result. A reused ID with
 different input or a stale revision fails. Exit codes are 0 for a processed
@@ -103,12 +104,11 @@ requires the same five envelope fields shown above.
 | --- | --- | --- |
 | `predict` / `answer` | `text`; checkpoint phases also need `answers` mapping every displayed ID to a short string | Saves a new attempt and factual feedback without advancing. Keep long-form work in the artifact files. |
 | `evidence` | `view` copied from the phase's evidence list | Runs a fixed read-only command and returns captured output, command, and fixture-manifest hash. |
-| `hint` | `{}` | Reveals one hint at a time without penalty. |
+| `hint` | `{}` | Reveals answer-bearing help and marks unfinished attempts in this block supported. |
 | `reveal` | `{}` | Shows only this block's worked review and assigned case. Subsequent answers exposed by it cannot count as independent. |
 | `continue` | `{}` or optional numeric `minutes` | Advances after required responses; review can remain pending. Minutes are self-reported. |
 | `skip` | Nonempty `reason` | Continues while recording unfinished work. Revisit and finish it later to satisfy completion. |
 | `review` | `reviewer`, `scores`, `feedback`, `expected_artifact_hashes`, `expected_response_sha256` | Records a self/facilitator rubric review of specific file and response versions. |
-| `practice` | `answers` for the five displayed optional questions, or `reveal: true` | Saves practice results without affecting the grade. Question IDs and order are retained across resumes. |
 | `feedback` | Optional integer `wanted_to_know` and `manageable` ratings, 1–5; optional `text` | Records the existing engagement questions. An empty object opts out. |
 
 Checkpoint answers retain the existing workbench normalization and aliases.
@@ -163,24 +163,32 @@ both manual and guided delivery. The JSON response reports:
 
 | Field | Requirement |
 | --- | --- |
-| `delivery_finished` | Reached the end of all 36 implemented phases; skips or demonstrations can remain. |
-| `required_work_recorded` | All phases are complete or pending rubric review, with valid artifact structure; no skipped, incomplete, or demonstrated phases remain. |
-| `objective_checks_satisfied` | Every required checkpoint has a correct independent answer. |
+| `delivery_finished` | Reached the end of all implemented phases; skips or demonstrations can remain. |
+| `required_work_recorded` | All phases are complete, demonstrated, or pending rubric review, with valid artifact structure; no skipped or incomplete phases remain. |
+| `objective_checks_satisfied` | Every conceptual objective has an independent first response or fresh reassessment; recording checks are part of required work. |
 | `self_reviewed_completion` | All three conditions above and passing, current self-reviews for Challenges 1–6 and the exit. |
 | `facilitator_reviewed_completion` | All three conditions above and passing, current facilitator reviews at those same seven points. |
 
-A worked reveal marks unanswered or incorrect checkpoints in the block as
-exposed. A later correct answer can advance delivery but remains demonstrated;
-repeated attempts and passing rubric reviews do not restore its independence.
-For example, revealing the payload calculation after an incorrect answer and
-then correcting it to 1160 bytes leaves `objective_checks_satisfied` false,
-even if all rubric reviews pass. Reaching the end sets `delivery_finished`
-true while both completion flags remain false. Export the learning history;
-the runner has no fresh-assessment or override operation. A facilitator's
-separate assessment of a different example belongs alongside that export.
+The first committed response qualifies only if correct before corrective
+feedback or answer-bearing help. Corrections remain supported; invalid factual
+formats do not consume an attempt. A fresh, unassisted reassessment can satisfy
+the same objective without rewriting the original history. Assignment is saved
+before presentation, resumes unchanged, and cannot be rerolled by retrying a
+request. A hint on a fresh variant exposes it permanently. Exhaustion explicitly
+leaves the objective unmet. See the [learning action contract](assessment.md#typed-learning-actions).
+The status and JSON export include per-objective original and fresh attainment;
+summary exports omit responses, prose, and authored answer keys.
 
-Hints and corrections without a worked reveal retain independence. Standalone
-quizzes and the optional `practice` action do not affect these completion fields.
+State and protocol version 2 reject old sessions without migration or regrading.
+Use their matching course copy to resume or export them; create a new session
+for the new course. Standalone workbench quizzes remain optional practice.
+
+Before capstone and exit diagnostic material, use `diagnose` with two
+`hypotheses`, `confidence` (`low`, `medium`, `high`), and `next_evidence`
+(`state`, `observations`, `conditions`). Status initially exposes only the
+symptom and flow. After recording that diagnosis, choose those evidence views
+in any order; update your explanation as evidence changes your claims. The
+local files remain readable by convention, not a secure exam boundary.
 
 ## Local Exports
 

@@ -1,6 +1,6 @@
 {
-  "schema_version": 1,
-  "course_version": "1.0",
+  "schema_version": 2,
+  "course_version": "2.0",
   "blocks": [
     {
       "id": "opening",
@@ -215,7 +215,7 @@
     {
       "id": "c01.inspect",
       "block": "c01",
-      "minutes": 30,
+      "minutes": 25,
       "kind": "reflection",
       "prerequisites": [
         "c01.model"
@@ -267,7 +267,7 @@
     {
       "id": "c01.change",
       "block": "c01",
-      "minutes": 15,
+      "minutes": 20,
       "kind": "checkpoint",
       "prerequisites": [
         "c01.inspect"
@@ -451,7 +451,7 @@
     {
       "id": "c02.inspect",
       "block": "c02",
-      "minutes": 20,
+      "minutes": 15,
       "kind": "reflection",
       "prerequisites": [
         "c02.predict"
@@ -503,7 +503,7 @@
     {
       "id": "c02.calculate",
       "block": "c02",
-      "minutes": 10,
+      "minutes": 15,
       "kind": "checkpoint",
       "prerequisites": [
         "c02.inspect"
@@ -1631,30 +1631,10 @@
           "fragment": "c06.receive"
         }
       ],
-      "evidence": [
-        "case.main"
-      ],
+      "evidence": [],
       "checkpoints": [],
-      "hints": [
-        {
-          "path": "challenges/hints.md",
-          "fragment": "c06.hint1"
-        },
-        {
-          "path": "challenges/hints.md",
-          "fragment": "c06.hint2"
-        },
-        {
-          "path": "challenges/hints.md",
-          "fragment": "c06.hint3"
-        }
-      ],
-      "solutions": [
-        {
-          "path": "facilitator/solutions.md",
-          "fragment": "c06.case-{main}.solution"
-        }
-      ],
+      "hints": [],
+      "solutions": [],
       "artifacts": [
         "packet-path.md",
         "architecture.md",
@@ -1693,7 +1673,9 @@
         }
       ],
       "evidence": [
-        "case.main"
+        "case.main.state",
+        "case.main.observations",
+        "case.main.conditions"
       ],
       "checkpoints": [
         "case.id",
@@ -1905,7 +1887,9 @@
           "fragment": "c06.review"
         }
       ],
-      "evidence": [],
+      "evidence": [
+        "case.main"
+      ],
       "checkpoints": [],
       "hints": [
         {
@@ -1965,7 +1949,9 @@
         }
       ],
       "evidence": [
-        "case.exit"
+        "case.exit.state",
+        "case.exit.observations",
+        "case.exit.conditions"
       ],
       "checkpoints": [
         "case.id",
@@ -2048,7 +2034,9 @@
           "fragment": "exit.review"
         }
       ],
-      "evidence": [],
+      "evidence": [
+        "case.exit"
+      ],
       "checkpoints": [],
       "hints": [
         {
@@ -2132,7 +2120,7 @@
   ],
   "learning_contract": {
     "version": 2,
-    "enabled": false,
+    "enabled": true,
     "catalog": "delivery/problems.json",
     "families": [
       "subnet",

@@ -1,6 +1,7 @@
 """Learning contracts and independent checks of authored problems."""
 
 import json
+import ipaddress
 import unittest
 from unittest import mock
 from pathlib import Path
@@ -61,6 +62,34 @@ class LearningContractTests(unittest.TestCase):
             p = problem["parameters"]
             self.assertLessEqual(p["small_payload"] + p["ipv4_header"] + p["tcp_header"], p["mtu"])
 
+    def test_all_families_cover_objectives_and_route_variants_change_the_reasoning(self):
+        data = d.definition()
+        problems = learning.catalog()["families"]
+        self.assertTrue(data["learning_contract"]["enabled"])
+        self.assertEqual(set(problems), set(data["learning_contract"]["families"]))
+        for phase in data["phases"]:
+            for binding in phase["assessment"].values():
+                if binding["role"] == "conceptual":
+                    for variant in problems[binding["family"]]:
+                        self.assertIn(binding["field"], {q["id"] for q in variant["questions"]})
+        expected = {
+            "route-selection-r1": ("10.8.9.0/25", "10.8.9.0/25", {"10.0.0.2", "10.0.0.3"}, {"10.0.0.3"}),
+            "route-selection-r2": ("192.0.2.128/26", "192.0.2.0/24", {"10.0.0.2"}, {"10.0.0.1"}),
+        }
+        for variant in problems["route-selection"][1:]:
+            actual = {q["id"]: q["answer"] for q in variant["questions"]}
+            before, after, hops, after_hops = expected[variant["id"]]
+            self.assertEqual((actual["prefix"], actual["after-prefix"]), (before, after))
+            self.assertEqual(set(actual["hops"].split(", ")), hops)
+            self.assertEqual(set(actual["after-hops"].split(", ")), after_hops)
+        for variant in problems["subnet"]:
+            p = variant["parameters"]
+            local = ipaddress.ip_address(p["peer"]) in ipaddress.ip_interface(p["interface"]).network
+            self.assertEqual(variant["questions"][0]["answer"], "yes" if local else "no")
+        for variant in problems["diagnosis"]:
+            self.assertNotIn("case-a.json", json.dumps(variant))
+            self.assertNotIn("case-b.json", json.dumps(variant))
+
 
 class TransferLearningJourneyTests(unittest.TestCase):
     request = journeys.SessionTests.request
@@ -69,13 +98,6 @@ class TransferLearningJourneyTests(unittest.TestCase):
 
     def setUp(self):
         journeys.SessionTests.setUp(self)
-        # Isolate the first slice while the public contract remains inactive.
-        data = d.definition()
-        data["learning_contract"]["enabled"] = True
-        next(p for p in data["phases"] if p["id"] == "c02.calculate")["learning_enabled"] = True
-        patch = mock.patch.object(d, "definition", return_value=data)
-        patch.start()
-        self.addCleanup(patch.stop)
         self.reach_transfer()
         for _ in range(2):
             self.act("answer", {"text": "Prediction and evidence comparison"})
@@ -121,6 +143,14 @@ class TransferLearningJourneyTests(unittest.TestCase):
             result = self.act("problem_answer", {"variant_id": variant["id"], "answers": {"payload": payload, "fits": "yes"}})
             self.assertFalse(result["result"]["problem_result"]["independent"])
         self.assertTrue(self.act("reassess", {"family": "transfer"})["result"]["problem_result"]["exhausted"])
+
+    def test_failed_fresh_answer_and_correction_do_not_become_independent(self):
+        variant = self.act("reassess", {"family": "transfer"})["result"]["problem_result"]
+        self.act("problem_answer", {"variant_id": variant["id"], "answers": {"payload": "1 bytes", "fits": "no"}})
+        payload = "1224 bytes" if variant["id"] == "transfer-r1" else "1440 bytes"
+        result = self.act("problem_answer", {"variant_id": variant["id"], "answers": {"payload": payload, "fits": "yes"}})
+        self.assertFalse(result["result"]["problem_result"]["independent"])
+        self.assertFalse(next(o for o in result["objectives"] if o["family"] == "transfer")["satisfied"])
 
 
 if __name__ == "__main__":

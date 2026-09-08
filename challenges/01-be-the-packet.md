@@ -32,7 +32,7 @@ request. Identify which missing neighbor information would require ARP.
 <!-- delivery:end c01.model -->
 
 <!-- delivery:start c01.inspect -->
-## Inspect and Trace — 30 Minutes
+## Inspect and Trace — 25 Minutes
 
 ```sh
 jq '.' labs/fixtures/network/dhcp.jsonl
@@ -60,7 +60,7 @@ show the entire routed path or prove that the real network matches the diagram.
 <!-- delivery:end c01.inspect -->
 
 <!-- delivery:start c01.change -->
-## Change One Condition — 15 Minutes
+## Change One Condition — 20 Minutes
 
 This CSV is an **independent route-selection snapshot**, not the table that
 generated the earlier capture. Do not combine its next hops with the capture's

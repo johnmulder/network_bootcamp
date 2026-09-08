@@ -101,6 +101,1525 @@
           }
         ]
       }
+    ],
+    "subnet": [
+      {
+        "id": "subnet-supported",
+        "family": "subnet",
+        "use": "supported",
+        "parameters": {
+          "interface": "10.1.2.10/24",
+          "peer": "10.1.2.240"
+        },
+        "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
+        "prompt": "Decide whether the peer is on this interface subnet before choosing a gateway.",
+        "questions": [
+          {
+            "id": "local",
+            "prompt": "Is 10.1.2.240 local to 10.1.2.10/24? yes/no",
+            "answer": "yes",
+            "type": "text",
+            "explanation": "Compare the prefix bits, not the number of visibly matching decimal octets.",
+            "misconceptions": []
+          }
+        ]
+      },
+      {
+        "id": "subnet-r1",
+        "family": "subnet",
+        "use": "reassessment",
+        "parameters": {
+          "interface": "10.1.2.126/25",
+          "peer": "10.1.2.129"
+        },
+        "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
+        "prompt": "Decide whether the peer is on this interface subnet before choosing a gateway.",
+        "questions": [
+          {
+            "id": "local",
+            "prompt": "Is 10.1.2.129 local to 10.1.2.126/25? yes/no",
+            "answer": "no",
+            "type": "text",
+            "explanation": "Compare the prefix bits, not the number of visibly matching decimal octets.",
+            "misconceptions": []
+          }
+        ]
+      },
+      {
+        "id": "subnet-r2",
+        "family": "subnet",
+        "use": "reassessment",
+        "parameters": {
+          "interface": "172.16.1.254/23",
+          "peer": "172.16.0.8"
+        },
+        "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
+        "prompt": "Decide whether the peer is on this interface subnet before choosing a gateway.",
+        "questions": [
+          {
+            "id": "local",
+            "prompt": "Is 172.16.0.8 local to 172.16.1.254/23? yes/no",
+            "answer": "yes",
+            "type": "text",
+            "explanation": "Compare the prefix bits, not the number of visibly matching decimal octets.",
+            "misconceptions": []
+          }
+        ]
+      }
+    ],
+    "service-boundaries": [
+      {
+        "id": "service-boundaries-supported",
+        "family": "service-boundaries",
+        "use": "supported",
+        "parameters": {
+          "observations": [
+            "DNS reply supplies an address.",
+            "TCP SYN/SYN-ACK/ACK complete; no application bytes captured."
+          ]
+        },
+        "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
+        "prompt": "Keep separate evidence streams separate: DNS resolution, host reachability, and application success.",
+        "questions": [
+          {
+            "id": "dns",
+            "prompt": "Does the DNS-related evidence stream also demonstrate host reachability at that time? yes/no",
+            "answer": "no",
+            "type": "text",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": []
+          },
+          {
+            "id": "application",
+            "prompt": "Does the application evidence demonstrate an application response at that time? yes/no",
+            "answer": "no",
+            "type": "text",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": []
+          }
+        ]
+      },
+      {
+        "id": "service-boundaries-r1",
+        "family": "service-boundaries",
+        "use": "reassessment",
+        "parameters": {
+          "observations": [
+            "DNS reply supplies an address.",
+            "The named host also replies to ICMP echo.",
+            "Only a TCP handshake is recorded for the application."
+          ]
+        },
+        "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
+        "prompt": "Keep separate evidence streams separate: DNS resolution, host reachability, and application success.",
+        "questions": [
+          {
+            "id": "dns",
+            "prompt": "Does the DNS-related evidence stream also demonstrate host reachability at that time? yes/no",
+            "answer": "yes",
+            "type": "text",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": []
+          },
+          {
+            "id": "application",
+            "prompt": "Does the application evidence demonstrate an application response at that time? yes/no",
+            "answer": "no",
+            "type": "text",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": []
+          }
+        ]
+      },
+      {
+        "id": "service-boundaries-r2",
+        "family": "service-boundaries",
+        "use": "reassessment",
+        "parameters": {
+          "observations": [
+            "The DNS trace contains only a reply with an address.",
+            "A separate known-address request receives the expected HTTP 200 body."
+          ]
+        },
+        "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
+        "prompt": "Keep separate evidence streams separate: DNS resolution, host reachability, and application success.",
+        "questions": [
+          {
+            "id": "dns",
+            "prompt": "Does the DNS-related evidence stream also demonstrate host reachability at that time? yes/no",
+            "answer": "no",
+            "type": "text",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": []
+          },
+          {
+            "id": "application",
+            "prompt": "Does the application evidence demonstrate an application response at that time? yes/no",
+            "answer": "yes",
+            "type": "text",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": []
+          }
+        ]
+      }
+    ],
+    "route-selection": [
+      {
+        "id": "route-selection-supported",
+        "family": "route-selection",
+        "use": "supported",
+        "parameters": {
+          "destination": "10.1.2.3",
+          "routes": [
+            {
+              "prefix": "10.1.0.0/16",
+              "preference": 5,
+              "next_hop": "10.0.0.1"
+            },
+            {
+              "prefix": "10.1.2.0/24",
+              "preference": 200,
+              "next_hop": "10.0.0.2"
+            },
+            {
+              "prefix": "10.1.2.0/24",
+              "preference": 200,
+              "next_hop": "10.0.0.3"
+            },
+            {
+              "prefix": "10.1.2.3/32",
+              "preference": 250,
+              "next_hop": "10.0.0.4"
+            }
+          ],
+          "remove_row": 4
+        },
+        "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
+        "prompt": "Tables are complete for this lookup. Prefer longest matching prefix, then lowest preference; equal winners are eligible ECMP hops. Remove only the indicated one-based row for the second lookup.",
+        "questions": [
+          {
+            "id": "prefix",
+            "prompt": "Winning prefix before removal?",
+            "answer": "10.1.2.3/32",
+            "type": "prefix",
+            "explanation": "Find matching prefixes first, then preference among equally specific routes; retain every equal winner.",
+            "misconceptions": []
+          },
+          {
+            "id": "after-prefix",
+            "prompt": "Winning prefix after removal?",
+            "answer": "10.1.2.0/24",
+            "type": "prefix",
+            "explanation": "Find matching prefixes first, then preference among equally specific routes; retain every equal winner.",
+            "misconceptions": []
+          },
+          {
+            "id": "hops",
+            "prompt": "Every eligible next-hop IP before removal, comma separated?",
+            "answer": "10.0.0.4",
+            "type": "hops",
+            "explanation": "Find matching prefixes first, then preference among equally specific routes; retain every equal winner.",
+            "misconceptions": []
+          },
+          {
+            "id": "after-hops",
+            "prompt": "Every eligible next-hop IP after removal, comma separated?",
+            "answer": "10.0.0.2, 10.0.0.3",
+            "type": "hops",
+            "explanation": "Find matching prefixes first, then preference among equally specific routes; retain every equal winner.",
+            "misconceptions": []
+          }
+        ]
+      },
+      {
+        "id": "route-selection-r1",
+        "family": "route-selection",
+        "use": "reassessment",
+        "parameters": {
+          "destination": "10.8.9.10",
+          "routes": [
+            {
+              "prefix": "10.8.0.0/16",
+              "preference": 5,
+              "next_hop": "10.0.0.1"
+            },
+            {
+              "prefix": "10.8.9.0/25",
+              "preference": 110,
+              "next_hop": "10.0.0.2"
+            },
+            {
+              "prefix": "10.8.9.0/25",
+              "preference": 110,
+              "next_hop": "10.0.0.3"
+            },
+            {
+              "prefix": "10.8.9.0/25",
+              "preference": 120,
+              "next_hop": "10.0.0.9"
+            }
+          ],
+          "remove_row": 2
+        },
+        "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
+        "prompt": "Tables are complete for this lookup. Prefer longest matching prefix, then lowest preference; equal winners are eligible ECMP hops. Remove only the indicated one-based row for the second lookup.",
+        "questions": [
+          {
+            "id": "prefix",
+            "prompt": "Winning prefix before removal?",
+            "answer": "10.8.9.0/25",
+            "type": "prefix",
+            "explanation": "Find matching prefixes first, then preference among equally specific routes; retain every equal winner.",
+            "misconceptions": []
+          },
+          {
+            "id": "after-prefix",
+            "prompt": "Winning prefix after removal?",
+            "answer": "10.8.9.0/25",
+            "type": "prefix",
+            "explanation": "Find matching prefixes first, then preference among equally specific routes; retain every equal winner.",
+            "misconceptions": []
+          },
+          {
+            "id": "hops",
+            "prompt": "Every eligible next-hop IP before removal, comma separated?",
+            "answer": "10.0.0.2, 10.0.0.3",
+            "type": "hops",
+            "explanation": "Find matching prefixes first, then preference among equally specific routes; retain every equal winner.",
+            "misconceptions": []
+          },
+          {
+            "id": "after-hops",
+            "prompt": "Every eligible next-hop IP after removal, comma separated?",
+            "answer": "10.0.0.3",
+            "type": "hops",
+            "explanation": "Find matching prefixes first, then preference among equally specific routes; retain every equal winner.",
+            "misconceptions": []
+          }
+        ]
+      },
+      {
+        "id": "route-selection-r2",
+        "family": "route-selection",
+        "use": "reassessment",
+        "parameters": {
+          "destination": "192.0.2.130",
+          "routes": [
+            {
+              "prefix": "192.0.2.0/24",
+              "preference": 1,
+              "next_hop": "10.0.0.1"
+            },
+            {
+              "prefix": "192.0.2.128/26",
+              "preference": 200,
+              "next_hop": "10.0.0.2"
+            }
+          ],
+          "remove_row": 2
+        },
+        "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
+        "prompt": "Tables are complete for this lookup. Prefer longest matching prefix, then lowest preference; equal winners are eligible ECMP hops. Remove only the indicated one-based row for the second lookup.",
+        "questions": [
+          {
+            "id": "prefix",
+            "prompt": "Winning prefix before removal?",
+            "answer": "192.0.2.128/26",
+            "type": "prefix",
+            "explanation": "Find matching prefixes first, then preference among equally specific routes; retain every equal winner.",
+            "misconceptions": []
+          },
+          {
+            "id": "after-prefix",
+            "prompt": "Winning prefix after removal?",
+            "answer": "192.0.2.0/24",
+            "type": "prefix",
+            "explanation": "Find matching prefixes first, then preference among equally specific routes; retain every equal winner.",
+            "misconceptions": []
+          },
+          {
+            "id": "hops",
+            "prompt": "Every eligible next-hop IP before removal, comma separated?",
+            "answer": "10.0.0.2",
+            "type": "hops",
+            "explanation": "Find matching prefixes first, then preference among equally specific routes; retain every equal winner.",
+            "misconceptions": []
+          },
+          {
+            "id": "after-hops",
+            "prompt": "Every eligible next-hop IP after removal, comma separated?",
+            "answer": "10.0.0.1",
+            "type": "hops",
+            "explanation": "Find matching prefixes first, then preference among equally specific routes; retain every equal winner.",
+            "misconceptions": []
+          }
+        ]
+      }
+    ],
+    "convergence": [
+      {
+        "id": "convergence-supported",
+        "family": "convergence",
+        "use": "supported",
+        "parameters": {
+          "link_down_ms": 0,
+          "fib_installed_ms": 100,
+          "next_hop": "10.255.1.2",
+          "application_observation": "No application result supplied"
+        },
+        "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
+        "prompt": "All event times share a clock. Distinguish forwarding installation from observed service behavior.",
+        "questions": [
+          {
+            "id": "interval",
+            "prompt": "Elapsed time from link-down to FIB installation? ms or seconds",
+            "answer": "100",
+            "type": "milliseconds",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": []
+          },
+          {
+            "id": "hop",
+            "prompt": "Installed next-hop IP?",
+            "answer": "10.255.1.2",
+            "type": "ip",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": []
+          },
+          {
+            "id": "application",
+            "prompt": "Does the supplied evidence establish an application response after the failure? yes/no",
+            "answer": "no",
+            "type": "text",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": [
+              {
+                "answers": [
+                  "yes"
+                ],
+                "code": "application-not-observed"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "convergence-r1",
+        "family": "convergence",
+        "use": "reassessment",
+        "parameters": {
+          "link_down_ms": 25,
+          "fib_installed_ms": 90,
+          "next_hop": "10.255.2.3",
+          "application_observation": "No application result supplied"
+        },
+        "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
+        "prompt": "All event times share a clock. Distinguish forwarding installation from observed service behavior.",
+        "questions": [
+          {
+            "id": "interval",
+            "prompt": "Elapsed time from link-down to FIB installation? ms or seconds",
+            "answer": "65",
+            "type": "milliseconds",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": []
+          },
+          {
+            "id": "hop",
+            "prompt": "Installed next-hop IP?",
+            "answer": "10.255.2.3",
+            "type": "ip",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": []
+          },
+          {
+            "id": "application",
+            "prompt": "Does the supplied evidence establish an application response after the failure? yes/no",
+            "answer": "no",
+            "type": "text",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": [
+              {
+                "answers": [
+                  "yes"
+                ],
+                "code": "application-not-observed"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "convergence-r2",
+        "family": "convergence",
+        "use": "reassessment",
+        "parameters": {
+          "link_down_ms": 100,
+          "fib_installed_ms": 340,
+          "next_hop": "10.255.3.4",
+          "application_observation": "Expected HTTP 200 response at 400 ms"
+        },
+        "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
+        "prompt": "All event times share a clock. Distinguish forwarding installation from observed service behavior.",
+        "questions": [
+          {
+            "id": "interval",
+            "prompt": "Elapsed time from link-down to FIB installation? ms or seconds",
+            "answer": "240",
+            "type": "milliseconds",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": []
+          },
+          {
+            "id": "hop",
+            "prompt": "Installed next-hop IP?",
+            "answer": "10.255.3.4",
+            "type": "ip",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": []
+          },
+          {
+            "id": "application",
+            "prompt": "Does the supplied evidence establish an application response after the failure? yes/no",
+            "answer": "yes",
+            "type": "text",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": []
+          }
+        ]
+      }
+    ],
+    "bgp": [
+      {
+        "id": "bgp-supported",
+        "family": "bgp",
+        "use": "supported",
+        "parameters": {
+          "routes": [
+            {
+              "peer": "192.0.2.1",
+              "local_pref": 100,
+              "as_path_length": 1,
+              "accepted": true
+            },
+            {
+              "peer": "192.0.2.2",
+              "local_pref": 200,
+              "as_path_length": 3,
+              "accepted": true
+            }
+          ]
+        },
+        "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
+        "prompt": "All entries cover the same destination prefix. Reject unaccepted routes, then prefer highest LOCAL_PREF, then shortest AS path; other attributes tie.",
+        "questions": [
+          {
+            "id": "peer",
+            "prompt": "Which accepted peer wins?",
+            "answer": "192.0.2.2",
+            "type": "ip",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": []
+          }
+        ]
+      },
+      {
+        "id": "bgp-r1",
+        "family": "bgp",
+        "use": "reassessment",
+        "parameters": {
+          "routes": [
+            {
+              "peer": "192.0.2.10",
+              "local_pref": 250,
+              "as_path_length": 5,
+              "accepted": false
+            },
+            {
+              "peer": "192.0.2.20",
+              "local_pref": 150,
+              "as_path_length": 2,
+              "accepted": true
+            }
+          ]
+        },
+        "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
+        "prompt": "All entries cover the same destination prefix. Reject unaccepted routes, then prefer highest LOCAL_PREF, then shortest AS path; other attributes tie.",
+        "questions": [
+          {
+            "id": "peer",
+            "prompt": "Which accepted peer wins?",
+            "answer": "192.0.2.20",
+            "type": "ip",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": []
+          }
+        ]
+      },
+      {
+        "id": "bgp-r2",
+        "family": "bgp",
+        "use": "reassessment",
+        "parameters": {
+          "routes": [
+            {
+              "peer": "192.0.2.30",
+              "local_pref": 180,
+              "as_path_length": 5,
+              "accepted": true
+            },
+            {
+              "peer": "192.0.2.40",
+              "local_pref": 180,
+              "as_path_length": 2,
+              "accepted": true
+            }
+          ]
+        },
+        "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
+        "prompt": "All entries cover the same destination prefix. Reject unaccepted routes, then prefer highest LOCAL_PREF, then shortest AS path; other attributes tie.",
+        "questions": [
+          {
+            "id": "peer",
+            "prompt": "Which accepted peer wins?",
+            "answer": "192.0.2.40",
+            "type": "ip",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": []
+          }
+        ]
+      }
+    ],
+    "routing-context": [
+      {
+        "id": "routing-context-supported",
+        "family": "routing-context",
+        "use": "supported",
+        "parameters": {
+          "destination": "198.51.100.20",
+          "CORP": [
+            "0.0.0.0/0"
+          ],
+          "ISOLATED": [
+            "10.0.0.0/8"
+          ]
+        },
+        "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
+        "prompt": "Tables are complete for this flow; there is no route leaking. Use only the named context.",
+        "questions": [
+          {
+            "id": "corp",
+            "prompt": "Best matching prefix in CORP, or no route?",
+            "answer": "0.0.0.0/0",
+            "type": "text",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": []
+          },
+          {
+            "id": "isolated",
+            "prompt": "Best matching prefix in ISOLATED, or no route?",
+            "answer": "no route",
+            "type": "text",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": []
+          }
+        ]
+      },
+      {
+        "id": "routing-context-r1",
+        "family": "routing-context",
+        "use": "reassessment",
+        "parameters": {
+          "destination": "198.51.100.200",
+          "CORP": [
+            "0.0.0.0/0",
+            "198.51.100.0/24"
+          ],
+          "ISOLATED": [
+            "198.51.100.0/25"
+          ]
+        },
+        "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
+        "prompt": "Tables are complete for this flow; there is no route leaking. Use only the named context.",
+        "questions": [
+          {
+            "id": "corp",
+            "prompt": "Best matching prefix in CORP, or no route?",
+            "answer": "198.51.100.0/24",
+            "type": "text",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": []
+          },
+          {
+            "id": "isolated",
+            "prompt": "Best matching prefix in ISOLATED, or no route?",
+            "answer": "no route",
+            "type": "text",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": []
+          }
+        ]
+      },
+      {
+        "id": "routing-context-r2",
+        "family": "routing-context",
+        "use": "reassessment",
+        "parameters": {
+          "destination": "203.0.113.9",
+          "CORP": [
+            "10.0.0.0/8"
+          ],
+          "ISOLATED": [
+            "203.0.113.0/28"
+          ]
+        },
+        "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
+        "prompt": "Tables are complete for this flow; there is no route leaking. Use only the named context.",
+        "questions": [
+          {
+            "id": "corp",
+            "prompt": "Best matching prefix in CORP, or no route?",
+            "answer": "no route",
+            "type": "text",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": []
+          },
+          {
+            "id": "isolated",
+            "prompt": "Best matching prefix in ISOLATED, or no route?",
+            "answer": "203.0.113.0/28",
+            "type": "text",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": []
+          }
+        ]
+      }
+    ],
+    "cloud": [
+      {
+        "id": "cloud-supported",
+        "family": "cloud",
+        "use": "supported",
+        "parameters": {
+          "source": "10.20.5.4",
+          "destination": "10.4.1.2",
+          "routes": {
+            "cloud": [
+              {
+                "prefix": "10.0.0.0/8",
+                "target": "on-prem"
+              }
+            ],
+            "on-prem": [
+              {
+                "prefix": "10.20.0.0/16",
+                "target": "cloud"
+              }
+            ]
+          }
+        },
+        "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
+        "prompt": "Look up each direction independently using the supplied complete tables. Do not infer firewall or application success.",
+        "questions": [
+          {
+            "id": "outbound",
+            "prompt": "Target for destination from cloud, or no route?",
+            "answer": "on-prem",
+            "type": "text",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": []
+          },
+          {
+            "id": "return",
+            "prompt": "Target for source from on-prem, or no route?",
+            "answer": "cloud",
+            "type": "text",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": []
+          }
+        ]
+      },
+      {
+        "id": "cloud-r1",
+        "family": "cloud",
+        "use": "reassessment",
+        "parameters": {
+          "source": "10.20.5.4",
+          "destination": "10.4.1.2",
+          "routes": {
+            "cloud": [
+              {
+                "prefix": "10.0.0.0/8",
+                "target": "on-prem"
+              }
+            ],
+            "on-prem": [
+              {
+                "prefix": "10.4.0.0/16",
+                "target": "connected"
+              }
+            ]
+          }
+        },
+        "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
+        "prompt": "Look up each direction independently using the supplied complete tables. Do not infer firewall or application success.",
+        "questions": [
+          {
+            "id": "outbound",
+            "prompt": "Target for destination from cloud, or no route?",
+            "answer": "on-prem",
+            "type": "text",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": []
+          },
+          {
+            "id": "return",
+            "prompt": "Target for source from on-prem, or no route?",
+            "answer": "no route",
+            "type": "text",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": []
+          }
+        ]
+      },
+      {
+        "id": "cloud-r2",
+        "family": "cloud",
+        "use": "reassessment",
+        "parameters": {
+          "source": "10.20.5.4",
+          "destination": "10.4.1.2",
+          "routes": {
+            "cloud": [
+              {
+                "prefix": "10.0.0.0/8",
+                "target": "on-prem"
+              },
+              {
+                "prefix": "10.4.1.0/24",
+                "target": "inspection"
+              }
+            ],
+            "on-prem": [
+              {
+                "prefix": "10.20.0.0/16",
+                "target": "cloud"
+              }
+            ]
+          }
+        },
+        "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
+        "prompt": "Look up each direction independently using the supplied complete tables. Do not infer firewall or application success.",
+        "questions": [
+          {
+            "id": "outbound",
+            "prompt": "Target for destination from cloud, or no route?",
+            "answer": "inspection",
+            "type": "text",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": []
+          },
+          {
+            "id": "return",
+            "prompt": "Target for source from on-prem, or no route?",
+            "answer": "cloud",
+            "type": "text",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": []
+          }
+        ]
+      }
+    ],
+    "policy": [
+      {
+        "id": "policy-supported",
+        "family": "policy",
+        "use": "supported",
+        "parameters": {
+          "intended": {
+            "server-to-ot": "allow",
+            "user-to-ot": "deny"
+          },
+          "observation": "No enforcement telemetry supplied."
+        },
+        "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
+        "prompt": "Report policy intent separately from observed behavior. A policy statement alone cannot establish enforcement.",
+        "questions": [
+          {
+            "id": "server",
+            "prompt": "Intended server-to-OT decision: allow/deny?",
+            "answer": "allow",
+            "type": "text",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": [
+              {
+                "answers": [
+                  "enforced",
+                  "proven"
+                ],
+                "code": "intent-not-enforcement"
+              }
+            ]
+          },
+          {
+            "id": "user",
+            "prompt": "Intended user-to-OT decision: allow/deny?",
+            "answer": "deny",
+            "type": "text",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": [
+              {
+                "answers": [
+                  "enforced",
+                  "proven"
+                ],
+                "code": "intent-not-enforcement"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "policy-r1",
+        "family": "policy",
+        "use": "reassessment",
+        "parameters": {
+          "intended": {
+            "server-to-ot": "deny",
+            "user-to-ot": "allow"
+          },
+          "observation": "A user SYN is seen at the source only."
+        },
+        "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
+        "prompt": "Report policy intent separately from observed behavior. A policy statement alone cannot establish enforcement.",
+        "questions": [
+          {
+            "id": "server",
+            "prompt": "Intended server-to-OT decision: allow/deny?",
+            "answer": "deny",
+            "type": "text",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": [
+              {
+                "answers": [
+                  "enforced",
+                  "proven"
+                ],
+                "code": "intent-not-enforcement"
+              }
+            ]
+          },
+          {
+            "id": "user",
+            "prompt": "Intended user-to-OT decision: allow/deny?",
+            "answer": "allow",
+            "type": "text",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": [
+              {
+                "answers": [
+                  "enforced",
+                  "proven"
+                ],
+                "code": "intent-not-enforcement"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "policy-r2",
+        "family": "policy",
+        "use": "reassessment",
+        "parameters": {
+          "intended": {
+            "server-to-ot": "allow",
+            "user-to-ot": "deny"
+          },
+          "observation": "A server packet is dropped; a user SYN is seen beyond the boundary. These observations do not change declared intent."
+        },
+        "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
+        "prompt": "Report policy intent separately from observed behavior. A policy statement alone cannot establish enforcement.",
+        "questions": [
+          {
+            "id": "server",
+            "prompt": "Intended server-to-OT decision: allow/deny?",
+            "answer": "allow",
+            "type": "text",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": [
+              {
+                "answers": [
+                  "enforced",
+                  "proven"
+                ],
+                "code": "intent-not-enforcement"
+              }
+            ]
+          },
+          {
+            "id": "user",
+            "prompt": "Intended user-to-OT decision: allow/deny?",
+            "answer": "deny",
+            "type": "text",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": [
+              {
+                "answers": [
+                  "enforced",
+                  "proven"
+                ],
+                "code": "intent-not-enforcement"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "timestamps": [
+      {
+        "id": "timestamps-supported",
+        "family": "timestamps",
+        "use": "supported",
+        "parameters": {
+          "local_time": "2026-08-15T08:15:00-06:00"
+        },
+        "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
+        "prompt": "Normalize the clock offset explicitly; day boundaries and fractional-hour offsets matter.",
+        "questions": [
+          {
+            "id": "utc",
+            "prompt": "Timestamp in UTC, including its zone?",
+            "answer": "2026-08-15T14:15:00Z",
+            "type": "utc",
+            "explanation": "UTC equals local time minus the signed offset. Preserve the date after crossing midnight.",
+            "misconceptions": [],
+            "local_time": "2026-08-15T08:15:00-06:00"
+          }
+        ]
+      },
+      {
+        "id": "timestamps-r1",
+        "family": "timestamps",
+        "use": "reassessment",
+        "parameters": {
+          "local_time": "2026-08-15T23:50:00-02:00"
+        },
+        "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
+        "prompt": "Normalize the clock offset explicitly; day boundaries and fractional-hour offsets matter.",
+        "questions": [
+          {
+            "id": "utc",
+            "prompt": "Timestamp in UTC, including its zone?",
+            "answer": "2026-08-16T01:50:00Z",
+            "type": "utc",
+            "explanation": "UTC equals local time minus the signed offset. Preserve the date after crossing midnight.",
+            "misconceptions": [],
+            "local_time": "2026-08-15T23:50:00-02:00"
+          }
+        ]
+      },
+      {
+        "id": "timestamps-r2",
+        "family": "timestamps",
+        "use": "reassessment",
+        "parameters": {
+          "local_time": "2026-08-16T02:10:00+05:30"
+        },
+        "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
+        "prompt": "Normalize the clock offset explicitly; day boundaries and fractional-hour offsets matter.",
+        "questions": [
+          {
+            "id": "utc",
+            "prompt": "Timestamp in UTC, including its zone?",
+            "answer": "2026-08-15T20:40:00Z",
+            "type": "utc",
+            "explanation": "UTC equals local time minus the signed offset. Preserve the date after crossing midnight.",
+            "misconceptions": [],
+            "local_time": "2026-08-16T02:10:00+05:30"
+          }
+        ]
+      }
+    ],
+    "diagnosis": [
+      {
+        "id": "diagnosis-supported",
+        "family": "diagnosis",
+        "use": "supported",
+        "parameters": {
+          "flow": {
+            "src": "10.30.5.10",
+            "dst": "10.0.20.40"
+          },
+          "before": {
+            "on-prem": [
+              {
+                "prefix": "10.30.0.0/16",
+                "next_hop": "cloud"
+              }
+            ]
+          },
+          "after": {
+            "on-prem": []
+          },
+          "observations": [
+            {
+              "id": "D1",
+              "event": "Client sends SYN"
+            },
+            {
+              "id": "D2",
+              "event": "Server receives SYN and emits SYN-ACK"
+            },
+            {
+              "id": "D3",
+              "event": "On-prem reply lookup: no matching prefix"
+            }
+          ],
+          "conditions": "Tables complete for this flow. No NAT; policy permits both directions. No evidence of intent or post-repair success."
+        },
+        "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
+        "prompt": "An approved connection no longer reaches its expected service. Compare conditions and observations, and distinguish a lookup result from a claim about intent.",
+        "questions": [
+          {
+            "id": "change",
+            "prompt": "Which prefix differs between the supplied before and after snapshots?",
+            "answer": "10.30.0.0/16",
+            "type": "text",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": []
+          },
+          {
+            "id": "lookup",
+            "prompt": "Matching prefix for the reply destination at on-prem afterward, or no route?",
+            "answer": "no route",
+            "type": "text",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": []
+          },
+          {
+            "id": "observation",
+            "prompt": "Which observation directly records the relevant forwarding decision?",
+            "answer": "D3",
+            "type": "text",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": []
+          }
+        ]
+      },
+      {
+        "id": "diagnosis-r1",
+        "family": "diagnosis",
+        "use": "reassessment",
+        "parameters": {
+          "flow": {
+            "src": "10.0.10.23",
+            "dst": "203.0.113.77"
+          },
+          "before": {
+            "ingress_context": "CORP"
+          },
+          "after": {
+            "ingress_context": "QUARANTINE"
+          },
+          "routes": {
+            "CORP": [
+              {
+                "prefix": "0.0.0.0/0",
+                "next_hop": "firewall"
+              }
+            ],
+            "QUARANTINE": []
+          },
+          "observations": [
+            {
+              "id": "D1",
+              "event": "Client sends SYN"
+            },
+            {
+              "id": "D2",
+              "event": "Ingress lookup: no matching prefix"
+            }
+          ],
+          "conditions": "Tables complete for this flow; no route leaking. Policy permits the diagnostic connection. Why the context changed and service recovery are unknown."
+        },
+        "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
+        "prompt": "An approved connection no longer reaches its expected service. Compare conditions and observations, and distinguish a lookup result from a claim about intent.",
+        "questions": [
+          {
+            "id": "change",
+            "prompt": "Which context differs between the before and after ingress state?",
+            "answer": "QUARANTINE",
+            "type": "text",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": []
+          },
+          {
+            "id": "lookup",
+            "prompt": "Matching prefix for the outbound destination in the active context, or no route?",
+            "answer": "no route",
+            "type": "text",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": []
+          },
+          {
+            "id": "observation",
+            "prompt": "Which observation directly records the relevant forwarding decision?",
+            "answer": "D2",
+            "type": "text",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": []
+          }
+        ]
+      },
+      {
+        "id": "diagnosis-r2",
+        "family": "diagnosis",
+        "use": "reassessment",
+        "parameters": {
+          "flow": {
+            "src": "10.40.5.10",
+            "dst": "10.0.20.40"
+          },
+          "before": {
+            "on-prem": [
+              {
+                "prefix": "10.40.0.0/16",
+                "next_hop": "cloud"
+              },
+              {
+                "prefix": "0.0.0.0/0",
+                "next_hop": "external"
+              }
+            ]
+          },
+          "after": {
+            "on-prem": [
+              {
+                "prefix": "0.0.0.0/0",
+                "next_hop": "external"
+              }
+            ]
+          },
+          "observations": [
+            {
+              "id": "D1",
+              "event": "Client sends SYN"
+            },
+            {
+              "id": "D2",
+              "event": "Server receives SYN and emits SYN-ACK"
+            },
+            {
+              "id": "D4",
+              "event": "On-prem reply lookup: selected default to external; expected cloud delivery not observed"
+            }
+          ],
+          "conditions": "Tables complete for this flow. No NAT; policy permits both directions. No evidence of intent or post-repair success."
+        },
+        "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
+        "prompt": "An approved connection no longer reaches its expected service. Compare conditions and observations, and distinguish a lookup result from a claim about intent.",
+        "questions": [
+          {
+            "id": "change",
+            "prompt": "Which prefix differs between the supplied before and after snapshots?",
+            "answer": "10.40.0.0/16",
+            "type": "text",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": []
+          },
+          {
+            "id": "lookup",
+            "prompt": "Matching prefix for the reply destination at on-prem afterward, or no route?",
+            "answer": "0.0.0.0/0",
+            "type": "text",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": []
+          },
+          {
+            "id": "observation",
+            "prompt": "Which observation directly records the relevant forwarding decision?",
+            "answer": "D4",
+            "type": "text",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": []
+          }
+        ]
+      },
+      {
+        "id": "diagnosis-r3",
+        "family": "diagnosis",
+        "use": "reassessment",
+        "parameters": {
+          "flow": {
+            "src": "10.0.10.23",
+            "dst": "203.0.113.77"
+          },
+          "before": {
+            "ingress_context": "CORP"
+          },
+          "after": {
+            "ingress_context": "MAINTENANCE"
+          },
+          "routes": {
+            "CORP": [
+              {
+                "prefix": "0.0.0.0/0",
+                "next_hop": "firewall"
+              }
+            ],
+            "MAINTENANCE": []
+          },
+          "observations": [
+            {
+              "id": "D1",
+              "event": "Client sends SYN"
+            },
+            {
+              "id": "D2",
+              "event": "Ingress lookup: no matching prefix"
+            }
+          ],
+          "conditions": "Tables complete for this flow; no route leaking. Policy permits the diagnostic connection. Why the context changed and service recovery are unknown."
+        },
+        "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
+        "prompt": "An approved connection no longer reaches its expected service. Compare conditions and observations, and distinguish a lookup result from a claim about intent.",
+        "questions": [
+          {
+            "id": "change",
+            "prompt": "Which context differs between the before and after ingress state?",
+            "answer": "MAINTENANCE",
+            "type": "text",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": []
+          },
+          {
+            "id": "lookup",
+            "prompt": "Matching prefix for the outbound destination in the active context, or no route?",
+            "answer": "no route",
+            "type": "text",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": []
+          },
+          {
+            "id": "observation",
+            "prompt": "Which observation directly records the relevant forwarding decision?",
+            "answer": "D2",
+            "type": "text",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": []
+          }
+        ]
+      },
+      {
+        "id": "diagnosis-r4",
+        "family": "diagnosis",
+        "use": "reassessment",
+        "parameters": {
+          "flow": {
+            "src": "10.50.5.10",
+            "dst": "10.0.20.40"
+          },
+          "before": {
+            "on-prem": [
+              {
+                "prefix": "10.50.0.0/16",
+                "next_hop": "cloud"
+              }
+            ]
+          },
+          "after": {
+            "on-prem": []
+          },
+          "observations": [
+            {
+              "id": "D1",
+              "event": "Client sends SYN"
+            },
+            {
+              "id": "D2",
+              "event": "Server receives SYN and emits SYN-ACK"
+            },
+            {
+              "id": "D3",
+              "event": "On-prem reply lookup: no matching prefix"
+            }
+          ],
+          "conditions": "Tables complete for this flow. No NAT; policy permits both directions. No evidence of intent or post-repair success."
+        },
+        "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
+        "prompt": "An approved connection no longer reaches its expected service. Compare conditions and observations, and distinguish a lookup result from a claim about intent.",
+        "questions": [
+          {
+            "id": "change",
+            "prompt": "Which prefix differs between the supplied before and after snapshots?",
+            "answer": "10.50.0.0/16",
+            "type": "text",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": []
+          },
+          {
+            "id": "lookup",
+            "prompt": "Matching prefix for the reply destination at on-prem afterward, or no route?",
+            "answer": "no route",
+            "type": "text",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": []
+          },
+          {
+            "id": "observation",
+            "prompt": "Which observation directly records the relevant forwarding decision?",
+            "answer": "D3",
+            "type": "text",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": []
+          }
+        ]
+      },
+      {
+        "id": "diagnosis-r5",
+        "family": "diagnosis",
+        "use": "reassessment",
+        "parameters": {
+          "flow": {
+            "src": "10.0.10.23",
+            "dst": "203.0.113.77"
+          },
+          "before": {
+            "ingress_context": "CORP"
+          },
+          "after": {
+            "ingress_context": "RESTRICTED"
+          },
+          "routes": {
+            "CORP": [
+              {
+                "prefix": "0.0.0.0/0",
+                "next_hop": "firewall"
+              }
+            ],
+            "RESTRICTED": [
+              {
+                "prefix": "203.0.113.0/24",
+                "next_hop": "inspection"
+              }
+            ]
+          },
+          "observations": [
+            {
+              "id": "D1",
+              "event": "Client sends SYN"
+            },
+            {
+              "id": "D4",
+              "event": "Ingress lookup: selected inspection route; firewall delivery not observed"
+            }
+          ],
+          "conditions": "Tables complete for this flow; no route leaking. Policy permits the diagnostic connection. Why the context changed and service recovery are unknown."
+        },
+        "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
+        "prompt": "An approved connection no longer reaches its expected service. Compare conditions and observations, and distinguish a lookup result from a claim about intent.",
+        "questions": [
+          {
+            "id": "change",
+            "prompt": "Which context differs between the before and after ingress state?",
+            "answer": "RESTRICTED",
+            "type": "text",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": []
+          },
+          {
+            "id": "lookup",
+            "prompt": "Matching prefix for the outbound destination in the active context, or no route?",
+            "answer": "203.0.113.0/24",
+            "type": "text",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": []
+          },
+          {
+            "id": "observation",
+            "prompt": "Which observation directly records the relevant forwarding decision?",
+            "answer": "D4",
+            "type": "text",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": []
+          }
+        ]
+      },
+      {
+        "id": "diagnosis-r6",
+        "family": "diagnosis",
+        "use": "reassessment",
+        "parameters": {
+          "flow": {
+            "src": "10.60.5.10",
+            "dst": "10.0.20.40"
+          },
+          "before": {
+            "on-prem": [
+              {
+                "prefix": "10.60.0.0/16",
+                "next_hop": "cloud"
+              },
+              {
+                "prefix": "0.0.0.0/0",
+                "next_hop": "external"
+              }
+            ]
+          },
+          "after": {
+            "on-prem": [
+              {
+                "prefix": "0.0.0.0/0",
+                "next_hop": "external"
+              }
+            ]
+          },
+          "observations": [
+            {
+              "id": "D1",
+              "event": "Client sends SYN"
+            },
+            {
+              "id": "D2",
+              "event": "Server receives SYN and emits SYN-ACK"
+            },
+            {
+              "id": "D4",
+              "event": "On-prem reply lookup: selected default to external; expected cloud delivery not observed"
+            }
+          ],
+          "conditions": "Tables complete for this flow. No NAT; policy permits both directions. No evidence of intent or post-repair success."
+        },
+        "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
+        "prompt": "An approved connection no longer reaches its expected service. Compare conditions and observations, and distinguish a lookup result from a claim about intent.",
+        "questions": [
+          {
+            "id": "change",
+            "prompt": "Which prefix differs between the supplied before and after snapshots?",
+            "answer": "10.60.0.0/16",
+            "type": "text",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": []
+          },
+          {
+            "id": "lookup",
+            "prompt": "Matching prefix for the reply destination at on-prem afterward, or no route?",
+            "answer": "0.0.0.0/0",
+            "type": "text",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": []
+          },
+          {
+            "id": "observation",
+            "prompt": "Which observation directly records the relevant forwarding decision?",
+            "answer": "D4",
+            "type": "text",
+            "explanation": "Apply the stated conditions; justify the mechanism and its limits in your explanation.",
+            "misconceptions": []
+          }
+        ]
+      }
     ]
   }
 }

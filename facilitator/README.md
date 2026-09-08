@@ -69,7 +69,7 @@ all explanations for a pair.
 Use a private first prediction, pair discussion, and revision. Welcome “I
 changed my mind because this field contradicts my first idea.” Do not reward
 speed, confident guesses, or the most dramatic attack story. Offer hints
-without penalty and accept written alternatives to role-play or speaking.
+freely and accept written alternatives to role-play or speaking.
 
 ## Assessment
 
@@ -94,11 +94,18 @@ the individual exit. The rubric does not require a particular wording or a
 single architecture choice. A learner who correctly leaves a claim unresolved
 can earn full rubric credit.
 
-A correction after a worked reveal can improve the rubric score without
-establishing independence. Record that progress even when the runner's
-completion flags remain false. A separate assessment using a different example
-can establish later understanding; record it alongside the export because the
-runner does not support reassessment or an override of exposed answers.
+A correction after feedback or answer-bearing help records supported learning.
+The original attempt never becomes independent. The runner now offers finite
+fresh reassessments with separate history; a correct first unassisted response
+to one can establish the objective. Invalid factual formats do not consume an
+attempt. Keep first attempts, supported practice, and fresh reassessments
+separate in reports. Review the [assessment contract](../delivery/assessment.md).
+Use one support/reassessment cycle per family in class, replacing practice time;
+a second fresh attempt can be completed after class. Support recommendations
+follow mistakes, never speed. Learners who succeed may bypass support but must
+still investigate, explain, and complete the individual exit. Before either
+case, collect two hypotheses, confidence, and a next-evidence choice using
+`diagnose`; then allow state, observations, and conditions in any order.
 After final artifact or answer revisions, refresh affected earlier reviews.
 
 ### Sample Graded Responses

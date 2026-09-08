@@ -14,9 +14,11 @@ Prerequisite: complete Challenges 1–5, with hints and revisions as needed.
 Choose **A** for the team capstone; reserve **B** for the individual exit task.
 A facilitator may reverse them, but do not read the reserved case early.
 
-```sh
-jq '.' labs/fixtures/challenges/case-a.json
-```
+Record two possible mechanisms, your confidence (low/medium/high), and the
+next evidence you want: state, observations, or conditions. In guided delivery,
+use `diagnose` before any diagnostic views are released. For manual delivery,
+start with this symptom: an approved health check previously succeeded and now
+times out. Do not open the case packet until you record the initial diagnosis.
 
 Case packets are small independent drills dated the following day, not extra
 events in the original incident. Their explicit conditions replace relevant
@@ -27,7 +29,10 @@ the specified flow; that does not assert global knowledge of the network.
 <!-- delivery:start c06.analyze -->
 ## Analyze — 20 Minutes
 
-Use the case's flow, before/after state, policy conditions, and observations.
+Request the case's state, observations, and conditions in your chosen order.
+State what changed in your diagnosis after each view. In manual delivery, use
+`jq '{before, after, routes, flow}'`, `jq '{observations}'`, and
+`jq '{conditions, limitations, path, scope}'` with the assigned case file.
 Keep the existing template headings: `Capstone Revision` in the packet-path
 and architecture sheets, and `Shift Handoff — Challenge 6` in the incident
 dossier. Fill their case-ID fields with the exact assigned ID, such as `A-v1`
@@ -77,7 +82,8 @@ one weak dimension. This review passes at 6/8 with no zero after feedback.
 Complete the individual exit, then check all remaining requirements in the
 [completion policy](../agenda.md#completion-and-feedback). Multiple
 proportionate actions may satisfy the rubric.
-Useful [hints](hints.md#challenge-6) remain available without penalty.
+Useful [hints](hints.md#challenge-6) remain available; seek a fresh reassessment
+after answer-bearing help.
 <!-- delivery:end c06.review -->
 
 <!-- delivery:start exit.answer -->
@@ -85,9 +91,9 @@ Useful [hints](hints.md#challenge-6) remain available without penalty.
 
 Work alone for the first five minutes on the reserved case:
 
-```sh
-jq '.' labs/fixtures/challenges/case-b.json
-```
+Record an initial diagnosis with two hypotheses, confidence, and next evidence
+before opening the reserved case. Guided delivery uses the `diagnose` action.
+Then request state, observations, and conditions in your chosen order.
 
 In four sentences, state the changed path, cite a decisive record, say what
 does not follow from it, and choose the next action. If your group used B,

@@ -102,7 +102,7 @@ def definition() -> dict:
 
 
 def validate_definition(data: dict) -> None:
-    if data["schema_version"] != 1 or not data["course_version"]:
+    if data["schema_version"] != 2 or not data["course_version"]:
         raise DeliveryError("Unsupported course definition version")
     blocks = data["blocks"]
     if [block["id"] for block in blocks] != ["opening", "c01", "c02", "c03", "c04", "c05", "c06", "exit"]:
@@ -150,6 +150,9 @@ def validate_definition(data: dict) -> None:
     if contract["version"] != 2 or type(contract["enabled"]) is not bool:
         raise DeliveryError("Unsupported learning contract")
     objectives = set()
+    problems = learning.catalog()["families"] if contract["enabled"] else {}
+    if contract["enabled"] and set(problems) != set(contract["families"]):
+        raise DeliveryError("Every declared family needs executable reassessment variants")
     for phase in data["phases"]:
         if set(phase["assessment"]) != set(phase["checkpoints"]):
             raise DeliveryError(f"Incomplete assessment mapping: {phase['id']}")
@@ -161,6 +164,8 @@ def validate_definition(data: dict) -> None:
                         or binding["support"] != binding["family"]):
                     raise DeliveryError("Invalid objective, family, or support mapping")
                 objectives.add(objective)
+                if contract["enabled"] and any(binding["field"] not in {q["id"] for q in p["questions"]} for p in problems[binding["family"]]):
+                    raise DeliveryError("A reassessment variant omits its mapped objective field")
             elif binding["role"] != "recording" or binding["objective"] is not None:
                 raise DeliveryError("Unknown assessment role")
         for binding in phase["artifact_bindings"]:
@@ -197,6 +202,13 @@ EVIDENCE.update({
     'case.exit': ['jq', '.', 'labs/fixtures/challenges/case-b.json'],
     "incident.timeline": [sys.executable, "-B", "course.py", "timeline"],
 })
+for case_role in ("main", "exit"):
+    for section, expression in {
+        "state": "{before, after, routes, flow}",
+        "observations": "{observations}",
+        "conditions": "{conditions, limitations, path, scope}",
+    }.items():
+        EVIDENCE[f"case.{case_role}.{section}"] = ["jq", expression, "labs/fixtures/challenges/case-a.json"]
 CHECKPOINTS = {
     "opening.local", "opening.dns", "opening.application", "transfer.payload",
     "route.before-hops", "route.after-hops", "routing.bgp-peer", "routing.corp-route",
@@ -308,8 +320,8 @@ def run_tool(argv: list[str], timeout: float = 15) -> dict:
 
 def evidence_command(view: str, state: dict) -> list[str]:
     command = list(EVIDENCE[view])
-    if view in {"case.main", "case.exit"}:
-        letter = state["case"] if view == "case.main" else other_case(state)
+    if view.startswith(("case.main", "case.exit")):
+        letter = state["case"] if view.startswith("case.main") else other_case(state)
         command[-1] = f"labs/fixtures/challenges/case-{letter.lower()}.json"
     return command
 
@@ -420,7 +432,7 @@ def load_state(directory: Path, data: dict) -> dict:
             raise ValueError("state exceeds size limit")
         state = decode_json(path.read_text(encoding="utf-8"))
         order = [phase["id"] for phase in data["phases"] if phase["implemented"]]
-        if (state["schema_version"] != 1 or state["id"] != directory.name
+        if (state["schema_version"] != 2 or state["id"] != directory.name
                 or state["order"] != order or type(state["revision"]) is not int
                 or state["revision"] < 0 or state["case"] not in ("A", "B")
                 or not isinstance(state["requests"], dict)
@@ -467,11 +479,10 @@ def create_session(ident: str, mode: str = "solo", case: str = "A", pair_label: 
     order = [phase["id"] for phase in data["phases"] if phase["implemented"]]
     if not order:
         raise DeliveryError("No phases are implemented", 4)
-    state = dict(schema_version=1, id=ident, versions=versions(data), mode=mode,
+    state = dict(schema_version=2, id=ident, versions=versions(data), mode=mode,
                  pair_label=pair_label, case=case, seed=seed,
-                 question_ids={str(n): [item["id"] for item in workbench(n).choose_questions("all", seed, 5)] for n in (1, 2, 3)},
                  revision=0, created_at=now(), updated_at=now(), order=order,
-                 current=order[0], requests={}, phases={})
+                 current=order[0], requests={}, phases={}, learning=[])
     for name in order:
         state["phases"][name] = dict(status="incomplete", submissions=[], checks={},
                                      views=[], hints=0, exposed=False, reviews=[])
@@ -552,16 +563,16 @@ def checkpoint_items(phase: dict, state: dict) -> list[dict]:
         add("case.id", "Enter the exact ID of your assigned case.", case["case"], evidence)
         if letter == "A":
             missing = [r["prefix"] for r in case["before"]["routes"]["on-prem"] if r not in case["after"]["routes"]["on-prem"]]
-            add("case.change", "What exact return-route prefix was removed?", missing[0], evidence + ": before/after on-prem")
+            add("case.change", "Which prefix differs between the two supplied snapshots?", missing[0], evidence + ": before/after on-prem")
             route = workbench(1).best_vrf_route("on-prem", case["flow"]["src"], case["after"]["routes"])
             prompt = "What prefix matches the returning reply's destination in on-prem after the change, or 'no route'?"
         else:
-            add("case.change", "What ingress VRF became active after the change?", case["after"]["ingress_vrf"], evidence + ": after.ingress_vrf")
+            add("case.change", "Which context differs between the two supplied ingress states?", case["after"]["ingress_vrf"], evidence + ": after.ingress_vrf")
             route = workbench(1).best_vrf_route(case["after"]["ingress_vrf"], case["flow"]["dst"], case["routes"])
             prompt = "What prefix matches the outbound destination in the active VRF, or 'no route'?"
         add("case.lookup", prompt, route["prefix"] if route else "no route", evidence + ": routes", ("none",) if not route else ())
         record = next(r for r in case["observations"] if "no matching" in r["event"])
-        add("case.observation", "Which observation ID directly records the failed route lookup?", record["id"], evidence + ": observations")
+        add("case.observation", "Which observation ID directly records the relevant forwarding decision?", record["id"], evidence + ": observations")
     for name in phase["checkpoints"]:
         if name.startswith(("m1.", "m2.", "m3.")):
             number = int(name[1])
@@ -594,6 +605,8 @@ def render_references(references: list[dict], state: dict) -> str:
 
 def allowed_actions(phase: dict) -> list[str]:
     actions = ["answer", "continue", "skip"]
+    if phase["id"] in ("c06.receive", "exit.answer"):
+        actions.append("diagnose")
     if phase.get("learning_enabled") and any(b["role"] == "conceptual" for b in phase["assessment"].values()):
         actions += ["support", "reassess", "problem_answer", "problem_hint"]
     if phase["kind"] == "prediction":
@@ -608,8 +621,6 @@ def allowed_actions(phase: dict) -> list[str]:
         actions.append("review")
     if phase["kind"] == "feedback":
         actions.append("feedback")
-    if phase["id"] in ("c03.review", "c04.review", "c05.review"):
-        actions.append("practice")
     return actions
 
 
@@ -673,14 +684,23 @@ def status_result(state: dict, data: dict, result: dict | None = None, view_phas
                 b["family"] for check, b in phase["assessment"].items()
                 if b["role"] == "conceptual" and check in state["phases"][current]["checks"]
                 and not state["phases"][current]["checks"][check]["independent"]))
+        initial = phase["id"] in ("c06.receive", "exit.answer") and "diagnosis" not in state["phases"][current]
+        view["initial_diagnosis_required"] = initial
+        if initial:
+            letter = other_case(state) if phase["block"] == "exit" else state["case"]
+            case = workbench(1).read_json(f"challenges/case-{letter.lower()}.json")
+            view["prompt"] = ("An approved health check previously succeeded and now times out. "
+                              "Record two hypotheses, your confidence, and the evidence view you would inspect next. "
+                              "The exact mechanism and intent have not been established.\nFlow: " + json.dumps(case["flow"]))
+            view["checkpoints"], view["evidence"] = [], []
+            view["allowed_actions"] = ["diagnose", "skip"]
+            view["next_evidence_choices"] = ["state", "observations", "conditions"]
         if phase["kind"] == "review":
             view["artifact_hashes"] = artifact_hashes(session_dir(state["id"]), phase["artifacts"])
             view["response_sha256"] = response_hash(state, phase["block"])
             view["artifact_check"] = validate_artifacts(session_dir(state["id"]), phase, state)
-        if "practice" in view["allowed_actions"]:
-            view["practice"] = [workbench(number).public_question(item) for number, item in practice_items(phase, state)]
     released = state["order"][:state["order"].index(state["current"]) + 1] if state["current"] else state["order"]
-    return dict(protocol_version=1, status="ok", session_id=state["id"], revision=state["revision"],
+    return dict(protocol_version=2, status="ok", session_id=state["id"], revision=state["revision"],
                 phase=view, completion=completion(state, data), result=result,
                 current_phase_id=state["current"],
                 released_phases=[dict(id=name, status=state["phases"][name]["status"]) for name in released],
@@ -697,12 +717,6 @@ def session_status(ident: str, phase_id: str | None = None) -> dict:
         if phase_id not in released:
             raise DeliveryError("This phase has not been released yet", 3)
     return status_result(state, data, view_phase=phase_id)
-
-
-def practice_items(phase: dict, state: dict) -> list[tuple[int, dict]]:
-    number = {"c03.review": 1, "c04.review": 2, "c05.review": 3}[phase["id"]]
-    available = {item["id"]: item for group in workbench(number).all_questions().values() for item in group}
-    return [(number, available[name]) for name in state["question_ids"][str(number)]]
 
 
 def require_text(value, label="text") -> str:
@@ -904,8 +918,22 @@ def act(ident: str, request: dict) -> dict:
         action, payload = request["action"], request["payload"]
         if action not in allowed_actions(phase):
             raise DeliveryError("Action is not available in this phase", 3)
+        if name in ("c06.receive", "exit.answer") and "diagnosis" not in progress and action not in ("diagnose", "skip"):
+            raise DeliveryError("Record initial hypotheses, confidence, and next evidence before opening diagnostic material", 3)
         result = {"action": action, "phase_id": name}
-        if action in ("answer", "predict"):
+        if action == "diagnose":
+            hypotheses = payload.get("hypotheses")
+            if (not isinstance(hypotheses, list) or len(hypotheses) != 2
+                    or payload.get("confidence") not in ("low", "medium", "high")
+                    or payload.get("next_evidence") not in ("state", "observations", "conditions")):
+                raise DeliveryError("Diagnosis needs two hypotheses, confidence low/medium/high, and next_evidence state/observations/conditions")
+            hypotheses = [require_text(h, "hypothesis") for h in hypotheses]
+            if "diagnosis" in progress:
+                raise DeliveryError("Initial diagnosis is already recorded; record revised reasoning with your explanation", 3)
+            progress["diagnosis"] = dict(at=now(), hypotheses=hypotheses, confidence=payload["confidence"], next_evidence=payload["next_evidence"])
+            progress["submissions"].append(dict(at=now(), text="; ".join(hypotheses), answers={}, checks={}, kind="initial_diagnosis"))
+            result["learning_result"] = "initial_diagnosis_recorded"
+        elif action in ("answer", "predict"):
             text = require_text(payload.get("text"))
             items = checkpoint_items(phase, state)
             answers = payload.get("answers", {})
@@ -933,7 +961,7 @@ def act(ident: str, request: dict) -> dict:
                 result["problem_result"] = learning.problem_action(state, phase, action, payload, now())
             except ValueError as error:
                 raise DeliveryError(str(error)) from error
-            if action == "support" and payload.get("level") == "worked":
+            if action == "support" and payload.get("level", "practice") != "orientation":
                 progress["exposed"] = True
                 for entry in state.get("learning", []):
                     if entry["phase"] == name and entry["family"] == payload["family"] and not entry["responses"]:
@@ -994,23 +1022,6 @@ def act(ident: str, request: dict) -> dict:
             if "text" in payload:
                 progress["feedback"]["text"] = require_text(payload["text"])
             result["learning_result"] = "recorded"
-        elif action == "practice":
-            items = practice_items(phase, state)
-            answers = payload.get("answers", {})
-            reveal = payload.get("reveal", False)
-            if (type(reveal) is not bool or not isinstance(answers, dict)
-                    or (not reveal and set(answers) != {item["id"] for _, item in items})):
-                raise DeliveryError("Practice needs all displayed answer IDs, or reveal: true")
-            prior = progress.setdefault("practice", [])
-            exposed = any(attempt["revealed"] for attempt in prior)
-            results = []
-            for number, item in items:
-                answer = "" if reveal else require_text(answers[item["id"]])
-                evaluated = workbench(number).evaluate_question(item, answer, revealed=reveal)
-                evaluated["independent"] = evaluated["correct"] and not exposed
-                results.append(evaluated)
-            prior.append(dict(at=now(), answers=answers, revealed=reveal, results=results))
-            result.update(learning_result="revealed" if reveal else "practice", results=results)
         elif action in ("continue", "skip"):
             if action == "skip":
                 progress["skip_reason"] = require_text(payload.get("reason"), "reason")
@@ -1050,7 +1061,7 @@ def export_session(ident: str, include_artifacts: bool = False) -> dict:
     data = definition()
     directory = session_dir(ident)
     state = load_state(directory, data)
-    result = dict(protocol_version=1, status="ok", session_id=ident, revision=state["revision"], versions=state["versions"],
+    result = dict(protocol_version=2, status="ok", session_id=ident, revision=state["revision"], versions=state["versions"],
                   mode=state["mode"], pair_label=state["pair_label"], main_case=state["case"], exit_case=other_case(state),
                   created_at=state["created_at"], updated_at=state["updated_at"],
                   completion=completion(state, data), reviews=review_statuses(state, data),
@@ -1148,7 +1159,7 @@ def learn(ident: str, mode: str = "solo", case: str = "A", pair_label: str | Non
                     last_phase = phase["id"]
                 answered = phase["progress"]["submissions"] and all(check["correct"] for check in phase["progress"]["checks"].values())
                 default = "r" if phase["kind"] == "review" and not phase["progress"]["reviews"] else "f" if phase["kind"] == "feedback" and "feedback" not in phase["progress"] else "c" if answered or phase["kind"] in ("review", "feedback") else "a"
-                keys = {"a": "answer", "c": "continue", "s": "skip", "e": "evidence", "h": "hint", "v": "reveal", "r": "review", "f": "feedback", "p": "practice", "u": "support", "n": "reassess", "b": "problem_answer", "j": "problem_hint"}
+                keys = {"a": "answer", "c": "continue", "s": "skip", "e": "evidence", "h": "hint", "v": "reveal", "r": "review", "f": "feedback", "d": "diagnose", "u": "support", "n": "reassess", "b": "problem_answer", "j": "problem_hint"}
                 choices = [f"{key}: {value}" for key, value in keys.items() if value in phase["allowed_actions"]]
                 action = input("\n" + " · ".join(choices) + f" · g: revisit · q: quit [{default}]: ").strip().lower() or default
             if action == "q":
@@ -1170,6 +1181,10 @@ def learn(ident: str, mode: str = "solo", case: str = "A", pair_label: str | Non
                 if operation in ("answer", "predict"):
                     answers = {item["id"]: input(item["prompt"] + "\nAnswer: ") for item in phase["checkpoints"]}
                     payload = dict(text=input("Your prediction/explanation (one paragraph; artifacts can be edited separately): "), answers=answers)
+                elif operation == "diagnose":
+                    payload = dict(hypotheses=[input("First hypothesis: "), input("Alternative hypothesis: ")],
+                                   confidence=input("Confidence: low/medium/high: ").strip(),
+                                   next_evidence=input("Next evidence: state/observations/conditions: ").strip())
                 elif operation == "evidence":
                     for i, item in enumerate(phase["evidence"], 1):
                         print(f"{i}. {item['id']}: {item['command']}")
@@ -1192,8 +1207,6 @@ def learn(ident: str, mode: str = "solo", case: str = "A", pair_label: str | Non
                     text = input("What dragged, or needed more explanation? (optional): ").strip()
                     if text:
                         payload["text"] = text
-                elif operation == "practice":
-                    payload = {"answers": {item["id"]: input(item["prompt"] + "\nAnswer: ") for item in phase["practice"]}}
                 elif operation in ("support", "reassess"):
                     families = list(dict.fromkeys(b["family"] for b in phase["assessment"].values() if b["role"] == "conceptual"))
                     print("Available families: " + ", ".join(families))
@@ -1284,14 +1297,14 @@ def cli(argv: list[str]) -> int:
                         raise
                     args = None
             if args is None:
-                print(json.dumps(dict(protocol_version=1, status="ok", help=help_output.getvalue())))
+                print(json.dumps(dict(protocol_version=2, status="ok", help=help_output.getvalue())))
                 return 0
         else:
             args = parser.parse_args(argv)
         if args.command == "learn":
             return learn(args.id, args.mode, args.case, args.pair_label)
         if args.command == "doctor":
-            result = dict(protocol_version=1, status="ok", **doctor())
+            result = dict(protocol_version=2, status="ok", **doctor())
             code = 0 if result["ready"] else 4
         else:
             code = 0
@@ -1314,7 +1327,7 @@ def cli(argv: list[str]) -> int:
                     target.parent.mkdir(parents=True, exist_ok=True)
                     with target.open("x", encoding="utf-8", newline="") as handle:
                         handle.write(output)
-                    result = dict(protocol_version=1, status="ok", output=str(target.relative_to(directory)),
+                    result = dict(protocol_version=2, status="ok", output=str(target.relative_to(directory)),
                                   included_files=result["included_files"])
                     print(json.dumps(result) if json_mode else f"Wrote {target}")
                 else:
@@ -1331,7 +1344,7 @@ def cli(argv: list[str]) -> int:
     except (DeliveryError, OSError, ValueError, KeyError, TypeError) as error:
         code = error.code if isinstance(error, DeliveryError) else 4
         if json_mode:
-            print(json.dumps(dict(protocol_version=1, status="error", error=str(error), code=code,
+            print(json.dumps(dict(protocol_version=2, status="error", error=str(error), code=code,
                                   details=error.details if isinstance(error, DeliveryError) else None)))
         else:
             print(f"error: {error}", file=sys.stderr)

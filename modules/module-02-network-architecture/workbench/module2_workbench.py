@@ -30,6 +30,8 @@ def repository_root() -> Path:
 
 
 ROOT = repository_root()
+sys.path.insert(0, str(ROOT))
+import learning
 FIXTURES = ROOT / "labs" / "fixtures"
 
 
@@ -314,10 +316,12 @@ def evaluate_question(item: dict, response: str, *, revealed: bool = False) -> d
     """Evaluate a response without input, printing, or mutating the question."""
     if not isinstance(response, str):
         raise ValueError("answer must be text")
-    correct = not revealed and normalize(response) in item["answers"]
+    evaluated = learning.evaluate(item, response)
+    correct = not revealed and evaluated["correct"]
     result = dict(id=item["id"], correct=correct,
                   learning_result="revealed" if revealed else "correct" if correct else "incorrect",
-                  feedback=item["explanation"] if correct or revealed else f"Reinspect {item['evidence']} and try again.")
+                  feedback=item["explanation"] if correct or revealed else evaluated["feedback"])
+    result.update(feedback_code=evaluated["feedback_code"], format_valid=evaluated["format_valid"])
     if revealed:
         result["answer"] = item["answer"]
     return result
@@ -336,11 +340,10 @@ def show_question(item: dict, number: int, reveal: bool) -> bool:
                 response = input("   Your answer (? for help, show to reveal): ")
             except EOFError:
                 raise SystemExit("\nerror: input ended before the activity was complete") from None
-            response = normalize(response)
-            if response in {"?", "help"}:
+            if normalize(response) in {"?", "help"}:
                 print("   Enter a short answer; capitalization is ignored.")
                 continue
-            if response in {"s", "show"}:
+            if normalize(response) in {"s", "show"}:
                 print("   Answer revealed.")
                 break
             if evaluate_question(item, response)["correct"]:

@@ -68,7 +68,7 @@ extended study, not 104 required assignments.
 | **Total** | **360** | **Seven elapsed hours** | |
 
 The local [delivery definition](delivery/course.json) divides these blocks into
-36 phases. `./course learn --id <label>` preserves the schedule and staged
+ordered phases. `./course learn --id <label>` preserves the schedule and staged
 reveals while saving accepted responses. The [automation contract](delivery/README.md)
 uses the same phases without a terminal. Suggested times are advisory; a learner
 advances explicitly. Direct Markdown browsing remains available for manual use.
@@ -99,8 +99,9 @@ completion requires:
 1. Finish the required phases, including the individual exit explanation, and
    resolve skipped work. Complete the three artifact bundles with their
    required fields, tables, evidence references, and narrative limits.
-2. Correct all required factual checkpoints, including the opening diagnostic,
-   without using a worked answer to supply an unanswered or incorrect result.
+2. Correct all required factual checkpoints, including the opening diagnostic.
+   Satisfy each conceptual objective on a first unassisted response or a fresh
+   equivalent reassessment; recording checks still require valid entries.
    The [delivery definition](delivery/course.json) identifies these checkpoints.
 3. Record a passing review for each of Challenges 1–6 and the individual exit.
    These seven reviews assess the same three bundles as they develop; they
@@ -115,15 +116,21 @@ requires all seven reviews from that reviewer type plus the other conditions
 above. Multiple defensible designs and qualified unresolved conclusions can
 meet the rubric. Passing a rubric review alone does not establish completion.
 
-Hints and corrections after factual feedback are encouraged and retain
-independence. A worked reveal exposes unanswered or incorrect checkpoints in
-that block. Correcting them afterward records demonstrated learning, but cannot
-turn those known answers into independent results in the same session. Finish
-the activities, retain the correction and rubric feedback, and report delivery
-finished with independent completion unmet. The runner has no fresh-assessment
-or override path; a facilitator may assess a different example separately and
-record that assessment alongside the export. Repeating known answers in a new
-session must not be presented as fresh evidence of independent attainment.
+Hints and corrections are encouraged. The first committed factual response is
+independent only if correct before corrective feedback or answer-bearing help.
+Invalid input formats do not consume an attempt. A corrected or revealed
+original stays supported work; a fresh equivalent problem can satisfy its
+objective without erasing that history. Use support and reassessment in the
+checkpoint phase, or revisit it later. Exhaustion reports an unmet objective.
+The [assessment contract](delivery/assessment.md) defines the finite catalog,
+help rules, and separate completion outcomes. Repeating known answers in a new
+session is not fresh evidence of independent attainment.
+
+Use one support/reassessment cycle per family within the existing block,
+replacing practice time rather than extending the day. Already successful
+learners can bypass support, but still investigate and explain. A second fresh
+attempt may be completed after class. Keep the three breaks intact and report
+unfinished objectives honestly.
 
 The opening diagnostic is formative: revise misconceptions before continuing;
 it does not receive a rubric score. Standalone workbench quizzes and optional

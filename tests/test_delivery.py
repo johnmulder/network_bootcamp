@@ -30,6 +30,8 @@ ANSWERS = {
     "flows.user-ot": "deny", "budget.options": "state-sync, monitoring",
     "incident.utc": "2026-08-15T16:04:01Z", "incident.auth-record": "2",
 }
+DIAGNOSIS = dict(hypotheses=["Forwarding or state may have changed.", "The service may not be responding."],
+                 confidence="low", next_evidence="observations")
 
 
 def answers_for(phase, main_case):
@@ -130,6 +132,9 @@ class SessionTests(unittest.TestCase):
     def finish_day(self):
         while self.view["phase"]:
             phase = self.view["phase"]
+            if phase.get("initial_diagnosis_required"):
+                self.act("diagnose", DIAGNOSIS)
+                phase = self.view["phase"]
             if phase["kind"] in ("prediction", "reflection", "checkpoint"):
                 self.act("answer", {"text": "PRIVATE REHEARSAL TEXT: inspect the record and qualify the claim.", "answers": answers_for(phase, "A")})
             elif phase["kind"] == "feedback":
@@ -164,7 +169,7 @@ class SessionTests(unittest.TestCase):
         self.act("answer", {"text": "Subtract both 20-byte headers.", "answers": {"transfer.payload": "1160 bytes"}})
         resumed = d.session_status("learner")
         self.assertEqual(len(resumed["phase"]["progress"]["submissions"]), 2)
-        self.assertTrue(resumed["phase"]["progress"]["checks"]["transfer.payload"]["independent"])
+        self.assertFalse(resumed["phase"]["progress"]["checks"]["transfer.payload"]["independent"])
         self.act("continue")
         self.act("continue")
         exported = d.export_session("learner")
@@ -234,11 +239,14 @@ class SessionTests(unittest.TestCase):
                     self.assertEqual([v["id"] for v in phase["evidence"]], ["incident.round1"])
                 if phase["id"] in ("c06.receive", "exit.answer"):
                     assigned = ("B" if letter == "A" else "A") if phase["block"] == "exit" else letter
-                    command = phase["evidence"][0]["command"]
-                    self.assertIn(f"case-{assigned.lower()}.json", command)
-                    self.assertTrue(any(shlex.split(line) == shlex.split(command)
-                                        for line in phase["prompt"].splitlines() if line.startswith("jq ")))
+                    self.assertTrue(phase["initial_diagnosis_required"])
+                    self.assertEqual(phase["evidence"], [])
+                    self.assertEqual(phase["checkpoints"], [])
+                    self.assertNotIn("prefix was removed", phase["prompt"])
                     self.assertNotIn(f"case-{('B' if assigned == 'A' else 'A').lower()}.json", phase["prompt"])
+                    request = dict(request_id=f"diagnosis-{self.view['revision']}", expected_revision=self.view["revision"], phase_id=phase["id"], action="diagnose", payload=DIAGNOSIS)
+                    self.view = d.act(ident, request)
+                    phase = self.view["phase"]
                 if phase["kind"] in ("prediction", "reflection", "checkpoint"):
                     action = "answer"
                     payload = dict(text="Scripted rehearsal response; claims need human review.", answers=answers_for(phase, letter))
@@ -252,7 +260,7 @@ class SessionTests(unittest.TestCase):
                     self.assertNotEqual(self.view["result"].get("learning_result"), "incorrect")
                     request = dict(request_id=f"run-{self.view['revision']}", expected_revision=self.view["revision"], phase_id=phase["id"], action="continue", payload={})
                     self.view = d.act(ident, request)
-            self.assertEqual(len(visited), 36)
+            self.assertEqual(len(visited), len(d.definition()["phases"]))
             self.assertTrue(self.view["completion"]["delivery_finished"])
             self.assertTrue(self.view["completion"]["objective_checks_satisfied"])
             self.assertFalse(self.view["completion"]["self_reviewed_completion"])
@@ -296,7 +304,7 @@ class SessionTests(unittest.TestCase):
         self.assertIn("PRIVATE REHEARSAL TEXT", json.dumps(bundle))
         self.assertEqual(set(bundle["included_files"]), set(d.ARTIFACTS))
         csv_rows = list(csv.DictReader(io.StringIO(d.format_export(summary, "csv"))))
-        self.assertEqual(len(csv_rows), 36)
+        self.assertEqual(len(csv_rows), len(d.definition()["phases"]))
         self.assertIn("# Course Review: learner", d.format_export(bundle, "markdown"))
         hashes = d.session_status("learner", "c01.review")["phase"]["artifact_hashes"]
         path = directory / "packet-path.md"

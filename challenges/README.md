@@ -40,12 +40,11 @@ unfamiliar terms.
 The factory and its service requirements are fictional; the captures are
 constructed teaching evidence, not records of a real attack.
 
-Hints and corrections after factual feedback retain independence. A worked
-reveal makes unanswered or incorrect checkpoints in that block demonstrated;
-you can finish the activities, but passing rubric reviews will not restore
-independent completion. Read the
-[completion policy](../agenda.md#completion-and-feedback) before choosing a
-worked reveal. It also explains the seven reviews and the required artifacts.
+Hints and corrections help you learn. A first unassisted correct response or a
+fresh equivalent reassessment satisfies a conceptual objective. Correcting an
+exposed original records supported work without erasing its history. Read the
+[completion policy](../agenda.md#completion-and-feedback) for the seven reviews,
+required artifacts, and finite reassessment opportunities.
 <!-- delivery:end opening.reflect -->
 
 ## Prepare Three Deliverables
@@ -93,20 +92,21 @@ your mind and acknowledging uncertainty are part of the work.
 ## Completion
 
 Follow the [completion policy](../agenda.md#completion-and-feedback): finish the
-required phases and artifacts, independently correct the required factual
-checkpoints, and record seven current reviews, one for each challenge and the
+required phases and artifacts, satisfy conceptual objectives on unassisted
+first attempts or fresh reassessments, correct recording checks, and record
+seven current reviews, one for each challenge and the
 individual exit. Each review needs 6/8 with no zero for mechanism, evidence,
 uncertainty, and action. Self-review and facilitator review are reported
 separately. The [facilitator guide](../facilitator/README.md#assessment) explains
 the rubric.
 
-Hints and corrections are encouraged. If you reveal a worked answer before
-correctly answering a checkpoint, you can still finish the activities and
-improve your rubric scores, but that answer remains demonstrated rather than
-independent. The session then records delivery finished without independent
-completion. Keep that history; the completion policy explains separate
-reassessment. Reaching the end or earning a passing rubric score alone does
-not establish course completion.
+Use `support` for orientation, supported practice, or a worked example. Use
+`reassess` in a checkpoint phase for a fresh problem, then `problem_answer`.
+The terminal provides the same choices. Answer-bearing help and corrective
+feedback make that attempt supported; another unseen variant is needed for
+independent attainment. Exhausted variants leave the objective unmet. These
+activities replace part of each block's practice time. Reaching the end or
+passing a rubric review alone does not establish course completion.
 
 Standalone workbench quizzes are optional practice, not the required factual
 checkpoints in guided delivery.

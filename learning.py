@@ -47,8 +47,8 @@ def normalize(text: str) -> str:
 
 def evaluate(item: dict, response: str) -> dict:
     """Semantic equality for bounded facts; recognize only explicitly known errors."""
-    if not isinstance(response, str):
-        raise ValueError("Answer must be text")
+    if not isinstance(response, str) or not response.strip() or len(response) > 16000:
+        raise ValueError("Answer must be nonempty text of at most 16000 characters")
     answer, expected = response.strip(), str(item["answer"])
     kind = item.get("type", "text")
     ident = item["id"]
@@ -101,18 +101,29 @@ def evaluate(item: dict, response: str) -> dict:
             correct = len(actual) == len(set(actual)) and set(actual) == wanted
         elif kind in ("prefix", "ip"):
             parse = ipaddress.ip_network if kind == "prefix" else ipaddress.ip_address
-            correct = parse(answer) == parse(expected)
+            correct = False if normalize(answer) in ("no route", "none") else parse(answer) == parse(expected)
         elif kind == "utc":
             actual = datetime.fromisoformat(answer.replace("Z", "+00:00"))
             target = datetime.fromisoformat(expected.replace("Z", "+00:00"))
             if actual.tzinfo is None:
                 raise ValueError("Include UTC zone")
             correct = actual == target and actual.utcoffset() == timedelta(0)
-            if actual == target - timedelta(hours=12):
+            local = datetime.fromisoformat(item.get("local_time", "2026-08-15T10:04:01-06:00"))
+            if actual == target + 2 * local.utcoffset():
                 code = "utc-direction"
     except (ValueError, TypeError):
         valid, correct, code = False, False, "input-format"
     if not correct and valid:
+        common = {
+            "m1.routes.10.0.20.40": [("10.0.0.0/8", "prefix-before-preference"), ("10.0.20.0/24", "prefix-before-preference"), ("0.0.0.0/0", "prefix-before-preference")],
+            "m1.convergence.application": [("yes", "application-not-observed")],
+            "opening.application": [("yes", "application-not-observed")],
+            "flows.server-ot": [("enforced", "intent-not-enforcement"), ("proven", "intent-not-enforcement")],
+            "flows.user-ot": [("enforced", "intent-not-enforcement"), ("proven", "intent-not-enforcement")],
+        }
+        for value, category in common.get(ident, []):
+            if normalize(answer) == value:
+                code = category
         for rule in item.get("misconceptions", []):
             if normalize(answer) in {normalize(a) for a in rule["answers"]}:
                 code = rule["code"]
@@ -173,6 +184,11 @@ def assign(state: dict, phase: dict, family: str, use: str, at: str) -> dict:
 
 
 def problem_action(state: dict, phase: dict, action: str, payload: dict, at: str) -> dict:
+    required = {"reassess": {"family"}, "support": {"family"}, "problem_hint": {"variant_id"},
+                "problem_answer": {"variant_id", "answers"}}[action]
+    optional = {"level"} if action == "support" else set()
+    if not required <= set(payload) or set(payload) - required - optional:
+        raise ValueError("Unexpected or missing learning action fields")
     if action in ("reassess", "support"):
         family = payload.get("family")
         if family not in {b["family"] for b in phase["assessment"].values() if b["role"] == "conceptual"}:

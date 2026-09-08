@@ -23,7 +23,7 @@ change, and what does it leave unresolved?
 <!-- delivery:end c02.predict -->
 
 <!-- delivery:start c02.inspect -->
-## Inspect — 20 Minutes
+## Inspect — 15 Minutes
 
 Only after the prediction, read the neutral case capture:
 
@@ -55,7 +55,7 @@ The observation point is a modeled VLAN 10 trunk.
 <!-- delivery:end c02.inspect -->
 
 <!-- delivery:start c02.calculate -->
-## Calculate and Challenge — 10 Minutes
+## Calculate and Challenge — 15 Minutes
 
 1. Calculate the largest TCP payload fitting the reported path limit with
    20-byte IPv4 and TCP headers, no options, and no encapsulation. State units.

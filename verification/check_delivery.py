@@ -129,6 +129,10 @@ def journey(case):
 
         while view["phase"]:
             phase = view["phase"]
+            if phase.get("initial_diagnosis_required"):
+                assert not phase["checkpoints"] and not phase["evidence"]
+                act("diagnose", examples.DIAGNOSIS)
+                phase = view["phase"]
             if phase["id"] == "c01.model":
                 act("skip", {"reason": "Rehearsal of revisiting unfinished work"})
                 act("answer", {"text": "A synthetic learner revisits the first-hop prediction."}, phase_id=phase["id"])
@@ -147,6 +151,12 @@ def journey(case):
                 assert view["result"]["learning_result"] != "incorrect"
                 if phase["id"] == "opening.predict":
                     assert call("session", "act", "--id", ident, "--input", "-", "--json", request=request) == view
+                if phase["id"] == "c02.calculate":
+                    act("reassess", {"family": "transfer"})
+                    problem = view["result"]["problem_result"]
+                    payload = "1224 bytes" if problem["id"] == "transfer-r1" else "1440 bytes"
+                    act("problem_answer", {"variant_id": problem["id"], "answers": {"payload": payload, "fits": "yes"}})
+                    assert view["result"]["problem_result"]["independent"]
             elif phase["kind"] == "feedback":
                 act("feedback", {"wanted_to_know": 4, "manageable": 4})
             elif phase["id"] == "c02.review":
@@ -166,7 +176,7 @@ def journey(case):
         assert not summary["completion"]["facilitator_reviewed_completion"]
         assert "PRIVATE REHEARSAL TEXT" not in json.dumps(summary)
         rows = call("session", "export", "--id", ident, "--format", "csv", json_output=False)
-        assert len(list(csv.DictReader(io.StringIO(rows)))) == 36
+        assert len(list(csv.DictReader(io.StringIO(rows)))) == len(d.definition()["phases"])
         call("session", "export", "--id", ident, "--format", "json", "--include-artifacts", "--output", "review.json")
         with tempfile.TemporaryDirectory(prefix="moved-review-") as temp:
             moved = Path(temp) / "review.json"
@@ -176,7 +186,7 @@ def journey(case):
             assert bundle["versions"] == before
         d.evidence_integrity()
         assert before == d.versions(d.definition())
-        print(f"Fresh-process journey passed: main {case}, exit {'B' if case == 'A' else 'A'}, 36 phases, resume/retry, review and export. Synthetic results only.", flush=True)
+        print(f"Fresh-process journey passed: main {case}, exit {'B' if case == 'A' else 'A'}, {len(d.definition()['phases'])} phases, resume/retry, review and export. Synthetic results only.", flush=True)
     finally:
         if created:
             shutil.rmtree(directory)
