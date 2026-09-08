@@ -192,6 +192,33 @@ local files remain readable by convention, not a secure exam boundary.
 
 ## Local Exports
 
+### Bounded Experiments
+
+Status exposes an `experiment` model, its finite parameter choices, and saved
+attempts in the route, transfer, and resilience activities. Use
+`experiment_predict` with `parameters` and a written `prediction`. Then use
+`experiment_result` with the returned `experiment_id`. The terminal uses `x`
+and `z`. A prediction is saved before any result is returned, and an unfinished
+experiment must be compared before starting another. Results retain parameters,
+variant ID, model version, and hashes of the unchanged baseline source files.
+
+The required comparisons are in `c01.change`, `c02.calculate`, `c04.outcomes`,
+and `c04.twist`; explicit skips remain unfinished work. Resilience uses the
+recorded two-token choice before the twist, then permits a revised pair. The
+twist is unavailable before its phase. These comparisons occupy the existing
+practice minutes. Complete the original factual attempt first when seeking
+independent evidence: seeing a model result is answer-bearing help.
+
+Transfer computes a byte bound and whether the selected payload fits. Routing
+reuses the workbench's prefix, preference, metric, and VRF selection. Resilience
+reports dependencies addressed and residual risks; it does not promise that
+state synchronization, failover, or monitoring meets the requirement. These
+are computed teaching results, not new captures or evidence of real recovery.
+The fixed parameter schemas accept no commands, filters, paths, or live targets.
+Default exports include model results and omit written predictions.
+
+### Export Commands
+
 ```sh
 ./course session export --id example --format json
 ./course session export --id example --format csv --output progress.csv

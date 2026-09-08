@@ -82,6 +82,12 @@ the backup? Does interface-up status meet the requirement?
 <!-- delivery:start c04.outcomes -->
 ## Compare the Outcomes — 4 Minutes
 
+Use your recorded two-token choice in the bounded resilience experiment. Save
+a prediction about one supplied failure, then compare the computed dependencies
+addressed and residual risks using `experiment_predict` and `experiment_result`
+(terminal `x`, `z`). A successful configuration change still needs validation;
+the model does not establish session survival or new-connection success.
+
 After recording predictions, reveal the modeled outcomes:
 
 ```sh
@@ -95,6 +101,10 @@ jq -c '{component, affected}' labs/fixtures/architecture/failures.jsonl
 Now apply this **hypothetical twist**: both transport paths use the same
 building power feed; management currently uses the preferred circuit. Revise
 one assumption. Do not rewrite the original fixture to hide the difference.
+
+Run a second bounded prediction and comparison with `twist: true`. Keep or
+revise the two options, and explain the remaining shared dependency. The
+original choice and prediction stay in history.
 <!-- delivery:end c04.twist -->
 
 <!-- delivery:start c04.review -->

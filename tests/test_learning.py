@@ -152,6 +152,52 @@ class TransferLearningJourneyTests(unittest.TestCase):
         self.assertFalse(result["result"]["problem_result"]["independent"])
         self.assertFalse(next(o for o in result["objectives"] if o["family"] == "transfer")["satisfied"])
 
+    def test_predict_then_compute_bounds_and_preserve_baseline(self):
+        baseline, hashes = d.experiment_baseline("transfer")
+        with self.assertRaises(d.DeliveryError):
+            self.act("experiment_result", {"experiment_id": "not-predicted"})
+        result = self.act("experiment_predict", dict(parameters=dict(scenario="plain", payload=1160), prediction="This exactly fits; recovery remains unknown."))
+        entry = result["result"]["experiment"]
+        self.assertNotIn("result", entry)
+        before = d.session_status("learner")["revision"]
+        with self.assertRaises(d.DeliveryError):
+            self.act("experiment_predict", dict(parameters=dict(scenario="plain", payload=1161), prediction="Too large"))
+        self.assertEqual(d.session_status("learner")["revision"], before)
+        result = self.act("experiment_result", {"experiment_id": entry["id"]})["result"]["experiment"]
+        self.assertTrue(result["result"]["fits"])
+        self.assertEqual(result["result"]["maximum_payload"], 1160)
+        self.assertEqual(result["baseline_sha256"], hashes)
+        self.assertEqual(d.experiment_baseline("transfer"), (baseline, hashes))
+        self.assertTrue(d.session_status("learner")["phase"]["progress"]["exposed"])
+        summary = d.export_session("learner")
+        self.assertNotIn("This exactly fits", json.dumps(summary))
+
+
+class ExperimentTests(unittest.TestCase):
+    def test_each_choice_changes_its_bounded_result(self):
+        transfer, _ = d.experiment_baseline("transfer")
+        result = lambda **params: learning.experiment("transfer", params, transfer)
+        self.assertFalse(result(scenario="plain", payload=1161)["fits"])
+        self.assertTrue(result(scenario="plain", payload=1160)["fits"])
+        self.assertFalse(result(scenario="ip-options", payload=1160)["fits"])
+        for parameters in ({"scenario": "shell", "payload": 128}, {"scenario": "plain", "payload": True}, {"scenario": "plain", "payload": 100000}, {"scenario": "plain", "payload": 128, "path": "/tmp/file"}):
+            with self.assertRaises(ValueError):
+                learning.experiment("transfer", parameters, transfer)
+        routes, _ = d.experiment_baseline("routing")
+        def route(condition, destination="10.0.20.40"):
+            return learning.experiment("routing", dict(condition=condition, destination=destination), routes, d.workbench(1).select_routes, d.workbench(1).best_vrf_route)
+        self.assertEqual(route("baseline")["prefix"], "10.0.20.40/32")
+        self.assertEqual(route("remove-host-route")["next_hops"], ["10.0.10.253", "10.0.10.254"])
+        self.assertEqual(route("OT", "198.51.100.77")["prefix"], "no route")
+        failures, _ = d.experiment_baseline("resilience")
+        params = dict(options=["state-sync", "monitoring"], failure="session-sync-stale", twist=False)
+        first = learning.experiment("resilience", params, failures)
+        second = learning.experiment("resilience", {**params, "options": ["backup-path", "management"]}, failures)
+        self.assertNotEqual(first["addressed_dependencies"], second["addressed_dependencies"])
+        twist = learning.experiment("resilience", {**params, "twist": True}, failures)
+        self.assertGreater(len(twist["residual_risk"]), len(first["residual_risk"]))
+        self.assertTrue(all(r["unknowns"] for r in (first, second, twist)))
+
 
 if __name__ == "__main__":
     unittest.main()

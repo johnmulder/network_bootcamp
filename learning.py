@@ -229,3 +229,64 @@ def problem_action(state: dict, phase: dict, action: str, payload: dict, at: str
 def attained(state: dict, objective: str) -> bool:
     return any(objective in a["objectives"] and any(r["independent"] and r["passed"] for r in a["responses"])
                for a in state.get("learning", []))
+
+
+EXPERIMENT_VERSION = 1
+EXPERIMENT_CHOICES = {
+    "transfer": {"scenario": ["plain", "tcp-options", "ip-options"], "payload": [128, 1144, 1160, 1161, 1400]},
+    "routing": {"condition": ["baseline", "remove-host-route", "CORP", "OT"], "destination": ["10.0.20.40", "198.51.100.77"]},
+    "resilience": {"options": ["state-sync", "backup-path", "monitoring", "management"],
+                   "failure": ["session-sync-stale", "20-percent-loss", "power-loss", "stale-answer"], "twist": [False, True]},
+}
+
+
+def experiment(model: str, parameters: dict, baseline: dict, select_routes=None, best_vrf_route=None) -> dict:
+    """Evaluate a finite decision model against supplied immutable baseline data."""
+    if model not in EXPERIMENT_CHOICES or not isinstance(parameters, dict) or set(parameters) != set(EXPERIMENT_CHOICES[model]):
+        raise ValueError("Use exactly the displayed experiment parameters")
+    for key, values in EXPERIMENT_CHOICES[model].items():
+        value = parameters[key]
+        if key == "options":
+            if not isinstance(value, list) or len(value) != 2 or any(not isinstance(v, str) for v in value) or len(set(value)) != 2 or any(v not in values for v in value):
+                raise ValueError("Choose two distinct listed improvements")
+        elif type(value) is not type(values[0]) or value not in values:
+            raise ValueError(f"Choose a listed {key}")
+    if model == "transfer":
+        ip, tcp = {"plain": (20, 20), "tcp-options": (20, 32), "ip-options": (24, 32)}[parameters["scenario"]]
+        mtu = baseline["mtu"]
+        payload = parameters["payload"]
+        return dict(mtu=mtu, ipv4_header=ip, tcp_header=tcp, maximum_payload=mtu-ip-tcp,
+                    packet_bytes=payload+ip+tcp, fits=payload+ip+tcp <= mtu,
+                    unknowns=["Delivery of ICMP feedback", "Application retry behavior and recovery"])
+    if model == "routing":
+        destination, condition = parameters["destination"], parameters["condition"]
+        if condition in ("CORP", "OT"):
+            route = best_vrf_route(condition, destination, baseline["vrfs"])
+            routes = [route] if route else []
+        else:
+            rows = [r for r in baseline["routes"] if condition != "remove-host-route" or r["prefix"] != "10.0.20.40/32"]
+            routes = select_routes(destination, rows)
+        return dict(prefix=routes[0]["prefix"] if routes else "no route",
+                    next_hops=sorted({r["next_hop"] for r in routes}),
+                    unknowns=["Policy enforcement", "Return path and application response"])
+    options = parameters["options"]
+    condition = parameters["failure"]
+    record = next(r for r in baseline["failures"] if r["condition"] == condition)
+    addressed = []
+    if "state-sync" in options and condition == "session-sync-stale":
+        addressed.append("Selected state-sync work targets the recorded stale-state dependency; successful validation remains required.")
+    if "backup-path" in options and condition == "20-percent-loss":
+        addressed.append("A separately routed path is a candidate around impairment; its loss and spare capacity must be measured.")
+    if "monitoring" in options:
+        addressed.append("Service monitoring targets detection; measure polling and alert delay against the one-minute requirement.")
+    if "management" in options:
+        addressed.append("Management access targets diagnosis and recovery access; verify transport and power independence.")
+    residual = ["No option establishes successful failover, application recovery, or policy enforcement without validation."]
+    if condition in ("power-loss", "stale-answer"):
+        residual.append("Neither chosen token repairs this recorded power or DNS failure directly.")
+    if parameters["twist"]:
+        residual.append("Both transport paths share building power and current management uses the preferred circuit; transport redundancy alone cannot survive the shared feed loss.")
+    if not addressed:
+        residual.append("The chosen improvements do not directly address this modeled failure condition.")
+    return dict(baseline_affected=record["affected"], addressed_dependencies=addressed,
+                residual_risk=residual, unknowns=["Post-change established-session survival", "New-connection success", "Backup capacity and independence"])

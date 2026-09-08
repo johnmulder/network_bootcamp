@@ -32,6 +32,12 @@ ANSWERS = {
 }
 DIAGNOSIS = dict(hypotheses=["Forwarding or state may have changed.", "The service may not be responding."],
                  confidence="low", next_evidence="observations")
+EXPERIMENTS = {
+    "c01.change": dict(condition="remove-host-route", destination="10.0.20.40"),
+    "c02.calculate": dict(scenario="plain", payload=1161),
+    "c04.outcomes": dict(options=["state-sync", "monitoring"], failure="session-sync-stale", twist=False),
+    "c04.twist": dict(options=["backup-path", "management"], failure="power-loss", twist=True),
+}
 
 
 def answers_for(phase, main_case):
@@ -125,6 +131,10 @@ class SessionTests(unittest.TestCase):
         self.view = d.act("learner", self.request(action, payload, phase))
         return self.view
 
+    def experiment(self, phase):
+        result = self.act("experiment_predict", dict(parameters=EXPERIMENTS[phase], prediction="PRIVATE prediction: explain the relevant bound or remaining dependency."))
+        return self.act("experiment_result", {"experiment_id": result["result"]["experiment"]["id"]})
+
     def reach_transfer(self):
         while self.view["phase"]["id"] != "c02.predict":
             self.act("skip", {"reason": "Test setup for transfer slice"})
@@ -139,6 +149,8 @@ class SessionTests(unittest.TestCase):
                 self.act("answer", {"text": "PRIVATE REHEARSAL TEXT: inspect the record and qualify the claim.", "answers": answers_for(phase, "A")})
             elif phase["kind"] == "feedback":
                 self.act("feedback", {})
+            if phase["id"] in EXPERIMENTS:
+                self.experiment(phase["id"])
             self.act("continue")
 
     def review(self, phase, reviewer="self", score=2, hashes=None):
@@ -170,6 +182,7 @@ class SessionTests(unittest.TestCase):
         resumed = d.session_status("learner")
         self.assertEqual(len(resumed["phase"]["progress"]["submissions"]), 2)
         self.assertFalse(resumed["phase"]["progress"]["checks"]["transfer.payload"]["independent"])
+        self.experiment("c02.calculate")
         self.act("continue")
         self.act("continue")
         exported = d.export_session("learner")
@@ -208,6 +221,7 @@ class SessionTests(unittest.TestCase):
         self.act("continue")
         response = self.act("answer", {"text": "Worked calculation.", "answers": {"transfer.payload": "1160 bytes"}})
         self.assertFalse(response["result"]["checks"]["transfer.payload"]["independent"])
+        self.experiment("c02.calculate")
         self.assertEqual(self.act("continue")["result"]["learning_result"], "demonstrated")
 
     def test_bad_session_paths_and_stale_requests(self):
@@ -258,6 +272,11 @@ class SessionTests(unittest.TestCase):
                 self.view = d.act(ident, request)
                 if action != "continue":
                     self.assertNotEqual(self.view["result"].get("learning_result"), "incorrect")
+                    if phase["id"] in EXPERIMENTS:
+                        for operation, values in [("experiment_predict", dict(parameters=EXPERIMENTS[phase["id"]], prediction="Synthetic decision prediction")), ("experiment_result", {})]:
+                            if operation == "experiment_result":
+                                values = {"experiment_id": self.view["result"]["experiment"]["id"]}
+                            self.view = d.act(ident, dict(request_id=f"experiment-{self.view['revision']}", expected_revision=self.view["revision"], phase_id=phase["id"], action=operation, payload=values))
                     request = dict(request_id=f"run-{self.view['revision']}", expected_revision=self.view["revision"], phase_id=phase["id"], action="continue", payload={})
                     self.view = d.act(ident, request)
             self.assertEqual(len(visited), len(d.definition()["phases"]))

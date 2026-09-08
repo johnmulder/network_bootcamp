@@ -57,6 +57,13 @@ The observation point is a modeled VLAN 10 trunk.
 <!-- delivery:start c02.calculate -->
 ## Calculate and Challenge — 15 Minutes
 
+Make the factual attempt before opening a model result. Then choose a payload
+and declared header scenario in the bounded transfer experiment. Predict whether
+it fits; use `experiment_predict` then `experiment_result` (terminal `x`, `z`).
+Compare a fitting small payload with the boundary. Explain why capacity does
+not prove ICMP delivery or application recovery. If you need support, replace
+part of this practice time with a worked example and fresh reassessment.
+
 1. Calculate the largest TCP payload fitting the reported path limit with
    20-byte IPv4 and TCP headers, no options, and no encapsulation. State units.
 2. Explain why the previously advertised MSS does not establish the entire

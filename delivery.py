@@ -607,6 +607,8 @@ def allowed_actions(phase: dict) -> list[str]:
     actions = ["answer", "continue", "skip"]
     if phase["id"] in ("c06.receive", "exit.answer"):
         actions.append("diagnose")
+    if phase["id"] in EXPERIMENT_PHASES:
+        actions += ["experiment_predict", "experiment_result"]
     if phase.get("learning_enabled") and any(b["role"] == "conceptual" for b in phase["assessment"].values()):
         actions += ["support", "reassess", "problem_answer", "problem_hint"]
     if phase["kind"] == "prediction":
@@ -622,6 +624,30 @@ def allowed_actions(phase: dict) -> list[str]:
     if phase["kind"] == "feedback":
         actions.append("feedback")
     return actions
+
+
+EXPERIMENT_PHASES = {"c01.change": "routing", "c02.calculate": "transfer", "c03.compare": "routing",
+                     "c04.predict": "resilience", "c04.outcomes": "resilience", "c04.twist": "resilience"}
+REQUIRED_EXPERIMENTS = {"c01.change", "c02.calculate", "c04.outcomes", "c04.twist"}
+
+
+def experiment_recorded(state: dict, name: str) -> bool:
+    phases = ("c04.predict", "c04.outcomes") if name == "c04.outcomes" else (name,)
+    return any("result" in a for phase in phases for a in state["phases"][phase].get("experiments", []))
+
+
+def experiment_baseline(model: str) -> tuple[dict, dict]:
+    if model == "transfer":
+        paths = ["labs/fixtures/challenges/transfer.pcap"]
+        baseline = {"mtu": 1200}
+    elif model == "routing":
+        paths = ["labs/fixtures/routing/route-candidates.csv", "labs/fixtures/routing/vrfs.json"]
+        baseline = dict(routes=workbench(1).route_rows(), vrfs=workbench(1).read_json("routing/vrfs.json"))
+    else:
+        paths = ["labs/fixtures/architecture/failures.jsonl"]
+        baseline = dict(failures=workbench(2).read_jsonl("architecture/failures.jsonl"))
+    hashes = {path: hashlib.sha256((ROOT / path).read_bytes()).hexdigest() for path in paths}
+    return baseline, hashes
 
 
 def completion(state: dict, data: dict) -> dict:
@@ -675,6 +701,15 @@ def status_result(state: dict, data: dict, result: dict | None = None, view_phas
         end_of_block = next_position == len(state["order"]) or phase_by_id(data, state["order"][next_position])["block"] != phase["block"]
         view["break_after_minutes"] = block["break_after"] if end_of_block else 0
         view["mode_prompt"] = "Write your own explanation before continuing." if state["mode"] == "solo" else "Swap evidence-reader and skeptical-reviewer roles; record your own answer. The exit is individual."
+        if phase["id"] in EXPERIMENT_PHASES:
+            model = EXPERIMENT_PHASES[phase["id"]]
+            choices = copy.deepcopy(learning.EXPERIMENT_CHOICES[model])
+            if model == "resilience" and phase["id"] != "c04.twist":
+                choices["twist"] = [False]
+            view["experiment"] = dict(model=model, choices=choices,
+                                      required=phase["id"] in REQUIRED_EXPERIMENTS,
+                                      recorded=experiment_recorded(state, phase["id"]),
+                                      attempts=copy.deepcopy(state["phases"][current].get("experiments", [])))
         if phase.get("learning_enabled"):
             view["assessment"] = phase["assessment"]
             view["problems"] = [dict(problem=learning.public_problem(learning.find_problem(a["variant_id"])),
@@ -861,7 +896,7 @@ def validate_artifacts(directory: Path, phase: dict, state: dict) -> dict:
 
 
 def response_hash(state: dict, block: str) -> str:
-    relevant = {name: {key: value[key] for key in ("submissions", "checks", "status")}
+    relevant = {name: {key: value.get(key) for key in ("submissions", "checks", "status", "experiments", "diagnosis")}
                 for name, value in state["phases"].items() if name.startswith(block + ".") and name != block + ".review" and name != "exit.feedback"}
     return hashlib.sha256(json.dumps(relevant, sort_keys=True).encode()).hexdigest()
 
@@ -933,6 +968,57 @@ def act(ident: str, request: dict) -> dict:
             progress["diagnosis"] = dict(at=now(), hypotheses=hypotheses, confidence=payload["confidence"], next_evidence=payload["next_evidence"])
             progress["submissions"].append(dict(at=now(), text="; ".join(hypotheses), answers={}, checks={}, kind="initial_diagnosis"))
             result["learning_result"] = "initial_diagnosis_recorded"
+        elif action == "experiment_predict":
+            if set(payload) != {"parameters", "prediction"}:
+                raise DeliveryError("Experiment prediction needs parameters and prediction")
+            model = EXPERIMENT_PHASES[name]
+            parameters = payload["parameters"]
+            prediction = require_text(payload["prediction"], "prediction")
+            if model == "resilience" and isinstance(parameters, dict) and parameters.get("twist") and name != "c04.twist":
+                raise DeliveryError("The shared-dependency twist is not released yet", 3)
+            if model == "resilience" and isinstance(parameters, dict):
+                if name == "c04.twist" and parameters.get("twist") is not True:
+                    raise DeliveryError("Apply the shared-power twist in this phase")
+                if name != "c04.twist":
+                    choices = state["phases"]["c04.choose"]["submissions"]
+                    original = choices[-1]["answers"].get("budget.options", "") if choices else ""
+                    tokens = re.findall(r"state-sync|backup-path|monitoring|management", original)
+                    if (not isinstance(parameters.get("options"), list)
+                            or any(not isinstance(v, str) for v in parameters["options"])
+                            or sorted(parameters["options"]) != sorted(tokens)):
+                        raise DeliveryError("Use your recorded two-token choice before revising it under the twist", 3)
+            baseline, hashes = experiment_baseline(model)
+            try:
+                learning.experiment(model, parameters, baseline, workbench(1).select_routes, workbench(1).best_vrf_route)
+            except ValueError as error:
+                raise DeliveryError(str(error)) from error
+            attempts = progress.setdefault("experiments", [])
+            if any("result" not in a for a in attempts):
+                raise DeliveryError("Compare the pending experiment before starting another", 3)
+            variant = hashlib.sha256(json.dumps(parameters, sort_keys=True).encode()).hexdigest()[:12]
+            entry = dict(id=f"{name}.{len(attempts)+1}", model=model, model_version=learning.EXPERIMENT_VERSION,
+                         variant_id=f"{model}.{variant}", parameters=parameters, prediction=prediction,
+                         baseline_sha256=hashes, predicted_at=now(), provenance="Bounded teaching model; not a new sensor observation")
+            attempts.append(entry)
+            result["experiment"] = copy.deepcopy(entry)
+        elif action == "experiment_result":
+            if set(payload) != {"experiment_id"}:
+                raise DeliveryError("Experiment result needs experiment_id")
+            entry = next((a for a in progress.get("experiments", []) if a["id"] == payload["experiment_id"]), None)
+            if entry is None:
+                raise DeliveryError("Record a prediction before requesting a result", 3)
+            baseline, hashes = experiment_baseline(entry["model"])
+            if hashes != entry["baseline_sha256"]:
+                raise DeliveryError("Experiment baseline changed; preserve the original prediction", 3)
+            if "result" not in entry:
+                entry["result"] = learning.experiment(entry["model"], entry["parameters"], baseline, workbench(1).select_routes, workbench(1).best_vrf_route)
+                entry["compared_at"] = now()
+                progress["exposed"] = True
+                for assigned in state.get("learning", []):
+                    if assigned["phase"] == name and not assigned["responses"]:
+                        assigned["exposed"] = True
+                        assigned.setdefault("help", []).append(dict(at=now(), kind="experiment-result"))
+            result["experiment"] = copy.deepcopy(entry)
         elif action in ("answer", "predict"):
             text = require_text(payload.get("text"))
             items = checkpoint_items(phase, state)
@@ -1028,6 +1114,8 @@ def act(ident: str, request: dict) -> dict:
                 progress["status"] = "skipped"
             else:
                 kind = phase["kind"]
+                if name in REQUIRED_EXPERIMENTS and not experiment_recorded(state, name):
+                    raise DeliveryError("Record a prediction and compare the bounded experiment result before continuing, or explicitly skip", 3)
                 if kind in ("prediction", "reflection", "checkpoint") and not progress["submissions"]:
                     raise DeliveryError("Record your explanation before continuing, or explicitly skip", 3)
                 if phase["checkpoints"] and not all(progress["checks"].get(check, {}).get("correct") for check in phase["checkpoints"]):
@@ -1071,6 +1159,8 @@ def export_session(ident: str, include_artifacts: bool = False) -> dict:
                                  attempts=[dict(at=r["at"], independent=r["independent"], passed=r["passed"],
                                                 feedback_codes={k:v["feedback_code"] for k,v in r["results"].items()}) for r in a["responses"]])
                             for a in state.get("learning", [])],
+                  experiments=[{key: value for key, value in entry.items() if key != "prediction"}
+                               for phase in state["phases"].values() for entry in phase.get("experiments", [])],
                   response_hashes={phase["id"]: response_hash(state, phase["block"]) for phase in data["phases"] if phase["kind"] == "review"},
                   review_history={name: [dict(at=r["at"], reviewer=r["reviewer"], scores=r["scores"], passed_at_review=r["passed"], artifact_hashes=r["artifact_hashes"])
                                         for r in p["reviews"]] for name, p in state["phases"].items() if p["reviews"]},
@@ -1088,6 +1178,7 @@ def export_session(ident: str, include_artifacts: bool = False) -> dict:
         result["included_files"] = list(ARTIFACTS)
         result["responses"] = {name: {key: p.get(key) for key in ("submissions", "reviews", "skip_reason", "practice", "feedback")}
                                for name, p in state["phases"].items()}
+        result["experiment_predictions"] = {entry["id"]: entry["prediction"] for p in state["phases"].values() for entry in p.get("experiments", [])}
     return result
 
 
@@ -1159,7 +1250,7 @@ def learn(ident: str, mode: str = "solo", case: str = "A", pair_label: str | Non
                     last_phase = phase["id"]
                 answered = phase["progress"]["submissions"] and all(check["correct"] for check in phase["progress"]["checks"].values())
                 default = "r" if phase["kind"] == "review" and not phase["progress"]["reviews"] else "f" if phase["kind"] == "feedback" and "feedback" not in phase["progress"] else "c" if answered or phase["kind"] in ("review", "feedback") else "a"
-                keys = {"a": "answer", "c": "continue", "s": "skip", "e": "evidence", "h": "hint", "v": "reveal", "r": "review", "f": "feedback", "d": "diagnose", "u": "support", "n": "reassess", "b": "problem_answer", "j": "problem_hint"}
+                keys = {"a": "answer", "c": "continue", "s": "skip", "e": "evidence", "h": "hint", "v": "reveal", "r": "review", "f": "feedback", "d": "diagnose", "u": "support", "n": "reassess", "b": "problem_answer", "j": "problem_hint", "x": "experiment_predict", "z": "experiment_result"}
                 choices = [f"{key}: {value}" for key, value in keys.items() if value in phase["allowed_actions"]]
                 action = input("\n" + " · ".join(choices) + f" · g: revisit · q: quit [{default}]: ").strip().lower() or default
             if action == "q":
@@ -1185,6 +1276,16 @@ def learn(ident: str, mode: str = "solo", case: str = "A", pair_label: str | Non
                     payload = dict(hypotheses=[input("First hypothesis: "), input("Alternative hypothesis: ")],
                                    confidence=input("Confidence: low/medium/high: ").strip(),
                                    next_evidence=input("Next evidence: state/observations/conditions: ").strip())
+                elif operation == "experiment_predict":
+                    parameters = {}
+                    for key, values in phase["experiment"]["choices"].items():
+                        print(f"{key}: " + json.dumps(values))
+                        value = input("Choose two comma-separated options: " if key == "options" else "Choose a value: ").strip()
+                        parameters[key] = [v.strip() for v in value.split(",")] if key == "options" else decode_json(value) if type(values[0]) in (int, bool) else value
+                    payload = dict(parameters=parameters, prediction=input("Predicted result and why: "))
+                elif operation == "experiment_result":
+                    print("Assigned experiments: " + ", ".join(a["id"] for a in phase["experiment"]["attempts"]))
+                    payload = {"experiment_id": input("Experiment ID to compare: ").strip()}
                 elif operation == "evidence":
                     for i, item in enumerate(phase["evidence"], 1):
                         print(f"{i}. {item['id']}: {item['command']}")
@@ -1239,6 +1340,8 @@ def learn(ident: str, mode: str = "solo", case: str = "A", pair_label: str | Non
                     print(result["text"])
                 if "problem_result" in result:
                     print(json.dumps(result["problem_result"], indent=2))
+                if "experiment" in result:
+                    print(json.dumps(result["experiment"], indent=2))
                 for name, check in result.get("checks", {}).items():
                     print(f"{name}: {check['feedback']}")
                 for check in result.get("results", []):

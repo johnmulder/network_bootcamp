@@ -161,6 +161,12 @@ def journey(case):
                 act("feedback", {"wanted_to_know": 4, "manageable": 4})
             elif phase["id"] == "c02.review":
                 act("reveal")
+            if phase["id"] in examples.EXPERIMENTS:
+                act("experiment_predict", dict(parameters=examples.EXPERIMENTS[phase["id"]], prediction="PRIVATE prediction: bounded effect with unknown recovery."))
+                assert "result" not in view["result"]["experiment"]
+                experiment_id = view["result"]["experiment"]["id"]
+                act("experiment_result", {"experiment_id": experiment_id})
+                assert view["result"]["experiment"]["result"]["unknowns"]
             act("continue")
         assert view["completion"]["delivery_finished"]
         assert not view["completion"]["self_reviewed_completion"]

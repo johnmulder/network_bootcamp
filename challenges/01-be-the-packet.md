@@ -62,6 +62,13 @@ show the entire routed path or prove that the real network matches the diagram.
 <!-- delivery:start c01.change -->
 ## Change One Condition — 20 Minutes
 
+After your factual attempt, use the guided bounded routing experiment: predict
+the effect of removing the host route, then compare the computed prefix and
+eligible next hops. You can also compare the supplied CORP and OT contexts.
+Use `experiment_predict` then `experiment_result` (terminal `x`, then `z`).
+Record what changed and which policy or return-path facts remain unobserved.
+Use this practice time for targeted support and reassessment if needed.
+
 This CSV is an **independent route-selection snapshot**, not the table that
 generated the earlier capture. Do not combine its next hops with the capture's
 gateway and claim an observed path.
