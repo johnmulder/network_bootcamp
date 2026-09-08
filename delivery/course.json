@@ -74,7 +74,9 @@
           "fragment": "opening.solution"
         }
       ],
-      "artifacts": []
+      "artifacts": [],
+      "assessment": {},
+      "artifact_bindings": []
     },
     {
       "id": "opening.diagnostic",
@@ -104,7 +106,31 @@
           "fragment": "opening.solution"
         }
       ],
-      "artifacts": []
+      "artifacts": [],
+      "assessment": {
+        "opening.local": {
+          "role": "conceptual",
+          "objective": "opening.diagnostic.opening.local",
+          "family": "subnet",
+          "field": "local",
+          "support": "subnet"
+        },
+        "opening.dns": {
+          "role": "conceptual",
+          "objective": "opening.diagnostic.opening.dns",
+          "family": "service-boundaries",
+          "field": "dns",
+          "support": "service-boundaries"
+        },
+        "opening.application": {
+          "role": "conceptual",
+          "objective": "opening.diagnostic.opening.application",
+          "family": "service-boundaries",
+          "field": "application",
+          "support": "service-boundaries"
+        }
+      },
+      "artifact_bindings": []
     },
     {
       "id": "opening.reflect",
@@ -130,7 +156,9 @@
           "fragment": "opening.solution"
         }
       ],
-      "artifacts": []
+      "artifacts": [],
+      "assessment": {},
+      "artifact_bindings": []
     },
     {
       "id": "c01.model",
@@ -175,6 +203,13 @@
       ],
       "artifacts": [
         "packet-path.md"
+      ],
+      "assessment": {},
+      "artifact_bindings": [
+        {
+          "file": "packet-path.md",
+          "region": "c01"
+        }
       ]
     },
     {
@@ -220,6 +255,13 @@
       ],
       "artifacts": [
         "packet-path.md"
+      ],
+      "assessment": {},
+      "artifact_bindings": [
+        {
+          "file": "packet-path.md",
+          "region": "c01"
+        }
       ]
     },
     {
@@ -268,6 +310,42 @@
       ],
       "artifacts": [
         "packet-path.md"
+      ],
+      "assessment": {
+        "m1.routes.10.0.20.40": {
+          "role": "conceptual",
+          "objective": "c01.change.m1.routes.10.0.20.40",
+          "family": "route-selection",
+          "field": "prefix",
+          "support": "route-selection"
+        },
+        "m1.convergence.remove-host-route": {
+          "role": "conceptual",
+          "objective": "c01.change.m1.convergence.remove-host-route",
+          "family": "route-selection",
+          "field": "after-prefix",
+          "support": "route-selection"
+        },
+        "route.before-hops": {
+          "role": "conceptual",
+          "objective": "c01.change.route.before-hops",
+          "family": "route-selection",
+          "field": "hops",
+          "support": "route-selection"
+        },
+        "route.after-hops": {
+          "role": "conceptual",
+          "objective": "c01.change.route.after-hops",
+          "family": "route-selection",
+          "field": "after-hops",
+          "support": "route-selection"
+        }
+      },
+      "artifact_bindings": [
+        {
+          "file": "packet-path.md",
+          "region": "c01"
+        }
       ]
     },
     {
@@ -309,6 +387,13 @@
       ],
       "artifacts": [
         "packet-path.md"
+      ],
+      "assessment": {},
+      "artifact_bindings": [
+        {
+          "file": "packet-path.md",
+          "region": "c01"
+        }
       ]
     },
     {
@@ -354,6 +439,13 @@
       ],
       "artifacts": [
         "packet-path.md"
+      ],
+      "assessment": {},
+      "artifact_bindings": [
+        {
+          "file": "packet-path.md",
+          "region": "c02"
+        }
       ]
     },
     {
@@ -399,6 +491,13 @@
       ],
       "artifacts": [
         "packet-path.md"
+      ],
+      "assessment": {},
+      "artifact_bindings": [
+        {
+          "file": "packet-path.md",
+          "region": "c02"
+        }
       ]
     },
     {
@@ -442,6 +541,21 @@
       ],
       "artifacts": [
         "packet-path.md"
+      ],
+      "assessment": {
+        "transfer.payload": {
+          "role": "conceptual",
+          "objective": "c02.calculate.transfer.payload",
+          "family": "transfer",
+          "field": "payload",
+          "support": "transfer"
+        }
+      },
+      "artifact_bindings": [
+        {
+          "file": "packet-path.md",
+          "region": "c02"
+        }
       ]
     },
     {
@@ -483,6 +597,13 @@
       ],
       "artifacts": [
         "packet-path.md"
+      ],
+      "assessment": {},
+      "artifact_bindings": [
+        {
+          "file": "packet-path.md",
+          "region": "c02"
+        }
       ]
     },
     {
@@ -530,6 +651,13 @@
       ],
       "artifacts": [
         "packet-path.md"
+      ],
+      "assessment": {},
+      "artifact_bindings": [
+        {
+          "file": "packet-path.md",
+          "region": "c03"
+        }
       ]
     },
     {
@@ -577,6 +705,35 @@
       ],
       "artifacts": [
         "packet-path.md"
+      ],
+      "assessment": {
+        "m1.convergence.interval": {
+          "role": "conceptual",
+          "objective": "c03.reconstruct.m1.convergence.interval",
+          "family": "convergence",
+          "field": "interval",
+          "support": "convergence"
+        },
+        "m1.convergence.next-hop": {
+          "role": "conceptual",
+          "objective": "c03.reconstruct.m1.convergence.next-hop",
+          "family": "convergence",
+          "field": "hop",
+          "support": "convergence"
+        },
+        "m1.convergence.application": {
+          "role": "conceptual",
+          "objective": "c03.reconstruct.m1.convergence.application",
+          "family": "convergence",
+          "field": "application",
+          "support": "convergence"
+        }
+      },
+      "artifact_bindings": [
+        {
+          "file": "packet-path.md",
+          "region": "c03"
+        }
       ]
     },
     {
@@ -625,6 +782,35 @@
       ],
       "artifacts": [
         "packet-path.md"
+      ],
+      "assessment": {
+        "routing.bgp-peer": {
+          "role": "conceptual",
+          "objective": "c03.compare.routing.bgp-peer",
+          "family": "bgp",
+          "field": "peer",
+          "support": "bgp"
+        },
+        "routing.corp-route": {
+          "role": "conceptual",
+          "objective": "c03.compare.routing.corp-route",
+          "family": "routing-context",
+          "field": "corp",
+          "support": "routing-context"
+        },
+        "routing.ot-route": {
+          "role": "conceptual",
+          "objective": "c03.compare.routing.ot-route",
+          "family": "routing-context",
+          "field": "isolated",
+          "support": "routing-context"
+        }
+      },
+      "artifact_bindings": [
+        {
+          "file": "packet-path.md",
+          "region": "c03"
+        }
       ]
     },
     {
@@ -666,6 +852,13 @@
       ],
       "artifacts": [
         "packet-path.md"
+      ],
+      "assessment": {},
+      "artifact_bindings": [
+        {
+          "file": "packet-path.md",
+          "region": "c03"
+        }
       ]
     },
     {
@@ -714,6 +907,17 @@
       ],
       "artifacts": [
         "architecture.md"
+      ],
+      "assessment": {},
+      "artifact_bindings": [
+        {
+          "file": "architecture.md",
+          "region": "c04"
+        },
+        {
+          "file": "architecture.md",
+          "region": "budget"
+        }
       ]
     },
     {
@@ -764,6 +968,46 @@
       ],
       "artifacts": [
         "architecture.md"
+      ],
+      "assessment": {
+        "m2.cloud.corp-vpc.10.0.20.40": {
+          "role": "conceptual",
+          "objective": "c04.flows.m2.cloud.corp-vpc.10.0.20.40",
+          "family": "cloud",
+          "field": "outbound",
+          "support": "cloud"
+        },
+        "m2.cloud.on-prem.10.20.5.10": {
+          "role": "conceptual",
+          "objective": "c04.flows.m2.cloud.on-prem.10.20.5.10",
+          "family": "cloud",
+          "field": "return",
+          "support": "cloud"
+        },
+        "flows.server-ot": {
+          "role": "conceptual",
+          "objective": "c04.flows.flows.server-ot",
+          "family": "policy",
+          "field": "server",
+          "support": "policy"
+        },
+        "flows.user-ot": {
+          "role": "conceptual",
+          "objective": "c04.flows.flows.user-ot",
+          "family": "policy",
+          "field": "user",
+          "support": "policy"
+        }
+      },
+      "artifact_bindings": [
+        {
+          "file": "architecture.md",
+          "region": "c04"
+        },
+        {
+          "file": "architecture.md",
+          "region": "budget"
+        }
       ]
     },
     {
@@ -807,6 +1051,25 @@
       ],
       "artifacts": [
         "architecture.md"
+      ],
+      "assessment": {
+        "budget.options": {
+          "role": "recording",
+          "objective": null,
+          "family": null,
+          "field": null,
+          "support": null
+        }
+      },
+      "artifact_bindings": [
+        {
+          "file": "architecture.md",
+          "region": "c04"
+        },
+        {
+          "file": "architecture.md",
+          "region": "budget"
+        }
       ]
     },
     {
@@ -851,6 +1114,17 @@
       ],
       "artifacts": [
         "architecture.md"
+      ],
+      "assessment": {},
+      "artifact_bindings": [
+        {
+          "file": "architecture.md",
+          "region": "c04"
+        },
+        {
+          "file": "architecture.md",
+          "region": "budget"
+        }
       ]
     },
     {
@@ -894,6 +1168,17 @@
       ],
       "artifacts": [
         "architecture.md"
+      ],
+      "assessment": {},
+      "artifact_bindings": [
+        {
+          "file": "architecture.md",
+          "region": "c04"
+        },
+        {
+          "file": "architecture.md",
+          "region": "budget"
+        }
       ]
     },
     {
@@ -935,6 +1220,17 @@
       ],
       "artifacts": [
         "architecture.md"
+      ],
+      "assessment": {},
+      "artifact_bindings": [
+        {
+          "file": "architecture.md",
+          "region": "c04"
+        },
+        {
+          "file": "architecture.md",
+          "region": "budget"
+        }
       ]
     },
     {
@@ -976,6 +1272,17 @@
       ],
       "artifacts": [
         "architecture.md"
+      ],
+      "assessment": {},
+      "artifact_bindings": [
+        {
+          "file": "architecture.md",
+          "region": "c04"
+        },
+        {
+          "file": "architecture.md",
+          "region": "budget"
+        }
       ]
     },
     {
@@ -1022,6 +1329,13 @@
       "artifacts": [
         "incident.md",
         "evidence-ledger.csv"
+      ],
+      "assessment": {},
+      "artifact_bindings": [
+        {
+          "file": "incident.md",
+          "region": "c05"
+        }
       ]
     },
     {
@@ -1066,6 +1380,13 @@
       "artifacts": [
         "incident.md",
         "evidence-ledger.csv"
+      ],
+      "assessment": {},
+      "artifact_bindings": [
+        {
+          "file": "incident.md",
+          "region": "c05"
+        }
       ]
     },
     {
@@ -1113,6 +1434,28 @@
       "artifacts": [
         "incident.md",
         "evidence-ledger.csv"
+      ],
+      "assessment": {
+        "incident.utc": {
+          "role": "conceptual",
+          "objective": "c05.round2.incident.utc",
+          "family": "timestamps",
+          "field": "utc",
+          "support": "timestamps"
+        },
+        "incident.auth-record": {
+          "role": "recording",
+          "objective": null,
+          "family": null,
+          "field": null,
+          "support": null
+        }
+      },
+      "artifact_bindings": [
+        {
+          "file": "incident.md",
+          "region": "c05"
+        }
       ]
     },
     {
@@ -1158,6 +1501,13 @@
       "artifacts": [
         "incident.md",
         "evidence-ledger.csv"
+      ],
+      "assessment": {},
+      "artifact_bindings": [
+        {
+          "file": "incident.md",
+          "region": "c05"
+        }
       ]
     },
     {
@@ -1202,6 +1552,13 @@
       "artifacts": [
         "incident.md",
         "evidence-ledger.csv"
+      ],
+      "assessment": {},
+      "artifact_bindings": [
+        {
+          "file": "incident.md",
+          "region": "c05"
+        }
       ]
     },
     {
@@ -1246,6 +1603,13 @@
       "artifacts": [
         "incident.md",
         "evidence-ledger.csv"
+      ],
+      "assessment": {},
+      "artifact_bindings": [
+        {
+          "file": "incident.md",
+          "region": "c05"
+        }
       ]
     },
     {
@@ -1296,6 +1660,21 @@
         "architecture.md",
         "incident.md",
         "evidence-ledger.csv"
+      ],
+      "assessment": {},
+      "artifact_bindings": [
+        {
+          "file": "packet-path.md",
+          "region": "c06-path"
+        },
+        {
+          "file": "architecture.md",
+          "region": "c06-architecture"
+        },
+        {
+          "file": "incident.md",
+          "region": "c06-handoff"
+        }
       ]
     },
     {
@@ -1347,6 +1726,50 @@
         "architecture.md",
         "incident.md",
         "evidence-ledger.csv"
+      ],
+      "assessment": {
+        "case.id": {
+          "role": "recording",
+          "objective": null,
+          "family": null,
+          "field": null,
+          "support": null
+        },
+        "case.change": {
+          "role": "conceptual",
+          "objective": "c06.analyze.case.change",
+          "family": "diagnosis",
+          "field": "change",
+          "support": "diagnosis"
+        },
+        "case.lookup": {
+          "role": "conceptual",
+          "objective": "c06.analyze.case.lookup",
+          "family": "diagnosis",
+          "field": "lookup",
+          "support": "diagnosis"
+        },
+        "case.observation": {
+          "role": "conceptual",
+          "objective": "c06.analyze.case.observation",
+          "family": "diagnosis",
+          "field": "observation",
+          "support": "diagnosis"
+        }
+      },
+      "artifact_bindings": [
+        {
+          "file": "packet-path.md",
+          "region": "c06-path"
+        },
+        {
+          "file": "architecture.md",
+          "region": "c06-architecture"
+        },
+        {
+          "file": "incident.md",
+          "region": "c06-handoff"
+        }
       ]
     },
     {
@@ -1391,6 +1814,21 @@
         "architecture.md",
         "incident.md",
         "evidence-ledger.csv"
+      ],
+      "assessment": {},
+      "artifact_bindings": [
+        {
+          "file": "packet-path.md",
+          "region": "c06-path"
+        },
+        {
+          "file": "architecture.md",
+          "region": "c06-architecture"
+        },
+        {
+          "file": "incident.md",
+          "region": "c06-handoff"
+        }
       ]
     },
     {
@@ -1435,6 +1873,21 @@
         "architecture.md",
         "incident.md",
         "evidence-ledger.csv"
+      ],
+      "assessment": {},
+      "artifact_bindings": [
+        {
+          "file": "packet-path.md",
+          "region": "c06-path"
+        },
+        {
+          "file": "architecture.md",
+          "region": "c06-architecture"
+        },
+        {
+          "file": "incident.md",
+          "region": "c06-handoff"
+        }
       ]
     },
     {
@@ -1479,6 +1932,21 @@
         "architecture.md",
         "incident.md",
         "evidence-ledger.csv"
+      ],
+      "assessment": {},
+      "artifact_bindings": [
+        {
+          "file": "packet-path.md",
+          "region": "c06-path"
+        },
+        {
+          "file": "architecture.md",
+          "region": "c06-architecture"
+        },
+        {
+          "file": "incident.md",
+          "region": "c06-handoff"
+        }
       ]
     },
     {
@@ -1527,6 +1995,42 @@
       ],
       "artifacts": [
         "incident.md"
+      ],
+      "assessment": {
+        "case.id": {
+          "role": "recording",
+          "objective": null,
+          "family": null,
+          "field": null,
+          "support": null
+        },
+        "case.change": {
+          "role": "conceptual",
+          "objective": "exit.answer.case.change",
+          "family": "diagnosis",
+          "field": "change",
+          "support": "diagnosis"
+        },
+        "case.lookup": {
+          "role": "conceptual",
+          "objective": "exit.answer.case.lookup",
+          "family": "diagnosis",
+          "field": "lookup",
+          "support": "diagnosis"
+        },
+        "case.observation": {
+          "role": "conceptual",
+          "objective": "exit.answer.case.observation",
+          "family": "diagnosis",
+          "field": "observation",
+          "support": "diagnosis"
+        }
+      },
+      "artifact_bindings": [
+        {
+          "file": "incident.md",
+          "region": "exit"
+        }
       ]
     },
     {
@@ -1568,6 +2072,13 @@
       ],
       "artifacts": [
         "incident.md"
+      ],
+      "assessment": {},
+      "artifact_bindings": [
+        {
+          "file": "incident.md",
+          "region": "exit"
+        }
       ]
     },
     {
@@ -1609,7 +2120,32 @@
       ],
       "artifacts": [
         "incident.md"
+      ],
+      "assessment": {},
+      "artifact_bindings": [
+        {
+          "file": "incident.md",
+          "region": "exit"
+        }
       ]
     }
-  ]
+  ],
+  "learning_contract": {
+    "version": 2,
+    "enabled": false,
+    "catalog": "delivery/problems.json",
+    "families": [
+      "subnet",
+      "service-boundaries",
+      "route-selection",
+      "transfer",
+      "convergence",
+      "bgp",
+      "routing-context",
+      "cloud",
+      "policy",
+      "timestamps",
+      "diagnosis"
+    ]
+  }
 }

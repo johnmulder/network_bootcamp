@@ -142,6 +142,26 @@ def validate_definition(data: dict) -> None:
         previous = name
     if list(totals.values()) != minutes:
         raise DeliveryError("Phase durations differ from block durations")
+    contract = data["learning_contract"]
+    if contract["version"] != 2 or type(contract["enabled"]) is not bool:
+        raise DeliveryError("Unsupported learning contract")
+    objectives = set()
+    for phase in data["phases"]:
+        if set(phase["assessment"]) != set(phase["checkpoints"]):
+            raise DeliveryError(f"Incomplete assessment mapping: {phase['id']}")
+        for binding in phase["assessment"].values():
+            if binding["role"] == "conceptual":
+                objective = binding["objective"]
+                if (not objective or objective in objectives or not binding["field"]
+                        or binding["family"] not in contract["families"]
+                        or binding["support"] != binding["family"]):
+                    raise DeliveryError("Invalid objective, family, or support mapping")
+                objectives.add(objective)
+            elif binding["role"] != "recording" or binding["objective"] is not None:
+                raise DeliveryError("Unknown assessment role")
+        for binding in phase["artifact_bindings"]:
+            if binding["file"] not in ARTIFACTS or not ID.fullmatch(binding["region"]):
+                raise DeliveryError("Invalid artifact binding")
 
 
 EVIDENCE = {
