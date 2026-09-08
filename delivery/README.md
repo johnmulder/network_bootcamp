@@ -108,10 +108,18 @@ requires the same five envelope fields shown above.
 | `reveal` | `{}` | Shows only this block's worked review and assigned case. Subsequent answers exposed by it cannot count as independent. |
 | `continue` | `{}` or optional numeric `minutes` | Advances after required responses; review can remain pending. Minutes are self-reported. |
 | `skip` | Nonempty `reason` | Continues while recording unfinished work. Revisit and finish it later to satisfy completion. |
-| `review` | `reviewer`, `scores`, `feedback`, `expected_artifact_hashes`, `expected_response_sha256` | Records a self/facilitator rubric review of specific file and response versions. |
+| `review` | `reviewer`, `scores`, `reasoning`, `feedback`, `expected_artifact_hashes`, `expected_response_sha256` | Records a self/facilitator rubric review of assessed region, ledger, and response versions. |
+| `submit_artifact` | `file`, `region`, `expected_sha256`, `answers`; optional `confidence` | Snapshots the bound section as the explanation without rewriting the file. |
+| `calibrate` | `example_id`, `scores` | Saves formative scores before returning authored anchors and feedback. |
+| `diagnose` | Two `hypotheses`, `confidence`, `next_evidence` | Records the initial diagnosis before capstone/exit diagnostic material. |
+| `experiment_predict` / `experiment_result` | `parameters` and `prediction` / `experiment_id` | Saves a prediction before computing a bounded result. |
 | `feedback` | Optional integer `wanted_to_know` and `manageable` ratings, 1–5; optional `text` | Records the existing engagement questions. An empty object opts out. |
 
-Checkpoint answers retain the existing workbench normalization and aliases.
+The [learning actions](assessment.md#typed-learning-actions) define `support`,
+`reassess`, `problem_answer`, and `problem_hint`. `answer` and `submit_artifact`
+also accept optional confidence (`low`, `medium`, `high`), separate from scores.
+
+Checkpoint answers use the shared semantic scorer and preserve useful aliases.
 Units matter where requested. For `budget.options`, supply exactly two of
 `state-sync`, `backup-path`, `monitoring`, and `management`, separated by commas.
 No choice receives an automatic architecture-quality score.
@@ -123,9 +131,9 @@ for retry. It never runs shell text from an answer or Markdown code block.
 
 ## Artifacts and Review
 
-Retain the template section headings, fill empty table cells and placeholders,
+Retain the template artifact markers, fill empty table cells and placeholders,
 and preserve the narrative/handoff markers. Put the exact capstone ID in the
-existing case-ID fields, not in renamed section headings. Write unknown with a
+session checkpoint fields; headings may be renamed. Write unknown with a
 reason when evidence is absent. The incident narrative and written handoff have a
 150-word limit. Diagrams can be expressed as text and tables in the Markdown.
 
@@ -254,6 +262,7 @@ Default exports include model results and omit written predictions.
 ```sh
 ./course session export --id example --format json
 ./course session export --id example --format csv --output progress.csv
+./course session export --id example --format objectives-csv --output objectives.csv
 ./course session export --id example --format markdown --include-artifacts --output review.md
 ```
 
@@ -294,7 +303,8 @@ commands have time and output limits. Hitting a limit preserves prior work.
 
 If an older manual `work/bootcamp` directory already exists, start a different
 session ID. Copy your Markdown/CSV files into that new workspace deliberately,
-retain its `session.json`, and adapt headings/ledger references to the templates.
+retain its `session.json`, and adapt artifact markers/ledger references to the
+new templates without overwriting the old work.
 Copying files does not infer completion of past phases. Keep the old workspace
 until you have checked the copy.
 

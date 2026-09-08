@@ -18,6 +18,86 @@ and record active minutes here. Scripted rehearsal scores are not learner data.
 
 Date / facilitator / participant count / modes: ___
 
+## Pilot Sequence and Comparison Design
+
+Human validation is pending. Arrange participants and facilitator time before
+claiming a trial: first observe one beginner and one experienced learner in the
+transfer slice, then repair blocking friction and run one complete beginner
+solo day and one paired day with separate individual exits. Do not replace
+participants with scripted answers. Keep each course version with its records;
+use new sessions after changing assessed content.
+
+For the slice, observe prediction, incorrect or correct first response, support
+choice, and a fresh reassessment. A successful first responder can bypass help.
+For the full day, compare the initial route-selection task with a reserved
+equivalent fresh variant near the end. Reserve the first `route-selection`
+reassessment for three minutes within the ten-minute capstone review, leaving
+seven minutes for that review; do not add time or consume the A/B exit packet.
+Revisit `c01.change` and choose `reassess`, then return to the current phase.
+If both variants were already exposed, record the comparison as unavailable;
+do not call a retry unseen. Additional second attempts belong after class.
+
+Use the same objective and rubric when comparing responses, and record the
+different variant's conditions. Report individual learners as the denominator,
+not attempts or pair submissions. Compare first attempts, supported corrections,
+and unassisted fresh results separately. A small observed sample supports a
+revision decision, not a general claim that the teaching technique works.
+
+Course version / content hash / fixture hash: ___
+
+Pilot stage / anonymous learner labels / prior background / support exposure:
+___
+
+Initial objective and variant / later equivalent variant / interval between:
+___
+
+## Technique Observations
+
+| Learner / phase / objective | Trigger or error code | Support level and whether requested | Feedback resolved the misconception? | Fresh variant / help exposure / first outcome | Evidence for observer judgment |
+| --- | --- | --- | --- | --- | --- |
+| | | | | | |
+
+| Learner / case | Initial diagnosis before any cue? | Confidence before evidence | Requested next evidence | Actual first view / next choice | Confidence after evidence | Claim changed and why |
+| --- | --- | --- | --- | --- | --- | --- |
+| | | | | | | |
+
+Record accidental cues from wording, filenames, a partner, or prior browsing.
+Answer-bearing help changes assessment eligibility; orientation does not.
+Distinguish incorrect reasoning from an invalid input format or command failure.
+Record whether the learner could state why an experiment's result changed and
+which uncertainty remained. Note repeated typing, marker repair, or review
+navigation that consumed investigation time.
+
+| Learner / reviewed artifact region | Self scores by dimension | Facilitator scores by dimension | Disagreement and cited passage | Revision / later scores |
+| --- | --- | --- | --- | --- |
+| | | | | |
+
+## Local Data Collection
+
+Use separate anonymous sessions, including for partners. Save raw worksheets
+and exports under ignored `work/`; do not commit private free-text work.
+Default exports include per-objective attempt counts, first-response outcomes,
+supported corrections, fresh attainment, variant IDs, support use, error codes,
+review revisions, evidence-view order, and optional confidence/engagement data.
+
+```sh
+./course session export --id pilot-01 --format json --output observations.json
+./course session export --id pilot-01 --format objectives-csv --output objectives.csv
+./course session export --id pilot-01 --format csv --output phases.csv
+```
+
+These commands create new files inside that session's `exports/` directory and
+refuse overwrites. Use `--include-artifacts` only when you intend to include the
+learner's answers and prose for human review. Do not merge those raw exports
+into a public aggregate. Confidence is optional and distinct from correctness;
+`answer` and `submit_artifact` accept `confidence: low/medium/high`.
+
+Process timestamps indicate recorded actions. Durations submitted on `continue`
+are self-reports. Only the observer's worksheet measures observed active minutes.
+Label missing observations as missing; never infer active time from elapsed
+process time. Commit only an appropriate aggregate with participant counts,
+raw outcome totals, unresolved issues, and the next validation decision.
+
 ## Observations
 
 | Block | Planned minutes | Actual minutes | Active student minutes | Hints / friction / misconception |

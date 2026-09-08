@@ -169,8 +169,11 @@ def validate_definition(data: dict) -> None:
             elif binding["role"] != "recording" or binding["objective"] is not None:
                 raise DeliveryError("Unknown assessment role")
         for binding in phase["artifact_bindings"]:
-            if binding["file"] not in ARTIFACTS or not ID.fullmatch(binding["region"]):
+            if binding["file"] not in ARTIFACTS or binding["file"] not in phase["artifacts"] or not ID.fullmatch(binding["region"]):
                 raise DeliveryError("Invalid artifact binding")
+            regions = artifact_regions((ROOT / ARTIFACTS[binding["file"]]).read_text())
+            if binding["region"] not in regions:
+                raise DeliveryError(f"Missing bound template region: {binding['file']}#{binding['region']}")
 
 
 EVIDENCE = {
@@ -446,7 +449,7 @@ def load_state(directory: Path, data: dict) -> dict:
             if (progress["status"] not in {"incomplete", "complete", "pending_review", "skipped", "demonstrated"}
                     or not isinstance(progress["views"], list) or not isinstance(progress["reviews"], list)
                     or type(progress["hints"]) is not int or not 0 <= progress["hints"] <= 3
-                    or type(progress["exposed"]) is not bool):
+                    or type(progress["exposed"]) is not bool or not isinstance(progress["exposed_checks"], list)):
                 raise ValueError("invalid phase status")
             for check in progress["checks"].values():
                 if type(check["correct"]) is not bool or type(check["independent"]) is not bool:
@@ -455,8 +458,24 @@ def load_state(directory: Path, data: dict) -> dict:
                 if (review["reviewer"] not in ("self", "facilitator") or not isinstance(review["artifact_hashes"], dict)
                         or not isinstance(review["response_sha256"], str) or type(review["passed"]) is not bool):
                     raise ValueError("invalid review record")
+        if not isinstance(state["learning"], list):
+            raise ValueError("invalid learning history")
+        seen_variants = set()
+        for entry in state["learning"]:
+            problem = learning.find_problem(entry["variant_id"])
+            if (entry["variant_id"] in seen_variants or entry["family"] != problem["family"]
+                    or entry["use"] != problem["use"] or entry["parameters"] != problem["parameters"]
+                    or entry["phase"] not in order or type(entry["exposed"]) is not bool
+                    or not isinstance(entry["objectives"], dict) or not isinstance(entry["responses"], list)):
+                raise ValueError("invalid assigned problem")
+            seen_variants.add(entry["variant_id"])
+            for response in entry["responses"]:
+                if (type(response["independent"]) is not bool or type(response["passed"]) is not bool
+                        or not isinstance(response["answers"], dict) or not isinstance(response["results"], dict)
+                        or set(response["results"]) != {q["id"] for q in problem["questions"]}):
+                    raise ValueError("invalid reassessment history")
     except (OSError, ValueError, KeyError, TypeError, DeliveryError) as error:
-        raise DeliveryError(f"Cannot load session: {error}. Preserve this directory; restore a saved copy or create a new session.", 3) from error
+        raise DeliveryError(f"Cannot load session: {error}. Preserve this directory; use the matching course copy and saved state, or create a new session.", 3) from error
     if state["versions"] != versions(data):
         raise DeliveryError("Course or fixture version changed. Use the matching course copy or create a new session; existing work was preserved.", 3)
     evidence_integrity()
@@ -485,7 +504,7 @@ def create_session(ident: str, mode: str = "solo", case: str = "A", pair_label: 
                  current=order[0], requests={}, phases={}, learning=[])
     for name in order:
         state["phases"][name] = dict(status="incomplete", submissions=[], checks={},
-                                     views=[], hints=0, exposed=False, reviews=[])
+                                     views=[], hints=0, exposed=False, exposed_checks=[], reviews=[])
     directory.parent.mkdir(parents=True, exist_ok=True)
     try:
         directory.mkdir()
@@ -503,6 +522,13 @@ def phase_by_id(data: dict, name: str) -> dict:
         if phase["id"] == name:
             return phase
     raise DeliveryError(f"Unknown phase: {name}")
+
+
+def expose_checks(progress: dict, phase: dict, family: str | None = None) -> None:
+    progress["exposed"] = True
+    for check, binding in phase["assessment"].items():
+        if (family is None or binding["family"] == family) and check not in progress["exposed_checks"]:
+            progress["exposed_checks"].append(check)
 
 
 def checkpoint_items(phase: dict, state: dict) -> list[dict]:
@@ -682,9 +708,18 @@ def objective_status(state: dict, data: dict) -> list[dict]:
                 continue
             original = any(s["checks"].get(check, {}).get("independent", False)
                            for s in state["phases"][phase["id"]]["submissions"])
+            attempts = [s["checks"][check] for s in state["phases"][phase["id"]]["submissions"] if check in s["checks"]]
+            variants = [a for a in state.get("learning", []) if binding["objective"] in a["objectives"]]
             fresh = learning.attained(state, binding["objective"])
             result.append(dict(id=binding["objective"], phase=phase["id"], family=binding["family"],
-                               original_independent=original, fresh_independent=fresh, satisfied=original or fresh))
+                               original_independent=original, fresh_independent=fresh, satisfied=original or fresh,
+                               first_response_correct=attempts[0]["correct"] if attempts else None,
+                               original_attempts=len(attempts), supported_correct=any(a["correct"] and not a["independent"] for a in attempts),
+                               feedback_codes=[a["feedback_code"] for a in attempts],
+                               variants=[dict(id=a["variant_id"], use=a["use"], exposed=a["exposed"],
+                                              help=[h["kind"] for h in a.get("help", [])],
+                                              first_response_correct=a["responses"][0]["passed"] if a["responses"] else None,
+                                              attempts=len(a["responses"])) for a in variants]))
     return result
 
 
@@ -799,7 +834,7 @@ def hash_text(text: str) -> str:
 
 def artifact_regions(text: str) -> dict[str, str]:
     regions, active, lines = {}, None, []
-    for line in text.replace("\r\n", "\n").replace("\r", "\n").splitlines(keepends=True):
+    for line in io.StringIO(text.replace("\r\n", "\n").replace("\r", "\n")):
         match = re.fullmatch(r"<!-- artifact:(start|end) ([a-z0-9-]+) -->\n?", line)
         if not match:
             if "<!-- artifact:" in line:
@@ -824,7 +859,7 @@ def artifact_regions(text: str) -> dict[str, str]:
 def ledger_records(text: str) -> tuple[str, dict[str, str]]:
     """Keep exact CSV record text (including quoted newlines) for scoped hashes."""
     text = text.replace("\r\n", "\n").replace("\r", "\n")
-    lines = text.splitlines(keepends=True)
+    lines = list(io.StringIO(text))
     reader = csv.reader(io.StringIO(text), strict=True)
     try:
         header = next(reader)
@@ -853,7 +888,10 @@ def review_dependencies(directory: Path, phase: dict) -> dict[str, str | None]:
             body = artifact_regions(artifact_text(directory, name))[region]
             dependencies[key] = body
             for ids in re.findall(r"^Evidence IDs: (.*)$", body, re.M):
-                evidence_ids.update(item.strip() for item in ids.split(",") if item.strip())
+                for item in (item.strip() for item in ids.split(",") if item.strip()):
+                    source, _, number = item.rpartition("#")
+                    valid_id = (source in workbench(3).LOGS.values() and number.isascii() and number.isdecimal()) or re.fullmatch(r"[AB][0-9]+", item)
+                    evidence_ids.add(item if valid_id else "invalid-reference")
         except (DeliveryError, OSError, KeyError):
             dependencies[key] = None
     if evidence_ids:
@@ -1106,15 +1144,19 @@ def act(ident: str, request: dict) -> dict:
             if "result" not in entry:
                 entry["result"] = learning.experiment(entry["model"], entry["parameters"], baseline, workbench(1).select_routes, workbench(1).best_vrf_route)
                 entry["compared_at"] = now()
-                progress["exposed"] = True
+                family = "transfer" if entry["model"] == "transfer" else "route-selection" if name == "c01.change" else "routing-context" if entry["model"] == "routing" else "resilience"
+                expose_checks(progress, phase, family)
                 for assigned in state.get("learning", []):
-                    if assigned["phase"] == name and not assigned["responses"]:
+                    if assigned["phase"] == name and assigned["family"] == family and not assigned["responses"]:
                         assigned["exposed"] = True
                         assigned.setdefault("help", []).append(dict(at=now(), kind="experiment-result"))
             result["experiment"] = copy.deepcopy(entry)
         elif action in ("answer", "predict", "submit_artifact"):
+            confidence = payload.get("confidence")
+            if confidence not in (None, "low", "medium", "high"):
+                raise DeliveryError("Optional confidence must be low, medium, or high")
             if action == "submit_artifact":
-                if set(payload) != {"file", "region", "expected_sha256", "answers"}:
+                if set(payload) - {"confidence"} != {"file", "region", "expected_sha256", "answers"}:
                     raise DeliveryError("Artifact submission needs file, region, expected_sha256, and answers")
                 binding = dict(file=payload["file"], region=payload["region"])
                 if binding not in phase["artifact_bindings"]:
@@ -1142,12 +1184,12 @@ def act(ident: str, request: dict) -> dict:
                 correct = evaluated["correct"]
                 independent = correct and not progress["exposed"]
                 if phase.get("learning_enabled"):
-                    independent = independent and not any(item["id"] in s["checks"] for s in progress["submissions"])
+                    independent = correct and item["id"] not in progress["exposed_checks"] and not any(item["id"] in s["checks"] for s in progress["submissions"])
                 checks[item["id"]] = dict(correct=correct, independent=independent,
                                           feedback_code=evaluated.get("feedback_code", "correct" if correct else "unclassified"),
                                           feedback=evaluated["feedback"])
             progress["checks"] = checks
-            progress["submissions"].append(dict(at=now(), text=text, answers=answers, checks=copy.deepcopy(checks), artifact_source=submitted_source))
+            progress["submissions"].append(dict(at=now(), text=text, answers=answers, checks=copy.deepcopy(checks), artifact_source=submitted_source, confidence=confidence))
             progress["status"] = "incomplete"
             result.update(learning_result="incorrect" if any(not c["correct"] for c in checks.values()) else "recorded", checks=checks)
         elif action in ("support", "reassess", "problem_answer", "problem_hint"):
@@ -1156,7 +1198,7 @@ def act(ident: str, request: dict) -> dict:
             except ValueError as error:
                 raise DeliveryError(str(error)) from error
             if action == "support" and payload.get("level", "practice") != "orientation":
-                progress["exposed"] = True
+                expose_checks(progress, phase, payload["family"])
                 for entry in state.get("learning", []):
                     if entry["phase"] == name and entry["family"] == payload["family"] and not entry["responses"]:
                         entry["exposed"] = True
@@ -1177,7 +1219,7 @@ def act(ident: str, request: dict) -> dict:
             if phase.get("learning_enabled"):
                 for peer in data["phases"]:
                     if peer["block"] == phase["block"]:
-                        state["phases"][peer["id"]]["exposed"] = True
+                        expose_checks(state["phases"][peer["id"]], peer)
         elif action == "reveal":
             result["text"] = render_references(phase["solutions"], state)
             result["answers"] = {item["id"]: item["answer"] for item in checkpoint_items(phase, state)}
@@ -1185,7 +1227,7 @@ def act(ident: str, request: dict) -> dict:
                 if peer["block"] == phase["block"] and peer["id"] in state["phases"]:
                     prior = state["phases"][peer["id"]]
                     if not prior["checks"] or not all(c["correct"] for c in prior["checks"].values()):
-                        prior["exposed"] = True
+                        expose_checks(prior, peer)
             result["learning_result"] = "revealed"
         elif action == "calibrate":
             examples = learning.catalog()["calibration"]
@@ -1265,6 +1307,9 @@ def act(ident: str, request: dict) -> dict:
                 if phase_by_id(data, entry["phase"])["block"] == phase["block"] and not entry["responses"]:
                     entry["exposed"] = True
                     entry.setdefault("help", []).append(dict(at=now(), kind=action))
+        if action in ("hint", "reveal", "support", "experiment_result"):
+            kind = "support:" + payload.get("level", "practice") if action == "support" else action
+            progress.setdefault("help_history", []).append(dict(at=now(), kind=kind))
         if submitted_source:
             current = artifact_regions(artifact_text(directory, submitted_source["file"])).get(submitted_source["region"])
             if current is None or hash_text(current) != submitted_source["sha256"]:
@@ -1288,6 +1333,7 @@ def export_session(ident: str, include_artifacts: bool = False) -> dict:
                   objectives=objective_status(state, data),
                   learning=[dict(variant_id=a["variant_id"], family=a["family"], phase=a["phase"], use=a["use"],
                                  parameters=a["parameters"], presented_at=a["presented_at"], exposed=a["exposed"],
+                                 help=a.get("help", []),
                                  attempts=[dict(at=r["at"], independent=r["independent"], passed=r["passed"],
                                                 feedback_codes={k:v["feedback_code"] for k,v in r["results"].items()}) for r in a["responses"]])
                             for a in state.get("learning", [])],
@@ -1300,7 +1346,11 @@ def export_session(ident: str, include_artifacts: bool = False) -> dict:
                   artifact_hashes=artifact_hashes(directory, list(ARTIFACTS)),
                   review_dependency_hashes={phase["id"]: review_hashes(directory, phase) for phase in data["phases"] if phase["kind"] == "review"},
                   phases=[dict(id=name, status=p["status"], checks={k: {field: v[field] for field in ("correct", "independent", "feedback_code")} for k, v in p["checks"].items()}, hints=p["hints"],
-                               revealed=p["exposed"], attempts=len(p["submissions"]),
+                               exposed=p["exposed"], revealed=any(e["kind"] == "reveal" for e in p.get("help_history", [])),
+                               help=p.get("help_history", []), attempts=len(p["submissions"]),
+                               evidence_views=p["views"],
+                               initial_diagnosis={key: p["diagnosis"][key] for key in ("at", "confidence", "next_evidence")} if "diagnosis" in p else None,
+                               confidence=[dict(at=s["at"], confidence=s["confidence"]) for s in p["submissions"] if s.get("confidence")],
                                self_reported_minutes=p.get("self_reported_minutes"),
                                practice_attempts=len(p.get("practice", []))) for name, p in state["phases"].items()],
                   feedback={key: state["phases"]["exit.feedback"].get("feedback", {}).get(key) for key in ("wanted_to_know", "manageable")},
@@ -1319,6 +1369,14 @@ def export_session(ident: str, include_artifacts: bool = False) -> dict:
 def format_export(result: dict, format_name: str) -> str:
     if format_name == "json":
         return json.dumps(result, indent=2, ensure_ascii=False, allow_nan=False) + "\n"
+    if format_name == "objectives-csv":
+        stream = io.StringIO(newline="")
+        fields = ["id", "phase", "family", "first_response_correct", "original_attempts", "supported_correct", "original_independent", "fresh_independent", "satisfied", "feedback_codes", "variants"]
+        writer = csv.writer(stream)
+        writer.writerow(["session", *fields])
+        for objective in result["objectives"]:
+            writer.writerow([result["session_id"], *[json.dumps(objective[key]) if isinstance(objective[key], list) else objective[key] for key in fields]])
+        return stream.getvalue()
     if format_name == "csv":
         stream = io.StringIO(newline="")
         writer = csv.writer(stream)
@@ -1346,6 +1404,10 @@ def format_export(result: dict, format_name: str) -> str:
         raw = json.dumps(result["responses"], indent=2, ensure_ascii=False)
         fence = "`" * max(3, max((len(match) for match in re.findall(r"`+", raw)), default=2) + 1)
         lines += ["", "## Included Response and Review History", "", fence + "json", raw, fence]
+    if "learning_responses" in result:
+        raw = json.dumps(result["learning_responses"], indent=2, ensure_ascii=False)
+        fence = "`" * max(3, max((len(match) for match in re.findall(r"`+", raw)), default=2) + 1)
+        lines += ["", "## Included Reassessment Responses", "", fence + "json", raw, fence]
     return "\n".join(lines) + "\n"
 
 
@@ -1488,6 +1550,8 @@ def learn(ident: str, mode: str = "solo", case: str = "A", pair_label: str | Non
                     value = input("Self-reported minutes for this phase (optional): ").strip()
                     if value:
                         payload["minutes"] = float(value)
+                if operation in ("answer", "predict", "submit_artifact") and phase["block"] in ("c05", "c06", "exit"):
+                    payload["confidence"] = input("Confidence after this evidence: low/medium/high (optional): ").strip() or None
                 request = dict(request_id=uuid.uuid4().hex, expected_revision=view["revision"], phase_id=phase["id"], action=operation, payload=payload)
                 response = act(ident, request)
                 result = response["result"]
@@ -1551,7 +1615,7 @@ def cli(argv: list[str]) -> int:
             if name == "status":
                 operation.add_argument("--phase", help="revisit a released phase without advancing")
             if name == "export":
-                operation.add_argument("--format", choices=("json", "markdown", "csv"), default="json")
+                operation.add_argument("--format", choices=("json", "markdown", "csv", "objectives-csv"), default="json")
                 operation.add_argument("--include-artifacts", action="store_true", help="include answers, review feedback, and the four learner files")
                 operation.add_argument("--output", help="new filename under this session's exports directory; never overwrites")
         if json_mode:
@@ -1582,7 +1646,7 @@ def cli(argv: list[str]) -> int:
                 json_mode = args.json or args.format == "json"
                 if args.json and args.format != "json":
                     raise DeliveryError("--json requires --format json")
-                if args.include_artifacts and args.format == "csv":
+                if args.include_artifacts and args.format.endswith("csv"):
                     raise DeliveryError("Use JSON or Markdown to include learner artifacts and answers")
                 result = export_session(args.id, args.include_artifacts)
                 output = format_export(result, args.format)

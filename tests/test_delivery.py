@@ -90,6 +90,7 @@ class DefinitionTests(unittest.TestCase):
             lambda value: value["phases"][0].update(minutes=200),
             lambda value: next(p for p in value["phases"] if p["id"] == "c02.inspect").update(evidence=["shell"]),
             lambda value: next(p for p in value["phases"] if p["id"] == "c02.calculate").update(checkpoints=["missing"]),
+            lambda value: value["phases"][3]["artifact_bindings"][0].update(region="missing"),
         ):
             changed = copy.deepcopy(data)
             mutate(changed)

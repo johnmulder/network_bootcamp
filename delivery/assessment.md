@@ -21,7 +21,10 @@ history. Reconnecting, repeating a request, and retrying the same problem cannot
 produce a fresh attempt. Each finite family has a supported example and at least
 two reassessment variants. Requesting answer-bearing help converts that attempt
 to practice. Exhaustion reports an unmet objective. Orientation help never
-supplies answers. Independent success does not waive investigations, explanations,
+supplies answers. Family-specific support and model results expose only the
+related original checks; general block hints and reveals can expose all of
+that block's unfinished checks. Independent success does not waive
+investigations, explanations,
 the individual exit, or reviews.
 
 Delivery finished, required work recorded, objectives satisfied, self-reviewed

@@ -1,11 +1,82 @@
 # Implementation Validation
 
-The local delivery implementation is complete. This records the initial
-technical checks on September 5, 2026, and the documentation consistency
-follow-up on September 7. These are not learner-pilot results or proof that a
-class will finish on schedule.
+The current course is version 2.0. The technique checks below describe its
+implementation; later sections retain historical delivery and documentation
+checks. Older counts and heading rules describe those earlier snapshots, not
+the current assessment contract. None of these software checks establishes
+learner attainment or an observed class duration.
 
-## Checks Performed
+## Course 2.0 Technique Checks
+
+- All 75 standard-library tests passed. The 18 learning tests independently
+  check every authored variant and objective mapping, semantic quantities and
+  misconception codes, exposure and reassessment histories, invalid formats,
+  variant exhaustion, concurrent assignment, corrupt learning history, bounded
+  experiments, artifact submission, and scoped reviews. They also exercise
+  terminal submission, edits during submission, neutral initial diagnoses,
+  calibration, privacy for malformed references, and preservation of unrelated
+  first attempts when targeted help is requested. Preflight rejects missing
+  template bindings before a learner starts.
+- The course retains 29 factual checkpoint occurrences: 25 conceptual
+  objectives and four recording requirements. Eleven finite problem families
+  provide 37 authored variants. Independent originals, supported corrections,
+  and fresh reassessments remain separate. Seven human rubric reviews still
+  require at least 6/8 and no zero, with separate self/facilitator records.
+- Course verification passed for 36 unchanged evidence fixtures, 83 workbench
+  questions, the 17-event incident timeline, and every required phase. The
+  block budget remains 360 teaching minutes plus 15/30/15-minute breaks.
+  The facilitator allocation of 265 active minutes is planned, not observed.
+- All 31 registered evidence views ran with the installed Mac tools. Both
+  A/B and B/A fresh-process journeys passed, including initial diagnosis gates,
+  a wrong original followed by help and fresh reassessment, calibration,
+  required experiments, submission from an artifact, review, privacy checks,
+  and portable JSON and per-objective CSV exports. These use synthetic
+  responses and scores and are explicitly not learner-pilot results.
+- All 12 Python files parsed using Python 3.10 syntax rules. Markdown lint,
+  local links/anchors, fragment/evidence-command checks, and Git whitespace
+  checks passed. The existing CI jobs discover the expanded portable tests and
+  run the updated Mac journeys; no remote CI run is claimed here.
+- The [pilot worksheet](pilot.md) now specifies beginner and experienced
+  transfer-slice observations, a full beginner solo day, and a paired day with
+  separate exits. It records support triggers and outcomes, early and later
+  confidence, cue exposure, chosen evidence, equivalent delayed problems,
+  reviewer disagreements, and concrete revision decisions. Default exports
+  exclude learner prose and distinguish attempts from participants.
+
+The final local archive, `work/course-technique-final.tar.gz`, passed course
+verification, all real-tool evidence views, and both complete journeys after
+extraction at a path containing spaces without Git metadata. It excludes learner
+work and the implementation plan. Its assessed-content and fixture fingerprints
+match the final checkout; this validation record was updated after that run.
+
+Final completeness review: all seven technique gaps have implementation support
+and the pilot workflow is ready. Implementation is complete with learner
+validation pending. The implementation plan can be removed while the outstanding
+human work remains recorded below.
+
+Assessed-content SHA-256 for the evaluated final archive:
+
+```text
+b878be01c387401977e8876906b36eec6f61c49808f657c916abb406a4272c80
+```
+
+### Human Validation Pending
+
+Observed participants: **0**. No learner trial, engagement result, observed
+active-minute total, or learning-effect estimate is claimed. Run the specified
+pilots when participants and a facilitator are available, retain private raw
+records under ignored `work/`, and commit only an appropriate aggregate and
+resulting course revisions. Preserve first attempts, supported corrections,
+and fresh unassisted outcomes separately; record any accidental cues and
+unavailable fresh variants. Do not count scripted retries as learners.
+
+The workflow is ready, but teaching validation requires observing the pilots,
+addressing material findings, and recording the next trial decision. The targets
+remain first observation within 15 minutes, 360 teaching minutes, at least 210
+active minutes, 80% reaching the rubric threshold after revision, and median
+4/5 on both engagement questions. None has been measured for this revision.
+
+## Earlier Delivery Checks — September 5, 2026
 
 - All 57 standard-library project tests passed. They cover the original
   navigator, fixtures, workbenches, and setup plus saved delivery, staged

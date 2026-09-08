@@ -1,8 +1,12 @@
 """Learning contracts and independent checks of authored problems."""
 
 import json
+import csv
 import ipaddress
 import unittest
+import contextlib
+import io
+from concurrent.futures import ThreadPoolExecutor
 from unittest import mock
 from pathlib import Path
 
@@ -90,6 +94,45 @@ class LearningContractTests(unittest.TestCase):
             self.assertNotIn("case-a.json", json.dumps(variant))
             self.assertNotIn("case-b.json", json.dumps(variant))
 
+    def test_every_authored_variant_against_independent_expected_facts(self):
+        expected = {
+            "transfer": [dict(payload="1348 bytes", fits="yes"), dict(payload="1224 bytes", fits="yes"), dict(payload="1440 bytes", fits="yes")],
+            "subnet": [dict(local=v) for v in ("yes", "no", "yes")],
+            "service-boundaries": [dict(dns=dns, application=app) for dns, app in (("no", "no"), ("yes", "no"), ("no", "yes"))],
+            "route-selection": [dict(zip(("prefix", "after-prefix", "hops", "after-hops"), values)) for values in (
+                ("10.1.2.3/32", "10.1.2.0/24", "10.0.0.4", "10.0.0.2, 10.0.0.3"),
+                ("10.8.9.0/25", "10.8.9.0/25", "10.0.0.2, 10.0.0.3", "10.0.0.3"),
+                ("192.0.2.128/26", "192.0.2.0/24", "10.0.0.2", "10.0.0.1"))],
+            "convergence": [dict(interval=str(t), hop=h, application=a) for t,h,a in ((100,"10.255.1.2","no"),(65,"10.255.2.3","no"),(240,"10.255.3.4","yes"))],
+            "bgp": [dict(peer=p) for p in ("192.0.2.2", "192.0.2.20", "192.0.2.40")],
+            "routing-context": [dict(corp=c, isolated=i) for c,i in (("0.0.0.0/0","no route"),("198.51.100.0/24","no route"),("no route","203.0.113.0/28"))],
+            "cloud": [dict(outbound=o, **{"return":r}) for o,r in (("on-prem","cloud"),("on-prem","no route"),("inspection","cloud"))],
+            "policy": [dict(server=s, user=u) for s,u in (("allow","deny"),("deny","allow"),("allow","deny"))],
+            "timestamps": [dict(utc=t) for t in ("2026-08-15T14:15:00Z", "2026-08-16T01:50:00Z", "2026-08-15T20:40:00Z")],
+            "diagnosis": [dict(change=c, lookup=l, observation=o) for c,l,o in (
+                ("10.30.0.0/16","no route","D3"),("QUARANTINE","no route","D2"),("10.40.0.0/16","0.0.0.0/0","D4"),
+                ("MAINTENANCE","no route","D2"),("10.50.0.0/16","no route","D3"),("RESTRICTED","203.0.113.0/24","D4"),("10.60.0.0/16","0.0.0.0/0","D4"))],
+        }
+        problems = learning.catalog()["families"]
+        self.assertEqual(set(expected), set(problems))
+        for family, variants in problems.items():
+            self.assertEqual(len(variants), len(expected[family]))
+            for variant, answers in zip(variants, expected[family]):
+                for question in variant["questions"]:
+                    with self.subTest(variant=variant["id"], field=question["id"]):
+                        self.assertTrue(learning.evaluate(question, answers[question["id"]])["correct"])
+        for phase in d.definition()["phases"]:
+            for family in {b["family"] for b in phase["assessment"].values() if b["role"] == "conceptual"}:
+                state = dict(seed=1, learning=[])
+                variant = learning.problem_action(state, phase, "reassess", {"family":family}, "synthetic-time")
+                index = next(i for i,p in enumerate(problems[family]) if p["id"] == variant["id"])
+                result = learning.problem_action(state, phase, "problem_answer", dict(variant_id=variant["id"], answers=expected[family][index]), "synthetic-time")
+                self.assertTrue(result["independent"])
+                for binding in phase["assessment"].values():
+                    if binding["family"] == family:
+                        self.assertTrue(learning.attained(state, binding["objective"]))
+                self.assertFalse(learning.attained(state, "unrelated-objective"))
+
 
 class TransferLearningJourneyTests(unittest.TestCase):
     request = journeys.SessionTests.request
@@ -129,7 +172,7 @@ class TransferLearningJourneyTests(unittest.TestCase):
         self.assertFalse(self.view["completion"]["objective_checks_satisfied"])
         exported = d.export_session("learner")
         self.assertNotIn('"answers"', json.dumps(exported))
-        self.assertNotIn('"worked"', json.dumps(exported))
+        self.assertNotIn('"worked":', json.dumps(exported))
 
     def test_invalid_input_does_not_consume_and_exposed_variants_exhaust(self):
         before = d.session_status("learner")["revision"]
@@ -171,6 +214,27 @@ class TransferLearningJourneyTests(unittest.TestCase):
         self.assertTrue(d.session_status("learner")["phase"]["progress"]["exposed"])
         summary = d.export_session("learner")
         self.assertNotIn("This exactly fits", json.dumps(summary))
+
+    def test_concurrent_assignment_and_corrupt_learning_history_preserve_work(self):
+        request = self.request("reassess", {"family": "transfer"})
+        def attempt(ident):
+            try:
+                return d.act("learner", {**request, "request_id": ident})["status"]
+            except d.DeliveryError as error:
+                return error.code
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            results = list(pool.map(attempt, ("assignment-one", "assignment-two")))
+        self.assertCountEqual(results, ["ok", 3])
+        directory = d.session_dir("learner")
+        state = d.load_state(directory, d.definition())
+        self.assertEqual(len(state["learning"]), 1)
+        state["learning"][0]["responses"] = [{"independent": True}]
+        path = directory / "session.json"
+        path.write_text(json.dumps(state))
+        before = path.read_bytes()
+        with self.assertRaisesRegex(d.DeliveryError, "Preserve this directory"):
+            d.session_status("learner")
+        self.assertEqual(path.read_bytes(), before)
 
 
 class ExperimentTests(unittest.TestCase):
@@ -273,6 +337,84 @@ class ArtifactLearningTests(unittest.TestCase):
             self.assertEqual(result["result"]["calibration"]["scores"], scores)
         self.assertEqual(len(d.export_session("learner")["calibration"]), 2)
         self.assertFalse(self.view["completion"]["objective_checks_satisfied"])
+
+    def test_terminal_submission_and_external_edit_conflict(self):
+        self.reach_transfer()
+        for _ in range(2):
+            self.act("answer", {"text": "Initial hypothesis and observations"})
+            self.act("continue")
+        journeys.fill_rehearsal_artifacts(d.session_dir("learner"))
+        with contextlib.redirect_stdout(io.StringIO()) as output:
+            with mock.patch("sys.stdin.isatty", return_value=True), mock.patch("sys.stdout.isatty", return_value=True):
+                with mock.patch("builtins.input", side_effect=("t", "1", "1160 bytes", "q")):
+                    self.assertEqual(d.learn("learner"), 0)
+        self.assertIn("Selected evidence:", output.getvalue())
+        region = d.session_status("learner")["phase"]["artifact_regions"][0]
+        path = d.session_dir("learner") / region["file"]
+        original = learning.evaluate
+        def edit_during_evaluation(item, response):
+            if item["id"] == "transfer.payload":
+                path.write_text(path.read_text().replace("<!-- artifact:end c02 -->", "External edit.\n<!-- artifact:end c02 -->"))
+            return original(item, response)
+        before = d.session_status("learner")["revision"]
+        with mock.patch.object(learning, "evaluate", side_effect=edit_during_evaluation):
+            with self.assertRaisesRegex(d.DeliveryError, "changed during submission"):
+                self.act("submit_artifact", dict(file=region["file"], region=region["region"], expected_sha256=region["sha256"], answers={"transfer.payload": "1160 bytes"}))
+        self.assertEqual(d.session_status("learner")["revision"], before)
+        self.assertIn("External edit.", path.read_text())
+
+    def test_invalid_reference_text_stays_private_and_unrelated_csv_record_is_ignored(self):
+        self.finish_day()
+        directory = d.session_dir("learner")
+        journeys.fill_rehearsal_artifacts(directory)
+        self.review("c05.review")
+        ledger = directory / "evidence-ledger.csv"
+        raw = ledger.read_text()
+        row = next(row for row in csv.DictReader(io.StringIO(raw)) if row["evidence_id"] == "incident/flows.jsonl#1")
+        record = d.workbench(3).read_jsonl("incident/flows.jsonl")[1]
+        row.update(evidence_id="incident/flows.jsonl#2", raw_time=record["start"], normalized_time=record["start"])
+        extra = io.StringIO(newline="")
+        csv.DictWriter(extra, fieldnames=d.workbench(3).LEDGER_FIELDS).writerow(row)
+        ledger.write_text(raw + extra.getvalue())
+        self.assertEqual(d.ledger_errors(ledger.read_text(), d.load_state(directory, d.definition())), [])
+        self.assertTrue(d.session_status("learner")["reviews"]["c05.review"]["self"]["valid_pass"])
+        incident = directory / "incident.md"
+        incident.write_text(incident.read_text().replace("Evidence IDs: incident/flows.jsonl#1", "Evidence IDs: PRIVATE PERSONAL NOTE", 1))
+        self.assertNotIn("PRIVATE PERSONAL NOTE", json.dumps(d.export_session("learner")))
+        with self.assertRaises(d.DeliveryError):
+            d.ledger_records("evidence_id,source\ninvalid,header\n")
+
+    def test_initial_diagnosis_gates_cues_and_old_state_is_preserved(self):
+        while self.view["phase"]["id"] != "c06.receive":
+            self.act("skip", {"reason": "Test setup"})
+        phase = self.view["phase"]
+        self.assertEqual(phase["assessment"], {})
+        self.assertEqual(phase["artifact_regions"], [])
+        self.assertEqual(phase["allowed_actions"], ["diagnose", "skip"])
+        before = d.session_status("learner")["revision"]
+        for action, payload in (("reveal", {}), ("answer", {"text": "Already diagnosed"}), ("evidence", {"view": "case.main"})):
+            with self.assertRaises(d.DeliveryError):
+                self.act(action, payload)
+        self.assertEqual(d.session_status("learner")["revision"], before)
+        self.act("diagnose", journeys.DIAGNOSIS)
+        state_path = d.session_dir("learner") / "session.json"
+        state = json.loads(state_path.read_text())
+        state["schema_version"] = 1
+        state_path.write_text(json.dumps(state))
+        old = state_path.read_bytes()
+        with self.assertRaisesRegex(d.DeliveryError, "matching course copy"):
+            d.session_status("learner")
+        self.assertEqual(state_path.read_bytes(), old)
+
+    def test_targeted_support_preserves_unrelated_first_attempts(self):
+        self.act("skip", {"reason": "Reach opening diagnostic"})
+        self.act("support", {"family": "subnet", "level": "worked"})
+        result = self.act("answer", dict(text="Different evidence is needed for each claim.",
+                                          answers={"opening.local": "yes", "opening.dns": "no", "opening.application": "no"}))
+        checks = result["result"]["checks"]
+        self.assertFalse(checks["opening.local"]["independent"])
+        self.assertTrue(checks["opening.dns"]["independent"])
+        self.assertTrue(checks["opening.application"]["independent"])
 
 
 if __name__ == "__main__":

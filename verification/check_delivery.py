@@ -51,6 +51,8 @@ def content_checks():
     data = d.definition()
     d.evidence_integrity()
     errors, count = [], 0
+    if not data["learning_contract"]["enabled"]:
+        errors.append("Learning contract is unfinished or inactive")
     for path in markdown_files():
         text = path.read_text(encoding="utf-8")
         for target in re.findall(r"!?\[[^\]]*\]\(([^)]+)\)", text):
@@ -130,7 +132,7 @@ def journey(case):
         while view["phase"]:
             phase = view["phase"]
             if phase.get("initial_diagnosis_required"):
-                assert not phase["checkpoints"] and not phase["evidence"]
+                assert not phase["checkpoints"] and not phase["evidence"] and not phase["assessment"] and not phase["artifact_regions"]
                 act("diagnose", examples.DIAGNOSIS)
                 phase = view["phase"]
             if phase["id"] == "c01.model":
@@ -167,10 +169,19 @@ def journey(case):
                 experiment_id = view["result"]["experiment"]["id"]
                 act("experiment_result", {"experiment_id": experiment_id})
                 assert view["result"]["experiment"]["result"]["unknowns"]
+            if phase["id"] == "opening.reflect":
+                for example, scores in (("calibration-symptom", dict.fromkeys(d.DIMENSIONS, 0)), ("calibration-partial", dict(mechanism=2, evidence=2, uncertainty=0, action=1))):
+                    act("calibrate", dict(example_id=example, scores=scores))
             act("continue")
         assert view["completion"]["delivery_finished"]
         assert not view["completion"]["self_reviewed_completion"]
         examples.fill_rehearsal_artifacts(directory, case)
+        current = call("session", "status", "--id", ident, "--phase", "c05.narrative", "--json")
+        region = current["phase"]["artifact_regions"][0]
+        artifact_before = (directory / region["file"]).read_bytes()
+        act("submit_artifact", dict(file=region["file"], region=region["region"], expected_sha256=region["sha256"], answers={}, confidence="medium"), phase_id="c05.narrative")
+        act("continue", phase_id="c05.narrative")
+        assert (directory / region["file"]).read_bytes() == artifact_before
         for name in [p["id"] for p in d.definition()["phases"] if p["kind"] == "review"]:
             review = call("session", "status", "--id", ident, "--phase", name, "--json")
             act("review", dict(reviewer="self", scores=dict.fromkeys(d.DIMENSIONS, 2),
@@ -184,6 +195,12 @@ def journey(case):
         assert "PRIVATE REHEARSAL TEXT" not in json.dumps(summary)
         rows = call("session", "export", "--id", ident, "--format", "csv", json_output=False)
         assert len(list(csv.DictReader(io.StringIO(rows)))) == len(d.definition()["phases"])
+        objectives = call("session", "export", "--id", ident, "--format", "objectives-csv", json_output=False)
+        objectives = list(csv.DictReader(io.StringIO(objectives)))
+        assert len(objectives) == 25
+        transfer = next(o for o in objectives if o["family"] == "transfer")
+        assert transfer["first_response_correct"] == "False" and transfer["supported_correct"] == "True" and transfer["fresh_independent"] == "True"
+        assert "PRIVATE REHEARSAL TEXT" not in json.dumps(objectives)
         call("session", "export", "--id", ident, "--format", "json", "--include-artifacts", "--output", "review.json")
         with tempfile.TemporaryDirectory(prefix="moved-review-") as temp:
             moved = Path(temp) / "review.json"
