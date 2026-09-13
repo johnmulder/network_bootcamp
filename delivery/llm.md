@@ -152,12 +152,21 @@ truncation, malformed JSON, invalid quotes/citations, and connection failures
 produce an unavailable advisory result rather than a wrong learner answer.
 An operation can be processed successfully while reporting `advisory_failed`.
 
+Advice that cannot be encoded as UTF-8, or contains the configured API key
+after JSON decoding, is rejected before display or storage. This includes
+JSON-escaped copies of that key. Valid accented text and emoji are preserved.
+The credential check does not detect every possible secret in free text.
+
 Requests reserve an ID before inference and release the session lock during
 the call. Repeating a completed JSON request replays its saved result; a
 duplicate in-flight request reports `advisory_pending` without another call.
 Advice is committed with its exposure record before it is returned. Edits or
 other accepted actions during inference discard the stale result. Failed or
 discarded advice does not change assessment eligibility.
+
+Pending-request recovery remains available when LLM settings are absent or
+invalid. Guided delivery shows the cancellation command and accepts ordinary
+course actions without requiring a configured endpoint.
 
 After interruption, inspect status and explicitly cancel a pending request:
 

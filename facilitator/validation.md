@@ -14,6 +14,37 @@ all four LLM features require explicit configuration and individual actions.
 The [LLM guide](../delivery/llm.md) documents endpoint/key/model settings,
 exposure rules, private exports, and interrupted-request recovery.
 
+### Error-Handling Corrections
+
+All three errors from the implementation review were reproduced before their
+fixes. Seven new regression tests cover the corrected behavior:
+
+- Guided delivery resumes with an interrupted request when LLM configuration
+  is absent or invalid. Ordinary actions and explicit cancellation remain
+  available without inference; saved answers and independent results survive.
+- Plain and JSON-escaped copies of the configured API key are rejected across
+  all four features. Tests exercise escaping in both response layers and
+  verify that rejected advice reaches neither session exports nor draft files.
+- Lone high and low Unicode surrogates are rejected before persistence.
+  Requests finish as failed, with no advice or help exposure, and replay
+  without another inference. Accented text and emoji round-trip unchanged
+  through accepted advice, session storage, and artifact exports.
+
+All 103 standard-library tests passed, including all 28 focused LLM tests.
+Content checks passed for 36 phases and 31 evidence views; the ten synthetic
+evaluation examples passed their offline inventory check. Markdown lint and
+Git whitespace checks passed. Provider responses were mocked, with fake
+credentials; no live-provider or learner validation was performed.
+
+The course/state protocol remains version 3. Assessed-source edits change the
+content fingerprint, so older sessions still require their matching course
+copy. No session migration or regrading was introduced.
+
+### Initial Implementation Checks
+
+The following results describe the initial optional-LLM snapshot and archive,
+before the error-handling corrections above.
+
 Transport checks simulate OpenAI and LM Studio response formats, with local
 authentication both off and on. Session checks cover phase/evidence limits,
 scoped help, existing independent outcomes, fresh reassessment, concurrent
