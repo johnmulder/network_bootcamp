@@ -2,6 +2,7 @@
 
 import contextlib
 import copy
+from dataclasses import replace
 import io
 import json
 import os
@@ -73,6 +74,9 @@ class ClientTests(unittest.TestCase):
                                ("BOOTCAMP_LLM_TIMEOUT_SECONDS", "301"),
                                ("BOOTCAMP_LLM_MAX_OUTPUT_TOKENS", "0"),
                                ("BOOTCAMP_LLM_RESPONSE_FORMAT", "automatic"),
+                               ("BOOTCAMP_LLM_MAX_INPUT_BYTES", "1023"),
+                               ("BOOTCAMP_LLM_MAX_INPUT_BYTES", "65537"),
+                               ("BOOTCAMP_LLM_MAX_INPUT_BYTES", "1.5"),
                                ("BOOTCAMP_LLM_TOKEN_FIELD", "invented")):
                 with self.subTest(key=key, value=value), mock.patch.dict(os.environ, {key: value}):
                     self.assertEqual(llm.availability()["status"], "configuration")
@@ -237,6 +241,45 @@ class ClientTests(unittest.TestCase):
             llm.validate_output("handoff", dict(question="\x1b[31m", evidence_ids=[]), context)
         with self.assertRaises(ValueError):
             llm.decode('{"ready": true, "ready": false}')
+
+    def test_input_budget_counts_utf8_messages_and_schema_before_network(self):
+        context = dict(learner_text="Café 🚀 " * 100, evidence={})
+        config = replace(llm.configuration(), response_format="json_schema")
+        body, size = llm.prepare_request(config, "coach", context)
+        inputs = {k: body[k] for k in ("messages", "response_format")}
+        self.assertEqual(size, len(llm.json_text(inputs).encode("utf-8")))
+        self.assertGreater(size, len(llm.json_text(inputs)))
+        self.assertLess(llm.prepare_request(replace(config, response_format="prompt"), "coach", context)[1], size)
+        with mock.patch("urllib.request.build_opener") as factory:
+            with self.assertRaisesRegex(llm.LLMError, f"needs {size} bytes"):
+                llm.generate(replace(config, max_input_bytes=size - 1), "coach", context)
+            factory.assert_not_called()
+            factory.return_value.open.return_value = io.BytesIO(envelope(advice_samples("Consider evidence.")["coach"]))
+            result = llm.generate(replace(config, max_input_bytes=size), "coach", context)
+            self.assertEqual(result["input_bytes"], size)
+
+    def test_compaction_preserves_facts_identifiers_quotes_and_original_context(self):
+        record = dict(event="login", success=True, actor="backup")
+        packet = dict(observations=[record, dict(event="contradictory observation")], limitation="Uncertain intent")
+        context = dict(learner_text="Café 🚀\n\nIntent unknown", regions={"first": "Café 🚀", "second": "Intent unknown"},
+                       evidence={"event1": dict(record=record, source="original"),
+                                 "view:partial": dict(text=json.dumps(packet), view="partial"),
+                                 "view:plain": dict(text="Non-JSON observation"),
+                                 "view:unmatched": dict(text='{"event":"different"}')})
+        original = copy.deepcopy(context)
+        compact = llm.compact_context(context)
+        self.assertEqual(context, original)
+        self.assertEqual(compact["region_ids"], ["first", "second"])
+        self.assertEqual(compact["learner_text"], context["learner_text"])
+        self.assertEqual(set(compact["evidence"]), set(context["evidence"]))
+        restored = compact["evidence"]["view:partial"]["data"]
+        reference = restored["observations"][0]["evidence_ref"]
+        restored["observations"][0] = compact["evidence"][reference]["record"]
+        self.assertEqual(restored, packet)
+        self.assertEqual(compact["evidence"]["view:plain"], context["evidence"]["view:plain"])
+        self.assertEqual(compact["evidence"]["view:unmatched"], context["evidence"]["view:unmatched"])
+        changed = {**context, "learner_text": "Different submission"}
+        self.assertIn("regions", llm.compact_context(changed))
 
 
 class AuthorTests(unittest.TestCase):

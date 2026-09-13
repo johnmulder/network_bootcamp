@@ -27,12 +27,23 @@ not a general secret-redaction system; see the context and export rules below.
 | `BOOTCAMP_LLM_TOKEN_FIELD` | `max_completion_tokens` | Set to `max_tokens` for the documented LM Studio profile. |
 | `BOOTCAMP_LLM_RESPONSE_FORMAT` | `prompt` | `prompt` requests JSON in text instructions; `json_schema` also asks the server to enforce the advice schema. |
 | `BOOTCAMP_LLM_MAX_OUTPUT_TOKENS` | `2048` | Integer output budget, 1–8192. |
+| `BOOTCAMP_LLM_MAX_INPUT_BYTES` | `65536` | Integer input budget, 1024–65536 UTF-8 bytes, counting serialized messages and any response schema. |
 | `BOOTCAMP_LLM_TIMEOUT_SECONDS` | `60` | Integer timeout for blocking network operations, 1–300 seconds; not a total elapsed-time limit. |
 
 Trailing slashes are normalized. Custom prefixes such as `/proxy/v1`, a full
 `/v1/chat/completions` URL, embedded credentials, query strings, and fragments
 are rejected. HTTP requires `localhost` or a loopback IP literal; other hosts
 require HTTPS. The selected model must be supplied explicitly.
+
+The input budget measures compact JSON containing the messages and optional
+response schema, including the fixed task instructions. Model name and other
+generation settings are excluded. It supplements the original 64 KiB limit
+on selected context. A request can fit that context limit but exceed the input
+budget after instructions/schema are added. Rejection reports both byte
+counts before inference or session reservation; essential content is never
+silently truncated. Bytes are not tokens or a guarantee of context-window fit.
+Choose a smaller limit using the model's loaded context length and observed
+token usage, leaving space for generation.
 
 The client sends text to `/v1/chat/completions` without streaming or tools.
 Optional `json_schema` mode uses the shared Chat Completions response format;
@@ -139,6 +150,14 @@ Session evidence is limited to views opened in the same block at or before the
 requested phase. Open every cited ledger record's evidence view before review
 or handoff practice. Reading a file manually does not record a view action.
 
+The wire representation sends learner regions once, retaining their names.
+For JSON evidence views, exact duplicate records may be replaced by
+`evidence_ref` links to other supplied evidence entries. Citation IDs,
+observations, conflicting evidence, metadata, and partial-view boundaries
+remain available. Non-equivalent text remains intact. Saved context retains
+the original representation for validation and history; prompt version 2
+identifies the compact representation used for inference.
+
 The client reuses saved command output. A partial case view remains partial;
 it is never expanded to the complete source file. Incident-round records map
 back to their original IDs. The context builder does not fetch future rounds,
@@ -165,8 +184,9 @@ adds the configured API key only to the authorization header. Redirects are
 rejected, TLS is verified, and raw provider error bodies are not printed or saved.
 
 Advisory history is stored locally under the session's ignored `work/` folder.
-It records model, endpoint, prompt version, context hashes, evidence IDs,
-latency, and token usage when available. Default JSON exports include LLM
+It records model, endpoint, prompt version, response mode, input bytes,
+context hashes, evidence IDs, latency, and token usage when available.
+Default JSON exports include LLM
 metadata, status, and help history; default Markdown and phase CSV are shorter
 summaries. Explicit `--include-artifacts` in JSON or Markdown adds private
 advice and context. See the [export format table](README.md#export-commands).

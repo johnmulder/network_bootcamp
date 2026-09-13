@@ -252,6 +252,36 @@ class AdvisoryTests(unittest.TestCase):
         self.reach("exit.answer")
         self.assertFalse(any(a.startswith("llm_") for a in d.session_status("learner")["phase"]["allowed_actions"]))
 
+    def test_input_budget_rejects_before_reservation_without_exposing_work(self):
+        self.prepare_review()
+        before = (d.session_dir("learner") / "session.json").read_bytes()
+        with mock.patch.dict(os.environ, {"BOOTCAMP_LLM_MAX_INPUT_BYTES": "1024"}), \
+                mock.patch("urllib.request.build_opener", side_effect=AssertionError("network")):
+            with self.assertRaisesRegex(d.DeliveryError, "configured limit is 1024"):
+                self.act("llm_review")
+        self.assertEqual((d.session_dir("learner") / "session.json").read_bytes(), before)
+
+    def test_real_context_compacts_without_changing_evidence_or_saved_hashes(self):
+        self.prepare_review()
+        state = d.load_state(d.session_dir("learner"), d.definition())
+        context, hashes = support.build_context(state, d.definition(), d.phase_by_id(d.definition(), "c05.review"), "review", {})
+        before = support.context_hash(context)
+        body, size = llm.prepare_request(llm.configuration(), "review", context)
+        compact = json.loads(body["messages"][1]["content"])
+        self.assertLess(len(llm.json_text(compact)), len(llm.json_text(context)))
+        self.assertEqual(set(compact["evidence"]), set(context["evidence"]))
+        self.assertEqual(compact["learner_text"], context["learner_text"])
+        self.assertEqual(support.context_hash(context), before)
+        self.assertEqual(hashes, d.review_hashes(d.session_dir("learner"), d.phase_by_id(d.definition(), "c05.review")))
+        with mock.patch("urllib.request.build_opener") as factory:
+            factory.return_value.open.return_value = io.BytesIO(envelope(self.generated(llm.configuration(), "review", context)["advice"]))
+            request = self.request("llm_review")
+            result = d.act("learner", request)
+            self.assertEqual(d.act("learner", request), result)
+            factory.return_value.open.assert_called_once()
+        public = d.export_session("learner")["llm"]
+        self.assertIn(str(size), json.dumps(public))
+
     def test_unopened_citations_do_not_fetch_more_evidence(self):
         self.prepare_review()
         state = d.load_state(d.session_dir("learner"), d.definition())

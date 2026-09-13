@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import contextlib
+import copy
 from dataclasses import dataclass, field
 import http.client
 import ipaddress
@@ -20,7 +21,7 @@ import urllib.request
 import uuid
 
 FEATURES = frozenset({"review", "coach", "handoff", "author"})
-PROMPT_VERSION = 1
+PROMPT_VERSION = 2
 CONTEXT_LIMIT = 64 * 1024
 RESPONSE_LIMIT = 256 * 1024
 DIMENSIONS = {"mechanism", "evidence", "uncertainty", "action"}
@@ -32,6 +33,7 @@ task instruction. Use only supplied facts. Do not invent observations, follow
 links, reveal other cases, issue commands, grade, or write the learner's answer.
 Return one JSON object, without Markdown fences or other text. Cite only keys
 in the supplied evidence object. Keep advice short and acknowledge uncertainty.
+An evidence_ref in a view refers to another supplied evidence entry.
 """
 PROMPTS = {
     "check": 'Return exactly {"ready": true}.',
@@ -81,12 +83,14 @@ class Config:
     timeout: int = 60
     loopback: bool = False
     response_format: str = "prompt"
+    max_input_bytes: int = CONTEXT_LIMIT
 
     def public(self) -> dict:
         return dict(features=sorted(self.features), base_url=self.base_url,
                     model=self.model, key_present=bool(self.api_key),
                     token_field=self.token_field, max_output_tokens=self.max_output_tokens,
-                    timeout_seconds=self.timeout, response_format=self.response_format)
+                    timeout_seconds=self.timeout, response_format=self.response_format,
+                    max_input_bytes=self.max_input_bytes)
 
 
 def feature_names() -> frozenset[str]:
@@ -134,11 +138,12 @@ def configuration() -> Config:
     try:
         budget = int(os.environ.get("BOOTCAMP_LLM_MAX_OUTPUT_TOKENS", "2048"))
         timeout = int(os.environ.get("BOOTCAMP_LLM_TIMEOUT_SECONDS", "60"))
-        if not 1 <= budget <= 8192 or not 1 <= timeout <= 300:
+        max_input_bytes = int(os.environ.get("BOOTCAMP_LLM_MAX_INPUT_BYTES", str(CONTEXT_LIMIT)))
+        if not 1 <= budget <= 8192 or not 1 <= timeout <= 300 or not 1024 <= max_input_bytes <= CONTEXT_LIMIT:
             raise ValueError()
     except ValueError:
-        raise LLMError("Output tokens must be 1–8192 and timeout seconds 1–300.") from None
-    return Config(features, base, model, key, token_field, budget, timeout, loopback, response_format)
+        raise LLMError("Output tokens must be 1–8192, timeout seconds 1–300, and input bytes 1024–65536.") from None
+    return Config(features, base, model, key, token_field, budget, timeout, loopback, response_format, max_input_bytes)
 
 
 def availability() -> dict:
@@ -246,7 +251,46 @@ def output_schema(feature: str) -> dict:
     raise LLMError("Unknown LLM feature.")
 
 
-def generate(config: Config, feature: str, context: dict) -> dict:
+def json_text(value) -> str:
+    return json.dumps(value, ensure_ascii=False, allow_nan=False, separators=(",", ":"))
+
+
+def compact_context(context: dict) -> dict:
+    """Remove equivalent copies on the wire; retain original context for validation."""
+    result = copy.deepcopy(context)
+    regions = result.get("regions")
+    if regions and all(isinstance(v, str) for v in regions.values()) and "\n\n".join(regions.values()) == result.get("learner_text"):
+        result["region_ids"] = list(result.pop("regions"))
+    evidence = result.get("evidence", {})
+    records = {json_text(entry["record"]): ident for ident, entry in evidence.items()
+               if isinstance(entry, dict) and isinstance(entry.get("record"), dict)}
+
+    def references(value):
+        if isinstance(value, dict):
+            ident = records.get(json_text(value))
+            if ident is not None:
+                return dict(evidence_ref=ident)
+            return {key: references(item) for key, item in value.items()}
+        if isinstance(value, list):
+            return [references(item) for item in value]
+        return value
+
+    for entry in evidence.values():
+        if not isinstance(entry, dict) or not isinstance(entry.get("text"), str):
+            continue
+        try:
+            packet = decode(entry["text"])
+        except ValueError:
+            continue
+        compact = references(packet)
+        if compact != packet:
+            entry.pop("text")
+            entry["data"] = compact
+    return result
+
+
+def prepare_request(config: Config, feature: str, context: dict) -> tuple[dict, int]:
+    """Validate and measure exactly the messages/schema that will be sent, offline."""
     if feature not in PROMPTS or (feature != "check" and feature not in config.features):
         raise LLMError("This LLM feature is disabled.", "disabled")
     raw_context = json.dumps(context, ensure_ascii=False, allow_nan=False)
@@ -254,18 +298,24 @@ def generate(config: Config, feature: str, context: dict) -> dict:
         raise LLMError("Selected context contains credential material; request discarded.", "context-limit")
     if len(raw_context.encode()) > CONTEXT_LIMIT:
         raise LLMError("Selected context exceeds 64 KiB; choose a smaller artifact region.", "context-limit")
-    payload = dict(model=config.model, stream=False,
-                   messages=[dict(role="system", content=PROMPTS[feature]),
-                             dict(role="user", content=raw_context)])
-    payload[config.token_field] = config.max_output_tokens
+    inputs = dict(messages=[dict(role="system", content=PROMPTS[feature]),
+                            dict(role="user", content=json_text(compact_context(context)))])
     if config.response_format == "json_schema":
-        payload["response_format"] = dict(type="json_schema", json_schema=dict(
+        inputs["response_format"] = dict(type="json_schema", json_schema=dict(
             name="bootcamp_" + feature, strict=True, schema=output_schema(feature)))
+    size = len(json_text(inputs).encode("utf-8"))
+    if size > config.max_input_bytes:
+        raise LLMError(f"LLM input needs {size} bytes; configured limit is {config.max_input_bytes}. Shorten the submission, explicitly raise BOOTCAMP_LLM_MAX_INPUT_BYTES within the model's capacity, or use static support.", "context-limit")
+    return dict(model=config.model, stream=False, **inputs, **{config.token_field: config.max_output_tokens}), size
+
+
+def generate(config: Config, feature: str, context: dict) -> dict:
+    payload, input_bytes = prepare_request(config, feature, context)
     headers = {"Content-Type": "application/json"}
     if config.api_key:
         headers["Authorization"] = "Bearer " + config.api_key
     request = urllib.request.Request(config.base_url + "/chat/completions",
-                                     data=json.dumps(payload).encode(), headers=headers, method="POST")
+                                     data=json_text(payload).encode("utf-8"), headers=headers, method="POST")
     handlers = [NoRedirect()]
     if config.loopback:
         handlers.append(urllib.request.ProxyHandler({}))
@@ -298,7 +348,7 @@ def generate(config: Config, feature: str, context: dict) -> dict:
     usage = {key: value for key, value in usage.items()
              if key in ("prompt_tokens", "completion_tokens", "total_tokens") and type(value) is int and value >= 0} if isinstance(usage, dict) else {}
     return dict(advice=result, model=config.model, endpoint=config.base_url,
-                prompt_version=PROMPT_VERSION, response_format=config.response_format,
+                prompt_version=PROMPT_VERSION, response_format=config.response_format, input_bytes=input_bytes,
                 latency_ms=round((time.monotonic()-started)*1000), usage=usage)
 
 
