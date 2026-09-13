@@ -1,6 +1,7 @@
 """Optional inference contracts; ordinary tests never contact a model server."""
 
 import contextlib
+import copy
 import io
 import json
 import os
@@ -164,6 +165,27 @@ class ClientTests(unittest.TestCase):
                         factory.return_value.open.return_value = io.BytesIO(raw)
                         self.assertEqual(llm.generate(llm.configuration(), feature, ADVICE_CONTEXT)["advice"], advice)
 
+    def test_unicode_prose_is_validated_before_returning_advice(self):
+        for valid, text in ((False, "\ud800"), (False, "\udfff"), (True, "Café 🚀")):
+            for feature, sample in advice_samples("Valid advice.").items():
+                body = sample["findings"][0] if feature == "review" else sample
+                for field in body.keys() & {"explanation", "revision_question", "question", "draft"}:
+                    with self.subTest(feature=feature, field=field, text=ascii(text)), \
+                            mock.patch("urllib.request.build_opener") as factory:
+                        advice = copy.deepcopy(sample)
+                        target = advice["findings"][0] if feature == "review" else advice
+                        target[field] = text
+                        factory.return_value.open.return_value = io.BytesIO(envelope(advice))
+                        if valid:
+                            result = llm.generate(llm.configuration(), feature, ADVICE_CONTEXT)
+                            restored = json.loads(json.dumps(result, ensure_ascii=False).encode("utf-8"))
+                            self.assertEqual(restored["advice"], advice)
+                        else:
+                            with self.assertRaises(llm.LLMError) as caught:
+                                llm.generate(llm.configuration(), feature, ADVICE_CONTEXT)
+                            self.assertEqual(caught.exception.code, "invalid-output")
+                            self.assertNotIn(text, str(caught.exception))
+
     def test_advice_schema_quotes_and_citations(self):
         context = dict(learner_text="A login proves theft.", evidence={"incident/auth.jsonl#2": {}})
         finding = dict(dimension="evidence", claim_quote="A login proves theft.", evidence_ids=["incident/auth.jsonl#2"],
@@ -235,6 +257,15 @@ class AuthorTests(unittest.TestCase):
                 llm.author("transfer", "explanation", "rejected.json")
             self.assertEqual(caught.exception.code, "invalid-output")
             self.assertFalse(list(Path(self.temp.name).rglob("*")))
+
+    def test_invalid_unicode_does_not_create_a_draft(self):
+        for text in ("\ud800", "\udfff"):
+            with self.subTest(text=ascii(text)), mock.patch("urllib.request.build_opener") as factory:
+                factory.return_value.open.return_value = io.BytesIO(envelope(dict(draft=text)))
+                with self.assertRaises(llm.LLMError) as caught:
+                    llm.author("transfer", "explanation", "rejected.json")
+                self.assertEqual(caught.exception.code, "invalid-output")
+                self.assertFalse(list(Path(self.temp.name).rglob("*")))
 
     def test_concurrent_output_symlink_and_interruption_preserve_files(self):
         target = llm.write_work_json("llm-drafts", "existing.json", {"original": True})

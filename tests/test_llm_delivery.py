@@ -12,7 +12,7 @@ import delivery as d
 import llm
 import llm_delivery as support
 import test_delivery as fixtures
-from test_llm import FAKE_KEY, LOCAL, credential_echo
+from test_llm import FAKE_KEY, LOCAL, credential_echo, envelope
 
 
 class AdvisoryTests(unittest.TestCase):
@@ -213,6 +213,32 @@ class AdvisoryTests(unittest.TestCase):
         for text in (json.dumps(result), (d.session_dir("learner") / "session.json").read_text(),
                      json.dumps(d.export_session("learner")), json.dumps(d.export_session("learner", True))):
             self.assertNotIn(FAKE_KEY, text)
+
+    def test_unicode_failure_replays_safely_and_valid_text_round_trips(self):
+        self.prepare_coach(correct=True)
+        before = d.session_status("learner")["phase"]["progress"]
+        for text in ("\ud800", "\udfff", "Café 🚀"):
+            with self.subTest(text=ascii(text)), mock.patch("urllib.request.build_opener") as factory:
+                request = self.request("llm_coach", dict(family="transfer"))
+                advice = dict(explanation=text, question="What next?", evidence_ids=[])
+                factory.return_value.open.return_value = io.BytesIO(envelope(advice))
+                result = d.act("learner", request)
+                self.assertEqual(d.act("learner", request), result)
+                factory.return_value.open.assert_called_once()
+                state = d.load_state(d.session_dir("learner"), d.definition())
+                entry = state["llm_requests"][request["request_id"]]
+                if text == "Café 🚀":
+                    self.assertEqual(result["result"]["learning_result"], "advisory_complete")
+                    self.assertEqual(entry["advice"], advice)
+                    exported = d.export_session("learner", True)
+                    restored = json.loads(json.dumps(exported, ensure_ascii=False).encode("utf-8"))
+                    self.assertEqual(restored["llm_history"][-1]["advice"], advice)
+                else:
+                    self.assertEqual(result["result"]["learning_result"], "advisory_failed")
+                    self.assertEqual(entry["status"], "failed")
+                    self.assertEqual(entry["error_code"], "invalid-output")
+                    self.assertNotIn("advice", entry)
+                    self.assertEqual(d.session_status("learner")["phase"]["progress"], before)
 
     def test_first_response_required_and_exit_always_excluded(self):
         self.reach("c02.calculate")

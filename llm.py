@@ -168,6 +168,7 @@ def validate_output(feature: str, result: dict, context: dict, *, api_key: str =
     def prose(value, limit=2000):
         if not isinstance(value, str) or not value.strip() or len(value) > limit:
             raise ValueError()
+        value.encode("utf-8")
         if api_key and api_key in value:
             raise LLMError("The endpoint returned credential material; response discarded.", "invalid-output")
         if any(ord(c) < 32 and c not in "\n\t" for c in value):
