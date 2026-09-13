@@ -358,6 +358,7 @@ def parser() -> argparse.ArgumentParser:
     commands.add_parser("learn", help="start or resume guided delivery; use learn --help")
     commands.add_parser("session", help="JSON session operations; use session --help")
     commands.add_parser("doctor", help="check delivery capabilities; use doctor --help")
+    commands.add_parser("llm", help="optional LLM support; use llm --help")
 
     commands.add_parser("day", help="show the six-hour schedule and start instructions")
     challenge = commands.add_parser("challenge", help="read a one-day challenge")
@@ -395,6 +396,9 @@ def parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else argv
+    if argv and argv[0] == "llm":
+        import llm
+        return llm.cli(argv[1:])
     if argv and (argv[0] in {"session", "doctor", "learn"} or "--json" in argv):
         import delivery
         return delivery.cli(argv)
