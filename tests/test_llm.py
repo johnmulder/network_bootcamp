@@ -173,6 +173,9 @@ class ClientTests(unittest.TestCase):
                             self.assertEqual(set(nested["required"]), set(advice["findings"][0]))
                             self.assertFalse(nested["additionalProperties"])
                         self.assertEqual(result["response_format"], "json_schema")
+                        if feature in ("coach", "handoff"):
+                            citations = schema["schema"]["properties"]["evidence_ids"]
+                            self.assertEqual(citations["items"]["enum"], ["record"])
                 with mock.patch("urllib.request.build_opener") as factory:
                     factory.return_value.open.side_effect = urllib.error.HTTPError(base, 400, "secret", {}, io.BytesIO(b"secret"))
                     with self.assertRaisesRegex(llm.LLMError, "explicitly select prompt mode"):
@@ -249,6 +252,7 @@ class ClientTests(unittest.TestCase):
         inputs = {k: body[k] for k in ("messages", "response_format")}
         self.assertEqual(size, len(llm.json_text(inputs).encode("utf-8")))
         self.assertGreater(size, len(llm.json_text(inputs)))
+        self.assertEqual(inputs["response_format"]["json_schema"]["schema"]["properties"]["evidence_ids"]["maxItems"], 0)
         self.assertLess(llm.prepare_request(replace(config, response_format="prompt"), "coach", context)[1], size)
         with mock.patch("urllib.request.build_opener") as factory:
             with self.assertRaisesRegex(llm.LLMError, f"needs {size} bytes"):

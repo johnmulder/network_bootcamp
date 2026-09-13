@@ -47,7 +47,9 @@ token usage, leaving space for generation.
 
 The client sends text to `/v1/chat/completions` without streaming or tools.
 Optional `json_schema` mode uses the shared Chat Completions response format;
-the default `prompt` mode omits it. Both modes validate advice locally,
+the default `prompt` mode omits it. Schema-mode citation lists are restricted
+to supplied evidence IDs, or an empty list when none exist. Both modes
+validate advice locally,
 including exact quotes and citation IDs. An unsupported schema request fails
 without retrying; explicitly select `prompt` for a server without support.
 The two token-budget fields reflect the respective
@@ -155,8 +157,9 @@ For JSON evidence views, exact duplicate records may be replaced by
 `evidence_ref` links to other supplied evidence entries. Citation IDs,
 observations, conflicting evidence, metadata, and partial-view boundaries
 remain available. Non-equivalent text remains intact. Saved context retains
-the original representation for validation and history; prompt version 2
-identifies the compact representation used for inference.
+the original representation for validation and history. Prompt version 3
+includes the compact representation and asks reviewers to flag actual
+unsupported claims while accepting properly qualified conclusions.
 
 The client reuses saved command output. A partial case view remains partial;
 it is never expanded to the complete source file. Incident-round records map

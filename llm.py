@@ -21,7 +21,7 @@ import urllib.request
 import uuid
 
 FEATURES = frozenset({"review", "coach", "handoff", "author"})
-PROMPT_VERSION = 2
+PROMPT_VERSION = 3
 CONTEXT_LIMIT = 64 * 1024
 RESPONSE_LIMIT = 256 * 1024
 DIMENSIONS = {"mechanism", "evidence", "uncertainty", "action"}
@@ -43,8 +43,12 @@ evidence, uncertainty, and action. Return {"findings": [...],
 claim_quote (an exact substring of learner_text), evidence_ids (a nonempty list
 of supplied evidence keys), explanation, and revision_question. Ask for a
 revision, not a rewritten answer. Missing evidence permits an empty findings
-list and insufficient_evidence true. A defensible unresolved conclusion can
-be correct. Never manufacture a flaw to fill the list.""",
+list and insufficient_evidence true. Each finding must identify an unsupported
+or contradicted learner claim. Evidence that does not establish a definite
+claim is a reason to flag that claim, not merely return insufficient_evidence.
+Do not emit findings to confirm a supported claim, request optional detail, or
+fill a rubric category. Return no findings for claims that correctly separate
+observations from unknowns. Never manufacture a flaw to fill the list.""",
     "coach": BOUNDARY + """Explain the recorded feedback codes in the learner's
 context. Preserve the deterministic factual result. Return {"explanation":
 "...", "question": "...", "evidence_ids": [...]}. Ask one guiding question.
@@ -228,13 +232,13 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
         return None
 
 
-def output_schema(feature: str) -> dict:
+def output_schema(feature: str, evidence_ids=()) -> dict:
     """Use the common strict-schema subset; local validation remains authoritative."""
     def obj(properties):
         return dict(type="object", properties=properties, required=list(properties), additionalProperties=False)
 
     prose = dict(type="string")
-    citations = dict(type="array", items=prose)
+    citations = dict(type="array", items=dict(type="string", enum=sorted(evidence_ids))) if evidence_ids else dict(type="array", items=prose, maxItems=0)
     if feature == "check":
         return obj(dict(ready=dict(type="boolean")))
     if feature == "review":
@@ -302,7 +306,7 @@ def prepare_request(config: Config, feature: str, context: dict) -> tuple[dict, 
                             dict(role="user", content=json_text(compact_context(context)))])
     if config.response_format == "json_schema":
         inputs["response_format"] = dict(type="json_schema", json_schema=dict(
-            name="bootcamp_" + feature, strict=True, schema=output_schema(feature)))
+            name="bootcamp_" + feature, strict=True, schema=output_schema(feature, context.get("evidence", {}))))
     size = len(json_text(inputs).encode("utf-8"))
     if size > config.max_input_bytes:
         raise LLMError(f"LLM input needs {size} bytes; configured limit is {config.max_input_bytes}. Shorten the submission, explicitly raise BOOTCAMP_LLM_MAX_INPUT_BYTES within the model's capacity, or use static support.", "context-limit")
