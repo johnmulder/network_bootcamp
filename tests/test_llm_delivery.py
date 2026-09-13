@@ -18,6 +18,7 @@ from test_llm import LOCAL
 class AdvisoryTests(unittest.TestCase):
     request = fixtures.SessionTests.request
     act = fixtures.SessionTests.act
+    experiment = fixtures.SessionTests.experiment
 
     def setUp(self):
         settings = mock.patch.dict(os.environ, LOCAL, clear=True)
@@ -220,6 +221,18 @@ class AdvisoryTests(unittest.TestCase):
         with contextlib.redirect_stdout(io.StringIO()) as output:
             self.assertEqual(course.main(["llm", "coach", "--json"]), 2)
         self.assertEqual(json.loads(output.getvalue())["status"], "error")
+
+    def test_optional_settings_never_make_normal_delivery_contact_a_model(self):
+        with mock.patch.object(llm, "generate", side_effect=AssertionError("inference")), \
+                mock.patch("urllib.request.build_opener", side_effect=AssertionError("network")):
+            for settings in ({}, {**LOCAL, "BOOTCAMP_LLM_FEATURES": ""},
+                             {**LOCAL, "BOOTCAMP_LLM_BASE_URL": "invalid"}, LOCAL):
+                with mock.patch.dict(os.environ, settings, clear=True):
+                    d.session_status("learner")
+                    d.export_session("learner")
+                    self.act("skip", dict(reason="Offline configuration check"))
+            fixtures.SessionTests.finish_day(self)
+            self.assertTrue(d.session_status("learner")["completion"]["delivery_finished"])
 
 
 if __name__ == "__main__":

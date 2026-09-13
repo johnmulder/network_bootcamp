@@ -4,11 +4,15 @@ import contextlib
 import io
 import json
 import os
+from pathlib import Path
+import tempfile
 import unittest
 import urllib.error
 from unittest import mock
 
 import course
+import delivery as d
+import learning
 import llm
 
 LOCAL = {"BOOTCAMP_LLM_FEATURES": "review,coach,handoff,author",
@@ -124,6 +128,82 @@ class ClientTests(unittest.TestCase):
             llm.validate_output("handoff", dict(question="\x1b[31m", evidence_ids=[]), context)
         with self.assertRaises(ValueError):
             llm.decode('{"ready": true, "ready": false}')
+
+
+class AuthorTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        for patch in (mock.patch.dict(os.environ, LOCAL, clear=True),
+                      mock.patch.object(d, "WORK_ROOT", Path(self.temp.name))):
+            patch.start()
+            self.addCleanup(patch.stop)
+
+    def generated(self, config, feature, context):
+        return dict(advice=dict(draft="Unreviewed wording for the fixed conditions."),
+                    endpoint=config.base_url, model=config.model, prompt_version=1, latency_ms=1, usage={})
+
+    def test_supported_examples_exclude_reserved_problems_and_compute_facts(self):
+        for family in learning.catalog()["families"]:
+            context = llm.author_context(family, "practice-variant")
+            self.assertEqual(context["example"]["use"], "supported")
+            self.assertNotIn("reassessment", json.dumps(context))
+            self.assertNotIn("case-b.json", json.dumps(context))
+        self.assertEqual(llm.author_context("transfer", "explanation")["computed_facts"]["maximum_payload"], 1348)
+        candidate = llm.author_context("transfer", "practice-variant", seed=7)
+        self.assertEqual(candidate, llm.author_context("transfer", "practice-variant", seed=7))
+        self.assertNotIn(candidate["example"]["parameters"]["mtu"], {p["parameters"]["mtu"] for p in learning.catalog()["families"]["transfer"]})
+        self.assertEqual(candidate["authored_facts"]["payload"], f"{candidate['computed_facts']['maximum_payload']} bytes")
+        self.assertTrue(llm.author_context("subnet", "explanation")["computed_facts"]["local"])
+        routes = llm.author_context("route-selection", "explanation")["computed_facts"]
+        self.assertEqual(routes["before"][0]["prefix"], "10.1.2.3/32")
+        self.assertEqual(len(routes["after"]), 2)
+
+    def test_authoring_is_explicit_private_and_never_overwrites(self):
+        with mock.patch.object(llm, "generate", side_effect=self.generated) as generate:
+            result = llm.author("transfer", "practice-variant", "transfer.json")
+            path = Path(result["output"])
+            record = json.loads(path.read_text())
+            self.assertEqual(record["status"], "unreviewed-draft")
+            self.assertIn("independent answer keys", record["review_required"])
+            self.assertEqual(path.stat().st_mode & 0o777, 0o600)
+            for name in ("transfer.json", "../escape.json", "/tmp/escape.json"):
+                with self.assertRaises(d.DeliveryError):
+                    llm.author("transfer", "explanation", name)
+            self.assertEqual(generate.call_count, 1)
+            with mock.patch.dict(os.environ, {"BOOTCAMP_LLM_FEATURES": "review"}):
+                with self.assertRaises(llm.LLMError):
+                    llm.author("transfer", "explanation", "new.json")
+
+    def test_concurrent_output_symlink_and_interruption_preserve_files(self):
+        target = llm.write_work_json("llm-drafts", "existing.json", {"original": True})
+        alias = target.parent / "alias.json"
+        alias.symlink_to(target)
+        with self.assertRaises(d.DeliveryError):
+            llm.work_output("llm-drafts", "alias.json")
+        with mock.patch.object(llm.os, "link", side_effect=FileExistsError):
+            with self.assertRaises(FileExistsError):
+                llm.write_work_json("llm-drafts", "new.json", {"new": True})
+        self.assertEqual(json.loads(target.read_text()), {"original": True})
+        self.assertFalse(list(target.parent.glob(".llm-*")))
+        self.assertFalse((target.parent / "new.json").exists())
+
+    def test_author_cli(self):
+        with mock.patch.object(llm, "generate", side_effect=self.generated), contextlib.redirect_stdout(io.StringIO()) as output:
+            self.assertEqual(course.main(["llm", "author", "--family", "transfer", "--kind", "explanation", "--output", "cli.json", "--json"]), 0)
+        self.assertEqual(json.loads(output.getvalue())["draft_status"], "unreviewed-draft")
+
+    def test_evaluation_is_offline_by_default_and_never_claims_human_review(self):
+        evaluation = d.module_at("verification/check_llm.py")
+        with mock.patch.object(llm, "generate", side_effect=AssertionError("network")), contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(evaluation.main(["--check"]), 0)
+        self.assertEqual(len(evaluation.cases()), 10)
+        with mock.patch.object(llm, "generate", side_effect=self.generated):
+            result = evaluation.evaluate("author", "held-out", "author.json")
+        saved = json.loads(Path(result["output"]).read_text())
+        self.assertEqual(saved["status"], "human-review-pending")
+        self.assertEqual(saved["examples"][0]["split"], "held-out")
+        self.assertIsNone(saved["examples"][0]["facilitator"]["grounded"])
 
 
 if __name__ == "__main__":
