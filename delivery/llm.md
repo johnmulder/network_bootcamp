@@ -25,6 +25,7 @@ not a general secret-redaction system; see the context and export rules below.
 | `BOOTCAMP_LLM_MODEL` | Unset | Exact model identifier available on that server. |
 | `BOOTCAMP_LLM_API_KEY` | Unset | Endpoint-specific bearer token. OpenAI requires it; local authentication may be disabled. |
 | `BOOTCAMP_LLM_TOKEN_FIELD` | `max_completion_tokens` | Set to `max_tokens` for the documented LM Studio profile. |
+| `BOOTCAMP_LLM_RESPONSE_FORMAT` | `prompt` | `prompt` requests JSON in text instructions; `json_schema` also asks the server to enforce the advice schema. |
 | `BOOTCAMP_LLM_MAX_OUTPUT_TOKENS` | `2048` | Integer output budget, 1–8192. |
 | `BOOTCAMP_LLM_TIMEOUT_SECONDS` | `60` | Integer timeout for blocking network operations, 1–300 seconds; not a total elapsed-time limit. |
 
@@ -33,8 +34,11 @@ Trailing slashes are normalized. Custom prefixes such as `/proxy/v1`, a full
 are rejected. HTTP requires `localhost` or a loopback IP literal; other hosts
 require HTTPS. The selected model must be supplied explicitly.
 
-The client sends text to `/v1/chat/completions` without streaming, tools, or
-provider-specific structured-output options. It validates JSON advice locally.
+The client sends text to `/v1/chat/completions` without streaming or tools.
+Optional `json_schema` mode uses the shared Chat Completions response format;
+the default `prompt` mode omits it. Both modes validate advice locally,
+including exact quotes and citation IDs. An unsupported schema request fails
+without retrying; explicitly select `prompt` for a server without support.
 The two token-budget fields reflect the respective
 [OpenAI](https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create)
 and [LM Studio](https://lmstudio.ai/docs/developer/openai-compat/chat-completions)

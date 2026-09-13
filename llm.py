@@ -80,12 +80,13 @@ class Config:
     max_output_tokens: int = 2048
     timeout: int = 60
     loopback: bool = False
+    response_format: str = "prompt"
 
     def public(self) -> dict:
         return dict(features=sorted(self.features), base_url=self.base_url,
                     model=self.model, key_present=bool(self.api_key),
                     token_field=self.token_field, max_output_tokens=self.max_output_tokens,
-                    timeout_seconds=self.timeout)
+                    timeout_seconds=self.timeout, response_format=self.response_format)
 
 
 def feature_names() -> frozenset[str]:
@@ -127,6 +128,9 @@ def configuration() -> Config:
     token_field = os.environ.get("BOOTCAMP_LLM_TOKEN_FIELD", "max_completion_tokens")
     if token_field not in ("max_completion_tokens", "max_tokens"):
         raise LLMError("BOOTCAMP_LLM_TOKEN_FIELD must be max_completion_tokens or max_tokens.")
+    response_format = os.environ.get("BOOTCAMP_LLM_RESPONSE_FORMAT", "prompt")
+    if response_format not in ("prompt", "json_schema"):
+        raise LLMError("BOOTCAMP_LLM_RESPONSE_FORMAT must be prompt or json_schema.")
     try:
         budget = int(os.environ.get("BOOTCAMP_LLM_MAX_OUTPUT_TOKENS", "2048"))
         timeout = int(os.environ.get("BOOTCAMP_LLM_TIMEOUT_SECONDS", "60"))
@@ -134,7 +138,7 @@ def configuration() -> Config:
             raise ValueError()
     except ValueError:
         raise LLMError("Output tokens must be 1–8192 and timeout seconds 1–300.") from None
-    return Config(features, base, model, key, token_field, budget, timeout, loopback)
+    return Config(features, base, model, key, token_field, budget, timeout, loopback, response_format)
 
 
 def availability() -> dict:
@@ -219,6 +223,29 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
         return None
 
 
+def output_schema(feature: str) -> dict:
+    """Use the common strict-schema subset; local validation remains authoritative."""
+    def obj(properties):
+        return dict(type="object", properties=properties, required=list(properties), additionalProperties=False)
+
+    prose = dict(type="string")
+    citations = dict(type="array", items=prose)
+    if feature == "check":
+        return obj(dict(ready=dict(type="boolean")))
+    if feature == "review":
+        finding = obj(dict(dimension=dict(type="string", enum=sorted(DIMENSIONS)),
+                           claim_quote=prose, evidence_ids=citations,
+                           explanation=prose, revision_question=prose))
+        return obj(dict(findings=dict(type="array", items=finding), insufficient_evidence=dict(type="boolean")))
+    if feature == "coach":
+        return obj(dict(explanation=prose, question=prose, evidence_ids=citations))
+    if feature == "handoff":
+        return obj(dict(question=prose, evidence_ids=citations))
+    if feature == "author":
+        return obj(dict(draft=prose))
+    raise LLMError("Unknown LLM feature.")
+
+
 def generate(config: Config, feature: str, context: dict) -> dict:
     if feature not in PROMPTS or (feature != "check" and feature not in config.features):
         raise LLMError("This LLM feature is disabled.", "disabled")
@@ -231,6 +258,9 @@ def generate(config: Config, feature: str, context: dict) -> dict:
                    messages=[dict(role="system", content=PROMPTS[feature]),
                              dict(role="user", content=raw_context)])
     payload[config.token_field] = config.max_output_tokens
+    if config.response_format == "json_schema":
+        payload["response_format"] = dict(type="json_schema", json_schema=dict(
+            name="bootcamp_" + feature, strict=True, schema=output_schema(feature)))
     headers = {"Content-Type": "application/json"}
     if config.api_key:
         headers["Authorization"] = "Bearer " + config.api_key
@@ -256,6 +286,8 @@ def generate(config: Config, feature: str, context: dict) -> dict:
     except urllib.error.HTTPError as error:
         code = error.code
         error.close()
+        if code in (400, 422) and config.response_format == "json_schema":
+            raise LLMError(f"LLM schema request rejected (HTTP {code}); check model/schema support or explicitly select prompt mode. No retry was made.", "unavailable") from None
         label = "authentication failed" if code in (401, 403) else "rate limited" if code == 429 else "request failed"
         raise LLMError(f"LLM {label} (HTTP {code}); check endpoint settings or use existing course support.", "unavailable") from None
     except (OSError, urllib.error.URLError, http.client.HTTPException):
@@ -266,7 +298,8 @@ def generate(config: Config, feature: str, context: dict) -> dict:
     usage = {key: value for key, value in usage.items()
              if key in ("prompt_tokens", "completion_tokens", "total_tokens") and type(value) is int and value >= 0} if isinstance(usage, dict) else {}
     return dict(advice=result, model=config.model, endpoint=config.base_url,
-                prompt_version=PROMPT_VERSION, latency_ms=round((time.monotonic()-started)*1000), usage=usage)
+                prompt_version=PROMPT_VERSION, response_format=config.response_format,
+                latency_ms=round((time.monotonic()-started)*1000), usage=usage)
 
 
 def author_context(family: str, kind: str, seed: int = 1) -> dict:

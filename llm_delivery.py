@@ -30,7 +30,7 @@ def actions(phase: dict) -> list[str]:
 def public_history(state: dict) -> list[dict]:
     keys = ("id", "phase", "feature", "status", "at", "finished_at", "context_sha256",
             "artifact_hashes", "model", "endpoint", "prompt_version", "source_ids",
-            "latency_ms", "usage", "error_code")
+            "latency_ms", "usage", "error_code", "response_format")
     return [{k: copy.deepcopy(entry[k]) for k in keys if k in entry} for entry in state["llm_requests"].values()]
 
 
@@ -237,7 +237,8 @@ def act(ident: str, request: dict) -> dict:
         entry = dict(id=request["request_id"], request=copy.deepcopy(request), phase=phase["id"], feature=feature,
                      status="pending", at=d.now(), context=context, context_sha256=context_hash(context),
                      artifact_hashes=hashes, prepared_revision=state["revision"], source_ids=sorted(context["evidence"]),
-                     model=config.model, endpoint=config.base_url, prompt_version=llm.PROMPT_VERSION)
+                     model=config.model, endpoint=config.base_url, prompt_version=llm.PROMPT_VERSION,
+                     response_format=config.response_format)
         state["llm_requests"][entry["id"]] = entry
         d.save_state(directory, state)
     try:

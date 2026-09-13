@@ -72,6 +72,7 @@ class ClientTests(unittest.TestCase):
                                ("BOOTCAMP_LLM_TIMEOUT_SECONDS", "nan"),
                                ("BOOTCAMP_LLM_TIMEOUT_SECONDS", "301"),
                                ("BOOTCAMP_LLM_MAX_OUTPUT_TOKENS", "0"),
+                               ("BOOTCAMP_LLM_RESPONSE_FORMAT", "automatic"),
                                ("BOOTCAMP_LLM_TOKEN_FIELD", "invented")):
                 with self.subTest(key=key, value=value), mock.patch.dict(os.environ, {key: value}):
                     self.assertEqual(llm.availability()["status"], "configuration")
@@ -144,7 +145,41 @@ class ClientTests(unittest.TestCase):
             factory.return_value.open.return_value = io.BytesIO(envelope(dict(ready=True, secret="private-token")))
             with self.assertRaises(llm.LLMError) as caught:
                 llm.generate(llm.configuration(), "check", {})
-            self.assertNotIn("private-token", str(caught.exception))
+                self.assertNotIn("private-token", str(caught.exception))
+
+    def test_optional_schema_profiles_keep_semantic_validation_and_do_not_retry(self):
+        for base, token in (("http://localhost:1234/v1", "max_tokens"),
+                            ("https://api.openai.com/v1", "max_completion_tokens")):
+            with mock.patch.dict(os.environ, {"BOOTCAMP_LLM_BASE_URL": base,
+                                             "BOOTCAMP_LLM_TOKEN_FIELD": token,
+                                             "BOOTCAMP_LLM_API_KEY": FAKE_KEY,
+                                             "BOOTCAMP_LLM_RESPONSE_FORMAT": "json_schema"}):
+                for feature, advice in {"check": {"ready": True}, **advice_samples("Consider the evidence.")}.items():
+                    with self.subTest(base=base, feature=feature), mock.patch("urllib.request.build_opener") as factory:
+                        factory.return_value.open.return_value = io.BytesIO(envelope(advice))
+                        result = llm.generate(llm.configuration(), feature, ADVICE_CONTEXT)
+                        body = json.loads(factory.return_value.open.call_args.args[0].data)
+                        self.assertEqual(body[token], 2048)
+                        schema = body["response_format"]["json_schema"]
+                        self.assertIs(schema["strict"], True)
+                        self.assertEqual(set(schema["schema"]["required"]), set(advice))
+                        self.assertFalse(schema["schema"]["additionalProperties"])
+                        if feature == "review":
+                            nested = schema["schema"]["properties"]["findings"]["items"]
+                            self.assertEqual(set(nested["required"]), set(advice["findings"][0]))
+                            self.assertFalse(nested["additionalProperties"])
+                        self.assertEqual(result["response_format"], "json_schema")
+                with mock.patch("urllib.request.build_opener") as factory:
+                    factory.return_value.open.side_effect = urllib.error.HTTPError(base, 400, "secret", {}, io.BytesIO(b"secret"))
+                    with self.assertRaisesRegex(llm.LLMError, "explicitly select prompt mode"):
+                        llm.generate(llm.configuration(), "check", {})
+                    factory.return_value.open.assert_called_once()
+                with mock.patch("urllib.request.build_opener") as factory:
+                    invalid = advice_samples("Consider the evidence.")["review"]
+                    invalid["findings"][0]["claim_quote"] = "Invented quote"
+                    factory.return_value.open.return_value = io.BytesIO(envelope(invalid))
+                    with self.assertRaises(llm.LLMError):
+                        llm.generate(llm.configuration(), "review", ADVICE_CONTEXT)
 
     def test_decoded_credentials_are_rejected_for_every_feature(self):
         for feature, advice in advice_samples("Provider echo: " + FAKE_KEY).items():
