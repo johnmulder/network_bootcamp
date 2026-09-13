@@ -111,6 +111,15 @@ class ClientTests(unittest.TestCase):
                 with self.assertRaises(llm.LLMError) as caught:
                     llm.generate(llm.configuration(), "check", {})
                 self.assertNotIn("secret", str(caught.exception))
+        with mock.patch.dict(os.environ, {"BOOTCAMP_LLM_API_KEY": "private-token"}), \
+                mock.patch("urllib.request.build_opener") as factory:
+            with self.assertRaises(llm.LLMError):
+                llm.generate(llm.configuration(), "check", {"text": "private-token"})
+            factory.assert_not_called()
+            factory.return_value.open.return_value = io.BytesIO(envelope(dict(ready=True, secret="private-token")))
+            with self.assertRaises(llm.LLMError) as caught:
+                llm.generate(llm.configuration(), "check", {})
+            self.assertNotIn("private-token", str(caught.exception))
 
     def test_advice_schema_quotes_and_citations(self):
         context = dict(learner_text="A login proves theft.", evidence={"incident/auth.jsonl#2": {}})

@@ -148,6 +148,12 @@ once; do not add class-size-dependent presentation time.
 
 ## Pilot and Improvement
 
+Optional [LLM support](../delivery/llm.md) offers advisory review, explanations,
+and handoff practice. It is disabled by default, records learner-visible advice
+as help, and cannot award rubric scores. Begin with a supervised Challenge 5
+trial after checking the selected model's output. Provider qualification and
+learner validation remain pending; preserve static support as the baseline.
+
 See the [implementation validation record](validation.md) for completed
 technical checks and the learner outcomes that remain unmeasured.
 

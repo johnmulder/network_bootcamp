@@ -1,10 +1,56 @@
 # Implementation Validation
 
-The current course is version 2.0. The technique checks below describe its
-implementation; later sections retain historical delivery and documentation
-checks. Older counts and heading rules describe those earlier snapshots, not
-the current assessment contract. None of these software checks establishes
-learner attainment or an observed class duration.
+The current course is version 3.0. It adds optional LLM support while retaining
+the learning contract's independent-attempt rules. Older sections retain
+historical delivery and documentation checks. Their counts describe those
+snapshots. No software check establishes learner attainment or an observed
+class duration.
+
+## Course 3.0 Optional LLM Validation
+
+The client, session actions, maintainer drafts, and synthetic evaluation
+workflow are implemented. The complete course remains offline by default;
+all four LLM features require explicit configuration and individual actions.
+The [LLM guide](../delivery/llm.md) documents endpoint/key/model settings,
+exposure rules, private exports, and interrupted-request recovery.
+
+Transport checks simulate OpenAI and LM Studio response formats, with local
+authentication both off and on. Session checks cover phase/evidence limits,
+scoped help, existing independent outcomes, fresh reassessment, concurrent
+updates, stale advice, cancellation, replay without duplicate inference,
+private exports, and terminal/JSON operation. Draft checks cover computed
+conditions, private atomic output, confinement, and refusal to overwrite files.
+
+- All 96 standard-library tests passed, including the complete offline course
+  under a network-call trap. The ten synthetic LLM evaluation cases passed
+  their offline inventory checks.
+- Course checks passed for 36 phases, 31 evidence views, 36 evidence fixtures,
+  83 workbench questions, and the 17-event timeline. All 31 real-tool views and
+  both complete A/B and B/A course journeys passed. The journeys use synthetic
+  responses and scores; they are not learner trials.
+- All 17 Python files parsed using Python 3.10 syntax rules. Markdown lint,
+  local links and anchors, content checks, and Git whitespace checks passed.
+  No remote CI run is claimed.
+- The local archive, `work/course-llm-v3-final.tar.gz`, passed verification,
+  all real-tool views, and both complete journeys after extraction at a path
+  containing spaces without Git metadata. Validation removed LLM configuration
+  and credentials from the child environment. The archive excludes learner
+  work and the implementation plan; its LLM configuration check reported all
+  features disabled. This validation record was updated after that run.
+
+### External Validation Pending
+
+No API endpoint, model, or key was configured in the implementation environment.
+No real OpenAI or LM Studio model was called or qualified. Simulated transport
+tests are not real-provider tests. Use `verification/check_llm.py --live` with
+each selected model/server and record actual server versions, latency, usage,
+schema failures, and facilitator judgments before recommending that setup.
+
+The ten synthetic examples contain proposed expectations and separate
+calibration/held-out splits. They have not been annotated by a facilitator.
+No learner trial was performed, and no educational benefit is claimed. The
+[LLM pilot comparison](pilot.md#optional-llm-comparison) records the remaining
+human work. Preserve static hints, pair exchange, and self-review throughout.
 
 ## Course 2.0 Technique Checks
 

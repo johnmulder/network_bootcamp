@@ -152,6 +152,8 @@ def build_context(state: dict, data: dict, phase: dict, feature: str, payload: d
             if len(previous) >= 3:
                 raise d.DeliveryError("This handoff has three model turns; revise it or use the rubric", 3)
             text = payload.get("text", "")
+            if not isinstance(text, str):
+                raise d.DeliveryError("Handoff reply must be text")
             if text:
                 d.require_text(text)
             if previous and not text:

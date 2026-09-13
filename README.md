@@ -22,7 +22,8 @@ enterprise hardware, or proprietary analyzers are required.
 | Saved delivery | 36 phases, with terminal and JSON interfaces |
 | Evidence fixtures | 36 manifest-tracked files plus the manifest |
 | Incident timeline | 17 normalized events across 8 sources |
-| Automated tests | 57 standard-library tests plus complete delivery rehearsals |
+| Automated tests | Standard-library tests plus complete delivery rehearsals |
+| Optional LLM support | Review, coaching, handoff practice, and maintainer drafts |
 | Supported environment | One Mac laptop with local, open-source tools |
 
 The [course agenda](agenda.md) is the authoritative curriculum specification.
@@ -93,12 +94,25 @@ Direct commands remain available for repeatable facilitation and scripting:
 Reference navigation reads the existing directory hierarchy and Markdown.
 Guided delivery uses [36 defined phases](delivery/course.json), with content
 fragments in those same documents. Progress and learner responses are stored
-locally under `work/<session-id>/`, which Git ignores. No upload occurs.
+locally under `work/<session-id>/`, which Git ignores. Core delivery sends no
+learner data. Optional LLM actions send selected context to a configured server.
 `python3 course.py ...` remains a supported equivalent for automation. See the
 [delivery guide](delivery/README.md) for JSON requests, version matching,
 reviews, and recovery. A successful command is not a passing assessment.
 The [completion policy](agenda.md#completion-and-feedback) distinguishes
 finished delivery, passing rubric reviews, and independent completion.
+
+## Optional LLM Support
+
+[LLM support](delivery/llm.md) is disabled by default and independently enables
+review, coaching, handoff practice, or maintainer drafting. Configure a base
+URL, model, and endpoint-specific API key to use OpenAI or local LM Studio.
+The guide includes both setup examples and the optional connection check.
+The complete course remains usable offline with no credentials or model server.
+
+Advice is recorded as help and does not award scores or replace human reviews.
+Real-model qualification and learner trials remain pending; the implementation
+includes synthetic evaluation cases and an explicit evaluation command.
 
 ## Reference Library
 

@@ -7,6 +7,7 @@ import argparse
 import gzip
 import io
 import json
+import os
 import subprocess
 import sys
 import tarfile
@@ -63,12 +64,16 @@ def check_archive(output: Path, journey: bool = False) -> None:
         if (root / ".git").exists() or (root / "work").exists() or (root / "PLAN.md").exists():
             raise d.DeliveryError("Archive contains development or learner data")
         commands = [[str(root / "course"), "verify"],
+                    [str(root / "course"), "llm", "check", "--json"],
+                    [sys.executable, "-B", str(root / "verification/check_llm.py"), "--check"],
                     [sys.executable, "-B", str(root / "verification/check_delivery.py")]]
         if journey:
             commands += [[str(root / "course"), "doctor", "--json"],
                          [sys.executable, "-B", str(root / "verification/check_delivery.py"), "--smoke", "--journey"]]
+        environment = {key: value for key, value in os.environ.items()
+                       if not key.startswith("BOOTCAMP_LLM_") and key != "OPENAI_API_KEY"}
         for command in commands:
-            subprocess.run(command, cwd=base, check=True)
+            subprocess.run(command, cwd=base, check=True, env=environment)
         metadata = json.loads((root / "RELEASE.json").read_text())
         code = "import json, delivery; print(json.dumps(delivery.versions(delivery.definition())))"
         result = subprocess.run([sys.executable, "-B", "-c", code], cwd=root, check=True, capture_output=True, text=True)

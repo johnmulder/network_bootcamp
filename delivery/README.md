@@ -4,6 +4,11 @@ The runner delivers all required phases across eight teaching blocks. Start or r
 with `./course learn --id my-session`, or use the JSON session commands below.
 The default `./course` menu opens saved delivery; manual browsing is also kept.
 
+Course/state/JSON protocol version 3 adds [optional LLM support](llm.md).
+All four LLM features are disabled by default. Enabled advice is requested
+explicitly, uses the configured OpenAI-compatible endpoint, and remains
+separate from rubric scores and independent completion.
+
 `course.json` gives phases stable IDs and ordered prerequisites. Teaching prose
 stays in Markdown between matching `delivery:start` and `delivery:end` comments.
 The validator checks references and the 360-minute teaching / 60-minute break
@@ -219,7 +224,7 @@ leaves the objective unmet. See the [learning action contract](assessment.md#typ
 The status and JSON export include per-objective original and fresh attainment;
 summary exports omit responses, prose, and authored answer keys.
 
-State and protocol version 2 reject old sessions without migration or regrading.
+State and protocol version 3 reject old sessions without migration or regrading.
 Use their matching course copy to resume or export them; create a new session
 for the new course. Standalone workbench quizzes remain optional practice.
 
@@ -294,6 +299,11 @@ original ID. A corrupt state file, unsupported version, or changed evidence
 produces a recovery message and preserves existing data. Keep a backup copy of
 the session directory. Exports are review records, not a substitute for a full
 session backup when resuming on another machine.
+
+LLM requests additionally reserve a pending ID while inference runs outside
+the session lock. A duplicate pending request never sends another call.
+Follow [LLM recovery](llm.md#failure-and-recovery) to cancel an interrupted
+request; ordinary course resume never retries inference automatically.
 
 Course content and evaluation code are fingerprinted without requiring Git.
 Resume using the matching course copy; otherwise create a new session. There

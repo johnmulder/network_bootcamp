@@ -135,6 +135,41 @@ Ask each learner what dragged and where they needed more explanation. Compare
 opening and exit answers by mechanism and evidence quality using equivalent,
 different examples; a small pilot does not establish a general learning effect.
 
+## Optional LLM Comparison
+
+LLM support is experimental and disabled by default. Read the
+[configuration and evaluation guide](../delivery/llm.md) before enabling a
+feature. Begin with Challenge 5 review under facilitator observation. Complete
+the synthetic calibration checks before using held-out examples. Suggested
+expectations are not human annotations; record the facilitator's judgment.
+
+Compare static hints/self-review with requested LLM advice using equivalent
+tasks and the same rubric. Record prior experience, support exposure, and model
+assignment. A small pilot supports a revision decision, not a general effect
+estimate. Preserve enough unseen equivalent problems for later unassisted
+assessment; do not use the same exposed answer as a transfer measure.
+
+For an initial supervised trial, inspect the generated advice with the learner
+before they act on it. Advice delivered by the runner is already recorded as
+answer-bearing help. If a facilitator shares advice generated elsewhere,
+record equivalent support exposure before any reassessment; do not count that
+learner's response as unassisted. No LLM advice is available during the exit.
+
+| Learner / task | Static or LLM support / feature | Model / server version / prompt version | Grounded feedback? | Facilitator correction / time | Revision / later fresh unassisted outcome |
+| --- | --- | --- | --- | --- | --- |
+| | | | | | |
+
+| Example / cited claim | Citation supports conclusion? | Useful revision question? | Uncertainty preserved? | Unsupported criticism or answer leakage? | Latency / token usage |
+| --- | --- | --- | --- | --- | --- |
+| | | | | | |
+
+Record refusals, schema failures, bad citations, overly confident advice,
+interruptions, and endpoint unavailability. Separate better writing and faster
+completion from improved reasoning on fresh unassisted work. Save private
+evaluation files under `work/llm-evals/`; report only appropriate aggregates.
+Record whether the next decision is to revise prompts, test another model,
+expand cautiously, or keep the static support path.
+
 ## Revision Decision
 
 | Finding | Evidence | Change | Owner | Next validation |

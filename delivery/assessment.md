@@ -1,7 +1,8 @@
 # Learning and Reassessment Contract
 
-Contract version 2 is active. Course, state, and JSON protocol versions are
-explicitly updated. Every conceptual checkpoint has an executable reassessment.
+Learning contract version 2 remains active. Course, state, and JSON protocol
+version 3 add optional advisory LLM actions. Every conceptual checkpoint has
+an executable reassessment.
 
 Every checkpoint occurrence has a stable objective, problem family, scoring
 field, and support reference in `course.json`. Case IDs, original record numbers,
@@ -32,7 +33,7 @@ completion, and facilitator-reviewed completion are separate outcomes. Supported
 corrections count toward recorded work. Self and facilitator reviews are separate
 unauthenticated local judgments; no automated prose grading is introduced.
 
-State and JSON protocol version 2 reject older sessions without migration,
+State and JSON protocol version 3 reject older sessions without migration,
 reset, or regrading. Use the matching older course copy to resume or export old
 work; create a separate session for the new course. Default exports omit prose
 and answer keys. The local course remains an open learning environment, not an
@@ -62,3 +63,24 @@ problem, and `j` for its answer-bearing help. An unfinished assignment is return
 again instead of rerolled. A repeated request ID returns its saved result.
 Supported corrections count as recorded work; default exports include result
 categories and parameters without learner answers or authored keys.
+
+## Optional LLM Advice
+
+The [LLM support guide](llm.md) defines configuration and explicit review,
+coaching, and handoff actions. These features are disabled by default and are
+never completion requirements. No LLM advice is available for the independent
+exit. Model output cannot supply a rubric score, edit a submission, advance a
+phase, or change the deterministic factual result.
+
+Delivered advice is answer-bearing help. Coaching requires a committed answer
+and exposes only its current family; review and handoff advice expose their
+block. Existing independent outcomes are preserved, and unfinished assigned
+reassessments in that scope become exposed practice. Fresh unassisted outcomes
+remain governed by the finite authored catalog.
+
+Advice and exposure are committed together before delivery. Pending, failed,
+cancelled, and stale advice do not consume an independent attempt. A lost
+response after commit retains exposure and replays the same saved advice.
+Default exports contain help metadata; explicit artifact exports include the
+private advice and context. LLM histories are separate from self/facilitator
+review histories and never represent authenticated external assessment.

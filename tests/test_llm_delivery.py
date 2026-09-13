@@ -101,6 +101,15 @@ class AdvisoryTests(unittest.TestCase):
         state = d.load_state(d.session_dir("learner"), d.definition())
         self.assertTrue(state["learning"][0]["exposed"])
         self.assertNotIn("m1.routes.10.0.20.40", state["phases"]["c01.change"]["exposed_checks"])
+        exposed = state["learning"][0]["variant_id"]
+        answers = {q["id"]: q["answer"] for q in d.learning.find_problem(exposed)["questions"]}
+        result = self.act("problem_answer", dict(variant_id=exposed, answers=answers))
+        self.assertFalse(result["result"]["problem_result"]["independent"])
+        result = self.act("reassess", dict(family="transfer"))
+        fresh = result["result"]["problem_result"]["id"]
+        answers = {q["id"]: q["answer"] for q in d.learning.find_problem(fresh)["questions"]}
+        result = self.act("problem_answer", dict(variant_id=fresh, answers=answers))
+        self.assertTrue(result["result"]["problem_result"]["independent"])
 
     def test_pending_duplicate_interruption_and_cancel_with_feature_disabled(self):
         self.prepare_coach()
@@ -193,6 +202,8 @@ class AdvisoryTests(unittest.TestCase):
         self.act("answer", dict(text="PRIVATE handoff"))
         self.act("continue")
         with mock.patch.object(llm, "generate", side_effect=self.generated) as generate:
+            with self.assertRaisesRegex(d.DeliveryError, "reply must be text"):
+                self.act("llm_handoff", dict(role="security", text=[]))
             for index in range(3):
                 self.act("llm_handoff", dict(role="network-operations", text="A recipient reply" if index else ""))
             context = generate.call_args.args[2]

@@ -412,6 +412,11 @@ def cli(argv: list[str]) -> int:
                                         phase_id=phase_id, action="llm_" + args.command, payload=payload))
         print(json.dumps(result, indent=2))
         return 0 if result["status"] in ("ok", "configured", "disabled") else 2
+    except KeyboardInterrupt:
+        message = "LLM request interrupted. Inspect session status and cancel any pending request before requesting new advice."
+        print(json.dumps(dict(status="interrupted", message=message)) if json_mode else message,
+              file=sys.stdout if json_mode else sys.stderr)
+        return 130
     except (LLMError, d.DeliveryError, OSError) as error:
         code = error.code if isinstance(error, (LLMError, d.DeliveryError)) else "filesystem"
         message = "Could not access local LLM work files." if isinstance(error, OSError) else str(error)
