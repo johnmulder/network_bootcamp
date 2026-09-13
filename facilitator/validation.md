@@ -6,7 +6,22 @@ historical delivery and documentation checks. Their counts describe those
 snapshots. No software check establishes learner attainment or an observed
 class duration.
 
-## Current Documentation Audit
+## Local Model Support
+
+Optional schema-constrained output, compact context, and a configurable input
+budget are implemented. The [local model evaluation](local-model-validation.md)
+records actual LM Studio configuration, calibration, and live outcomes.
+Model-specific observations do not establish learner benefit or qualify
+other models. Older no-live-testing statements below describe earlier runs.
+
+All 110 standard-library tests passed, including 35 focused LLM tests. Course
+verification passed for 36 phases, 36 fixtures, 83 questions, and the 17-event
+timeline. All 31 real-tool views and both full case journeys passed. The live
+run made 68 calls; coaching and handoff are provisional starting features for
+the tested local setup. Review and authoring remain unqualified. All features
+remain disabled by default, with no hosted fallback or automatic retry.
+
+## Documentation Audit Before Local Model Testing
 
 The operational guides were checked against the current CLI, session/export
 code, optional LLM context builder, setup script, and fixture/package tools.
@@ -22,8 +37,8 @@ restrictions. Markdown lint passed for 136 files, local link/anchor checks
 passed for 248 links, and Git whitespace checks passed. Documentation edits
 preserve the assessed-content fingerprint. This audit does not revalidate
 every networking explanation in the reference
-library. The 103-test run below remains the latest full suite; live-provider
-qualification and learner validation remain pending.
+library. The 103-test run below was the latest full suite at that point;
+live-provider qualification and learner validation were then pending.
 
 ## Course 3.0 Optional LLM Validation
 
@@ -88,10 +103,10 @@ conditions, private atomic output, confinement, and refusal to overwrite files.
   work and the implementation plan; its LLM configuration check reported all
   features disabled. This validation record was updated after that run.
 
-### External Validation Pending
+### External Validation Pending at Initial Implementation
 
-No API endpoint, model, or key was configured in the implementation environment.
-No real OpenAI or LM Studio model was called or qualified. Simulated transport
+No API endpoint, model, or key was configured for that initial implementation.
+No real OpenAI or LM Studio model was called in that run. Simulated transport
 tests are not real-provider tests. Use `verification/check_llm.py --live` with
 each selected model/server and record actual server versions, latency, usage,
 schema failures, and facilitator judgments before recommending that setup.
