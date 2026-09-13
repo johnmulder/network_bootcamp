@@ -12,7 +12,7 @@ import delivery as d
 import llm
 import llm_delivery as support
 import test_delivery as fixtures
-from test_llm import LOCAL
+from test_llm import FAKE_KEY, LOCAL, credential_echo
 
 
 class AdvisoryTests(unittest.TestCase):
@@ -191,6 +191,28 @@ class AdvisoryTests(unittest.TestCase):
         with mock.patch.dict(os.environ, {"BOOTCAMP_LLM_BASE_URL": "broken"}):
             self.assertEqual(d.session_status("learner")["llm"]["configuration"]["status"], "configuration")
             self.act("answer", dict(text="Correction", answers={"transfer.payload": "1160 bytes"}))
+
+    def test_decoded_credential_failure_is_private_and_durable(self):
+        self.prepare_coach(correct=True)
+        request = self.request("llm_coach", dict(family="transfer"))
+        before = d.session_status("learner")["phase"]["progress"]
+        advice = dict(explanation=FAKE_KEY, question="What next?", evidence_ids=[])
+        with mock.patch.dict(os.environ, {"BOOTCAMP_LLM_API_KEY": FAKE_KEY}), \
+                mock.patch("urllib.request.build_opener") as factory:
+            factory.return_value.open.return_value = io.BytesIO(credential_echo(advice))
+            result = d.act("learner", request)
+            self.assertEqual(result["result"]["learning_result"], "advisory_failed")
+            self.assertEqual(d.act("learner", request), result)
+            factory.return_value.open.assert_called_once()
+        state = d.load_state(d.session_dir("learner"), d.definition())
+        entry = state["llm_requests"][request["request_id"]]
+        self.assertEqual(entry["status"], "failed")
+        self.assertEqual(entry["error_code"], "invalid-output")
+        self.assertNotIn("advice", entry)
+        self.assertEqual(d.session_status("learner")["phase"]["progress"], before)
+        for text in (json.dumps(result), (d.session_dir("learner") / "session.json").read_text(),
+                     json.dumps(d.export_session("learner")), json.dumps(d.export_session("learner", True))):
+            self.assertNotIn(FAKE_KEY, text)
 
     def test_first_response_required_and_exit_always_excluded(self):
         self.reach("c02.calculate")

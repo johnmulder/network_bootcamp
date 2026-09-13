@@ -160,7 +160,7 @@ def decode(text: str):
     return json.loads(text, parse_constant=invalid, object_pairs_hook=pairs)
 
 
-def validate_output(feature: str, result: dict, context: dict) -> dict:
+def validate_output(feature: str, result: dict, context: dict, *, api_key: str = "") -> dict:
     def fields(value, keys):
         if not isinstance(value, dict) or set(value) != set(keys):
             raise ValueError()
@@ -168,6 +168,8 @@ def validate_output(feature: str, result: dict, context: dict) -> dict:
     def prose(value, limit=2000):
         if not isinstance(value, str) or not value.strip() or len(value) > limit:
             raise ValueError()
+        if api_key and api_key in value:
+            raise LLMError("The endpoint returned credential material; response discarded.", "invalid-output")
         if any(ord(c) < 32 and c not in "\n\t" for c in value):
             raise ValueError()
 
@@ -249,7 +251,7 @@ def generate(config: Config, feature: str, context: dict) -> dict:
         message = choice["message"]
         if choice["finish_reason"] != "stop" or message.get("refusal") or message.get("tool_calls"):
             raise LLMError("The model refused or returned incomplete advice; adjust the model or output budget.", "invalid-output")
-        result = validate_output(feature, decode(message["content"]), context)
+        result = validate_output(feature, decode(message["content"]), context, api_key=config.api_key)
     except urllib.error.HTTPError as error:
         code = error.code
         error.close()

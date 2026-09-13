@@ -18,6 +18,8 @@ import llm
 LOCAL = {"BOOTCAMP_LLM_FEATURES": "review,coach,handoff,author",
          "BOOTCAMP_LLM_BASE_URL": "http://localhost:1234/v1",
          "BOOTCAMP_LLM_MODEL": "test-model", "BOOTCAMP_LLM_TOKEN_FIELD": "max_tokens"}
+FAKE_KEY = "review-test-key"
+ADVICE_CONTEXT = dict(learner_text="A login succeeded.", evidence={"record": {}})
 
 
 def envelope(advice=None, **changes):
@@ -25,6 +27,28 @@ def envelope(advice=None, **changes):
                  usage=dict(prompt_tokens=10, completion_tokens=5, total_tokens=15, private="omit"))
     value.update(changes)
     return json.dumps(value).encode()
+
+
+def credential_echo(advice, layer="content"):
+    raw = envelope(advice)
+    escaped = "\\u0072eview-test-key"
+    if layer == "content":
+        value = json.loads(raw)
+        message = value["choices"][0]["message"]
+        message["content"] = message["content"].replace(FAKE_KEY, escaped)
+        return json.dumps(value).encode()
+    return raw.replace(FAKE_KEY.encode(), escaped.encode()) if layer == "envelope" else raw
+
+
+def advice_samples(text):
+    return {
+        "review": dict(findings=[dict(dimension="evidence", claim_quote="A login succeeded.",
+                                     evidence_ids=["record"], explanation=text, revision_question=text)],
+                       insufficient_evidence=False),
+        "coach": dict(explanation=text, question=text, evidence_ids=[]),
+        "handoff": dict(question=text, evidence_ids=[]),
+        "author": dict(draft=text),
+    }
 
 
 class ClientTests(unittest.TestCase):
@@ -121,6 +145,25 @@ class ClientTests(unittest.TestCase):
                 llm.generate(llm.configuration(), "check", {})
             self.assertNotIn("private-token", str(caught.exception))
 
+    def test_decoded_credentials_are_rejected_for_every_feature(self):
+        for feature, advice in advice_samples("Provider echo: " + FAKE_KEY).items():
+            for layer in ("plain", "envelope", "content"):
+                with self.subTest(feature=feature, layer=layer), \
+                        mock.patch.dict(os.environ, {"BOOTCAMP_LLM_API_KEY": FAKE_KEY}), \
+                        mock.patch("urllib.request.build_opener") as factory:
+                    raw = credential_echo(advice, layer)
+                    if layer != "plain":
+                        self.assertNotIn(FAKE_KEY.encode(), raw)
+                    factory.return_value.open.return_value = io.BytesIO(raw)
+                    with self.assertRaises(llm.LLMError) as caught:
+                        llm.generate(llm.configuration(), feature, ADVICE_CONTEXT)
+                    self.assertEqual(caught.exception.code, "invalid-output")
+                    self.assertNotIn(FAKE_KEY, str(caught.exception))
+                    factory.return_value.open.assert_called_once()
+                    with mock.patch.dict(os.environ, {"BOOTCAMP_LLM_API_KEY": ""}):
+                        factory.return_value.open.return_value = io.BytesIO(raw)
+                        self.assertEqual(llm.generate(llm.configuration(), feature, ADVICE_CONTEXT)["advice"], advice)
+
     def test_advice_schema_quotes_and_citations(self):
         context = dict(learner_text="A login proves theft.", evidence={"incident/auth.jsonl#2": {}})
         finding = dict(dimension="evidence", claim_quote="A login proves theft.", evidence_ids=["incident/auth.jsonl#2"],
@@ -183,6 +226,15 @@ class AuthorTests(unittest.TestCase):
             with mock.patch.dict(os.environ, {"BOOTCAMP_LLM_FEATURES": "review"}):
                 with self.assertRaises(llm.LLMError):
                     llm.author("transfer", "explanation", "new.json")
+
+    def test_credential_echo_does_not_create_a_draft(self):
+        with mock.patch.dict(os.environ, {"BOOTCAMP_LLM_API_KEY": FAKE_KEY}), \
+                mock.patch("urllib.request.build_opener") as factory:
+            factory.return_value.open.return_value = io.BytesIO(credential_echo(dict(draft=FAKE_KEY)))
+            with self.assertRaises(llm.LLMError) as caught:
+                llm.author("transfer", "explanation", "rejected.json")
+            self.assertEqual(caught.exception.code, "invalid-output")
+            self.assertFalse(list(Path(self.temp.name).rglob("*")))
 
     def test_concurrent_output_symlink_and_interruption_preserve_files(self):
         target = llm.write_work_json("llm-drafts", "existing.json", {"original": True})
