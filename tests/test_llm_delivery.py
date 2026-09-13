@@ -128,6 +128,32 @@ class AdvisoryTests(unittest.TestCase):
             self.assertEqual(d.act("learner", request)["result"]["learning_result"], "advisory_cancelled")
         self.assertFalse(d.session_status("learner")["phase"]["progress"]["exposed"])
 
+    def test_terminal_recovers_pending_requests_without_valid_configuration(self):
+        self.prepare_coach(correct=True)
+        before = d.session_status("learner")["phase"]["progress"]
+        for settings in ({}, {**LOCAL, "BOOTCAMP_LLM_BASE_URL": "invalid"}):
+            with self.subTest(settings=settings):
+                request = self.request("llm_coach", dict(family="transfer"), "c02.calculate")
+                with mock.patch.object(llm, "generate", side_effect=KeyboardInterrupt):
+                    with self.assertRaises(KeyboardInterrupt):
+                        d.act("learner", request)
+                with mock.patch.dict(os.environ, settings, clear=True), \
+                        mock.patch("urllib.request.build_opener", side_effect=AssertionError("network")):
+                    with contextlib.redirect_stdout(io.StringIO()) as output, \
+                            mock.patch.object(d.sys.stdin, "isatty", return_value=True), \
+                            mock.patch.object(d.sys.stdout, "isatty", return_value=True), \
+                            mock.patch("builtins.input", side_effect=["s", "Offline recovery regression", "q"]):
+                        self.assertEqual(d.learn("learner"), 0)
+                    self.assertIn("Recover with ./course llm cancel", output.getvalue())
+                    self.assertNotIn("Optional LLM:", output.getvalue())
+                    self.act("llm_cancel", dict(request_id=request["request_id"]))
+                    state = d.load_state(d.session_dir("learner"), d.definition())
+                    self.assertEqual(state["llm_requests"][request["request_id"]]["status"], "cancelled")
+                    self.assertIn("Offline recovery regression", (d.session_dir("learner") / "session.json").read_text())
+                    progress = state["phases"]["c02.calculate"]
+                    for key in ("submissions", "checks", "exposed", "exposed_checks"):
+                        self.assertEqual(progress[key], before[key])
+
     def test_inference_releases_lock_and_discards_concurrent_changes(self):
         self.prepare_coach()
         request = self.request("llm_coach", dict(family="transfer"))

@@ -1480,8 +1480,9 @@ def learn(ident: str, mode: str = "solo", case: str = "A", pair_label: str | Non
                 if phase.get("experiment", {}).get("required") and not phase["experiment"]["recorded"]:
                     print("Outstanding: predict and compare the bounded experiment (x, z).")
                 keys = {"a": "answer", "t": "submit_artifact", "k": "calibrate", "c": "continue", "s": "skip", "e": "evidence", "h": "hint", "v": "reveal", "r": "review", "f": "feedback", "d": "diagnose", "u": "support", "n": "reassess", "b": "problem_answer", "j": "problem_hint", "x": "experiment_predict", "z": "experiment_result", "lr": "llm_review", "lc": "llm_coach", "lh": "llm_handoff"}
-                if any(name.startswith("llm_") for name in phase["allowed_actions"]):
-                    settings = view["llm"]["configuration"]
+                settings = view["llm"]["configuration"]
+                if settings["status"] == "configured" and any(
+                        name in phase["allowed_actions"] for name in ("llm_review", "llm_coach", "llm_handoff")):
                     print(f"Optional LLM: {settings['base_url']} · {settings['model']}. Selecting lr/lc/lh sends your selected work.")
                     print(view["llm"]["notice"])
                 for pending in view["llm"]["history"]:
