@@ -1,6 +1,6 @@
 {
-  "schema_version": 2,
-  "course_version": "2.0",
+  "schema_version": 3,
+  "course_version": "3.0",
   "blocks": [
     {
       "id": "opening",

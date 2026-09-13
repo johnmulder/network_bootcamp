@@ -26,9 +26,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import learning
+import llm
 
 ROOT = Path(__file__).resolve().parent
 DEFINITION = "delivery/course.json"
+PROTOCOL_VERSION = 3
 ID = re.compile(r"[a-z0-9][a-z0-9.-]{0,79}\Z")
 MARKER = re.compile(r"<!-- delivery:(start|end) ([a-z0-9.-]+) -->\Z")
 
@@ -102,7 +104,7 @@ def definition() -> dict:
 
 
 def validate_definition(data: dict) -> None:
-    if data["schema_version"] != 2 or not data["course_version"]:
+    if data["schema_version"] != PROTOCOL_VERSION or not data["course_version"]:
         raise DeliveryError("Unsupported course definition version")
     blocks = data["blocks"]
     if [block["id"] for block in blocks] != ["opening", "c01", "c02", "c03", "c04", "c05", "c06", "exit"]:
@@ -285,7 +287,7 @@ def evidence_integrity() -> None:
 
 
 def versions(data: dict) -> dict:
-    paths = {DEFINITION, "delivery.py", "learning.py", "delivery/problems.json", "course.py", "agenda.md", "challenges/reference.md", "facilitator/README.md", *ARTIFACTS.values()}
+    paths = {DEFINITION, "delivery.py", "learning.py", "llm.py", "llm_delivery.py", "delivery/problems.json", "course.py", "agenda.md", "challenges/reference.md", "facilitator/README.md", *ARTIFACTS.values()}
     paths.update(str(path.relative_to(ROOT)) for path in ROOT.glob("modules/*/workbench/*.py"))
     for phase in data["phases"]:
         for reference in phase["content"] + phase["hints"] + phase["solutions"]:
@@ -435,7 +437,7 @@ def load_state(directory: Path, data: dict) -> dict:
             raise ValueError("state exceeds size limit")
         state = decode_json(path.read_text(encoding="utf-8"))
         order = [phase["id"] for phase in data["phases"] if phase["implemented"]]
-        if (state["schema_version"] != 2 or state["id"] != directory.name
+        if (state["schema_version"] != PROTOCOL_VERSION or state["id"] != directory.name
                 or state["order"] != order or type(state["revision"]) is not int
                 or state["revision"] < 0 or state["case"] not in ("A", "B")
                 or not isinstance(state["requests"], dict)
@@ -474,6 +476,8 @@ def load_state(directory: Path, data: dict) -> dict:
                         or not isinstance(response["answers"], dict) or not isinstance(response["results"], dict)
                         or set(response["results"]) != {q["id"] for q in problem["questions"]}):
                     raise ValueError("invalid reassessment history")
+        from llm_delivery import validate_state
+        validate_state(state)
     except (OSError, ValueError, KeyError, TypeError, DeliveryError) as error:
         raise DeliveryError(f"Cannot load session: {error}. Preserve this directory; use the matching course copy and saved state, or create a new session.", 3) from error
     if state["versions"] != versions(data):
@@ -498,10 +502,10 @@ def create_session(ident: str, mode: str = "solo", case: str = "A", pair_label: 
     order = [phase["id"] for phase in data["phases"] if phase["implemented"]]
     if not order:
         raise DeliveryError("No phases are implemented", 4)
-    state = dict(schema_version=2, id=ident, versions=versions(data), mode=mode,
+    state = dict(schema_version=PROTOCOL_VERSION, id=ident, versions=versions(data), mode=mode,
                  pair_label=pair_label, case=case, seed=seed,
                  revision=0, created_at=now(), updated_at=now(), order=order,
-                 current=order[0], requests={}, phases={}, learning=[])
+                 current=order[0], requests={}, phases={}, learning=[], llm_requests={})
     for name in order:
         state["phases"][name] = dict(status="incomplete", submissions=[], checks={},
                                      views=[], hints=0, exposed=False, exposed_checks=[], reviews=[])
@@ -653,6 +657,8 @@ def allowed_actions(phase: dict) -> list[str]:
         actions.append("review")
     if phase["kind"] == "feedback":
         actions.append("feedback")
+    from llm_delivery import actions as llm_actions
+    actions.extend(llm_actions(phase))
     return actions
 
 
@@ -724,6 +730,7 @@ def objective_status(state: dict, data: dict) -> list[dict]:
 
 
 def status_result(state: dict, data: dict, result: dict | None = None, view_phase: str | None = None) -> dict:
+    from llm_delivery import public_history
     current = view_phase or state["current"]
     view = None
     if current:
@@ -787,13 +794,18 @@ def status_result(state: dict, data: dict, result: dict | None = None, view_phas
         if "calibrate" in view["allowed_actions"]:
             view["calibration"] = [{k: example[k] for k in ("id", "context", "response")} for example in learning.catalog()["calibration"]]
     released = state["order"][:state["order"].index(state["current"]) + 1] if state["current"] else state["order"]
-    return dict(protocol_version=2, status="ok", session_id=state["id"], revision=state["revision"],
+    if view is not None and any(entry["status"] == "pending" for entry in state["llm_requests"].values()):
+        view["allowed_actions"].append("llm_cancel")
+    return dict(protocol_version=PROTOCOL_VERSION, status="ok", session_id=state["id"], revision=state["revision"],
                 phase=view, completion=completion(state, data), result=result,
                 current_phase_id=state["current"],
                 released_phases=[dict(id=name, status=state["phases"][name]["status"]) for name in released],
                 reviews=review_statuses(state, data),
                 objectives=objective_status(state, data),
-                workspace=f"work/{state['id']}")
+                workspace=f"work/{state['id']}",
+                llm=dict(configuration=llm.availability(), history=public_history(state),
+                         context_categories=["submitted explanation", "opened evidence", "rubric and recorded feedback"],
+                         notice="LLM actions send selected work to the configured endpoint and count as answer-bearing help."))
 
 
 def session_status(ident: str, phase_id: str | None = None) -> dict:
@@ -1060,6 +1072,12 @@ def act(ident: str, request: dict) -> dict:
             or type(request["expected_revision"]) is not int or not isinstance(request["payload"], dict)
             or not isinstance(request["phase_id"], str) or not isinstance(request["action"], str)):
         raise DeliveryError("Invalid request ID, revision, or payload")
+    if request["action"].startswith("llm_"):
+        from llm_delivery import act as llm_act
+        try:
+            return llm_act(ident, request)
+        except llm.LLMError as error:
+            raise DeliveryError(str(error), 2) from None
     data = definition()
     directory = session_dir(ident)
     with session_lock(directory):
@@ -1069,6 +1087,8 @@ def act(ident: str, request: dict) -> dict:
             if old["request"] != request:
                 raise DeliveryError("Request ID was already used for different input", 3)
             return old["response"]
+        if request["request_id"] in state["llm_requests"]:
+            raise DeliveryError("Request ID is reserved for an LLM request", 3)
         if state["revision"] != request["expected_revision"]:
             raise DeliveryError("Stale session revision; fetch status and retry with a new request ID", 3)
         name = request["phase_id"]
@@ -1323,10 +1343,11 @@ def act(ident: str, request: dict) -> dict:
 
 
 def export_session(ident: str, include_artifacts: bool = False) -> dict:
+    from llm_delivery import public_history
     data = definition()
     directory = session_dir(ident)
     state = load_state(directory, data)
-    result = dict(protocol_version=2, status="ok", session_id=ident, revision=state["revision"], versions=state["versions"],
+    result = dict(protocol_version=PROTOCOL_VERSION, status="ok", session_id=ident, revision=state["revision"], versions=state["versions"],
                   mode=state["mode"], pair_label=state["pair_label"], main_case=state["case"], exit_case=other_case(state),
                   created_at=state["created_at"], updated_at=state["updated_at"],
                   completion=completion(state, data), reviews=review_statuses(state, data),
@@ -1354,6 +1375,7 @@ def export_session(ident: str, include_artifacts: bool = False) -> dict:
                                self_reported_minutes=p.get("self_reported_minutes"),
                                practice_attempts=len(p.get("practice", []))) for name, p in state["phases"].items()],
                   feedback={key: state["phases"]["exit.feedback"].get("feedback", {}).get(key) for key in ("wanted_to_know", "manageable")},
+                  llm=public_history(state),
                   included_files=[], timing_note="Timestamps and self-reported durations do not measure active learning.")
     if include_artifacts:
         result["artifacts"] = {name: artifact_text(directory, name) for name in ARTIFACTS}
@@ -1363,6 +1385,7 @@ def export_session(ident: str, include_artifacts: bool = False) -> dict:
         result["responses"] = {name: {key: p.get(key) for key in ("submissions", "reviews", "skip_reason", "feedback", "diagnosis", "experiments", "calibration")}
                                for name, p in state["phases"].items()}
         result["learning_responses"] = [{"variant_id": a["variant_id"], "responses": [{k:v for k,v in r.items() if k != "results"} for r in a["responses"]]} for a in state.get("learning", [])]
+        result["llm_history"] = copy.deepcopy(list(state["llm_requests"].values()))
     return result
 
 
@@ -1408,6 +1431,10 @@ def format_export(result: dict, format_name: str) -> str:
         raw = json.dumps(result["learning_responses"], indent=2, ensure_ascii=False)
         fence = "`" * max(3, max((len(match) for match in re.findall(r"`+", raw)), default=2) + 1)
         lines += ["", "## Included Reassessment Responses", "", fence + "json", raw, fence]
+    if "llm_history" in result:
+        raw = json.dumps(result["llm_history"], indent=2, ensure_ascii=False)
+        fence = "`" * max(3, max((len(match) for match in re.findall(r"`+", raw)), default=2) + 1)
+        lines += ["", "## Included LLM Advice and Context", "", fence + "json", raw, fence]
     return "\n".join(lines) + "\n"
 
 
@@ -1452,7 +1479,14 @@ def learn(ident: str, mode: str = "solo", case: str = "A", pair_label: str | Non
                 print("Outstanding facts: " + ", ".join(q["id"] for q in phase["checkpoints"] if not phase["progress"]["checks"].get(q["id"], {}).get("correct")))
                 if phase.get("experiment", {}).get("required") and not phase["experiment"]["recorded"]:
                     print("Outstanding: predict and compare the bounded experiment (x, z).")
-                keys = {"a": "answer", "t": "submit_artifact", "k": "calibrate", "c": "continue", "s": "skip", "e": "evidence", "h": "hint", "v": "reveal", "r": "review", "f": "feedback", "d": "diagnose", "u": "support", "n": "reassess", "b": "problem_answer", "j": "problem_hint", "x": "experiment_predict", "z": "experiment_result"}
+                keys = {"a": "answer", "t": "submit_artifact", "k": "calibrate", "c": "continue", "s": "skip", "e": "evidence", "h": "hint", "v": "reveal", "r": "review", "f": "feedback", "d": "diagnose", "u": "support", "n": "reassess", "b": "problem_answer", "j": "problem_hint", "x": "experiment_predict", "z": "experiment_result", "lr": "llm_review", "lc": "llm_coach", "lh": "llm_handoff"}
+                if any(name.startswith("llm_") for name in phase["allowed_actions"]):
+                    settings = view["llm"]["configuration"]
+                    print(f"Optional LLM: {settings['base_url']} · {settings['model']}. Selecting lr/lc/lh sends your selected work.")
+                    print(view["llm"]["notice"])
+                for pending in view["llm"]["history"]:
+                    if pending["status"] == "pending":
+                        print(f"LLM pending: {pending['id']}. Recover with ./course llm cancel --id {ident} --request-id {pending['id']}")
                 choices = [f"{key}: {value}" for key, value in keys.items() if value in phase["allowed_actions"]]
                 action = input("\n" + " · ".join(choices) + f" · g: revisit · q: quit [{default}]: ").strip().lower() or default
             if action == "q":
@@ -1536,6 +1570,14 @@ def learn(ident: str, mode: str = "solo", case: str = "A", pair_label: str | Non
                     payload = {"family": input(f"Family [{families[0]}]: ").strip() or families[0]}
                     if operation == "support":
                         payload["level"] = input("Support: orientation, practice, worked [practice]: ").strip() or "practice"
+                elif operation == "llm_coach":
+                    families = list(dict.fromkeys(b["family"] for b in phase["assessment"].values() if b["role"] == "conceptual"))
+                    print("Available families: " + ", ".join(families))
+                    payload = {"family": input("Family: ").strip()}
+                elif operation == "llm_handoff":
+                    print("Recipient roles: " + ", ".join(llm.ROLES))
+                    payload = dict(role=input("Role [incident-response]: ").strip() or "incident-response",
+                                   text=input("Reply to the previous question (Enter for the first turn): "))
                 elif operation in ("problem_answer", "problem_hint"):
                     for entry in phase["problems"]:
                         print(json.dumps(entry, indent=2))
@@ -1567,6 +1609,10 @@ def learn(ident: str, mode: str = "solo", case: str = "A", pair_label: str | Non
                     print(json.dumps(result["experiment"], indent=2))
                 if "calibration" in result:
                     print(json.dumps(result["calibration"], indent=2))
+                if "advice" in result:
+                    print(json.dumps(result["advice"], indent=2, ensure_ascii=False))
+                if "notice" in result:
+                    print(result["notice"])
                 for dimension, prompt in result.get("revision_prompts", {}).items():
                     print(f"Revise {dimension}: {prompt}")
                 for name, check in result.get("checks", {}).items():
@@ -1627,14 +1673,14 @@ def cli(argv: list[str]) -> int:
                         raise
                     args = None
             if args is None:
-                print(json.dumps(dict(protocol_version=2, status="ok", help=help_output.getvalue())))
+                print(json.dumps(dict(protocol_version=PROTOCOL_VERSION, status="ok", help=help_output.getvalue())))
                 return 0
         else:
             args = parser.parse_args(argv)
         if args.command == "learn":
             return learn(args.id, args.mode, args.case, args.pair_label)
         if args.command == "doctor":
-            result = dict(protocol_version=2, status="ok", **doctor())
+            result = dict(protocol_version=PROTOCOL_VERSION, status="ok", **doctor())
             code = 0 if result["ready"] else 4
         else:
             code = 0
@@ -1657,7 +1703,7 @@ def cli(argv: list[str]) -> int:
                     target.parent.mkdir(parents=True, exist_ok=True)
                     with target.open("x", encoding="utf-8", newline="") as handle:
                         handle.write(output)
-                    result = dict(protocol_version=2, status="ok", output=str(target.relative_to(directory)),
+                    result = dict(protocol_version=PROTOCOL_VERSION, status="ok", output=str(target.relative_to(directory)),
                                   included_files=result["included_files"])
                     print(json.dumps(result) if json_mode else f"Wrote {target}")
                 else:
@@ -1674,7 +1720,7 @@ def cli(argv: list[str]) -> int:
     except (DeliveryError, OSError, ValueError, KeyError, TypeError) as error:
         code = error.code if isinstance(error, DeliveryError) else 4
         if json_mode:
-            print(json.dumps(dict(protocol_version=2, status="error", error=str(error), code=code,
+            print(json.dumps(dict(protocol_version=PROTOCOL_VERSION, status="error", error=str(error), code=code,
                                   details=error.details if isinstance(error, DeliveryError) else None)))
         else:
             print(f"error: {error}", file=sys.stderr)

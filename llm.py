@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-import argparse
+import contextlib
 from dataclasses import dataclass, field
 import http.client
 import ipaddress
+import io
 import json
 import os
 import sys
@@ -13,6 +14,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+import uuid
 
 FEATURES = frozenset({"review", "coach", "handoff", "author"})
 PROMPT_VERSION = 1
@@ -214,6 +216,8 @@ def generate(config: Config, feature: str, context: dict) -> dict:
     if feature not in PROMPTS or (feature != "check" and feature not in config.features):
         raise LLMError("This LLM feature is disabled.", "disabled")
     raw_context = json.dumps(context, ensure_ascii=False, allow_nan=False)
+    if config.api_key and config.api_key in raw_context:
+        raise LLMError("Selected context contains credential material; request discarded.", "context-limit")
     if len(raw_context.encode()) > CONTEXT_LIMIT:
         raise LLMError("Selected context exceeds 64 KiB; choose a smaller artifact region.", "context-limit")
     payload = dict(model=config.model, stream=False,
@@ -234,6 +238,8 @@ def generate(config: Config, feature: str, context: dict) -> dict:
             raw = response.read(RESPONSE_LIMIT + 1)
         if len(raw) > RESPONSE_LIMIT:
             raise LLMError("Model response exceeds the size limit.", "invalid-output")
+        if config.api_key and config.api_key.encode() in raw:
+            raise LLMError("The endpoint returned credential material; response discarded.", "invalid-output")
         envelope = decode(raw.decode("utf-8"))
         choice = envelope["choices"][0]
         message = choice["message"]
@@ -257,23 +263,69 @@ def generate(config: Config, feature: str, context: dict) -> dict:
 
 
 def cli(argv: list[str]) -> int:
-    parser = argparse.ArgumentParser(prog="./course llm")
-    commands = parser.add_subparsers(dest="command", required=True)
-    check = commands.add_parser("check", help="validate settings locally; --connect sends a synthetic request")
-    check.add_argument("--connect", action="store_true")
-    check.add_argument("--json", action="store_true")
-    args = parser.parse_args(argv)
+    import delivery as d
+    json_mode = "--json" in argv
     try:
-        result = availability()
-        if args.connect:
-            config = configuration()
-            result = dict(status="ok", configuration=config.public(), result=generate(config, "check", {}))
+        parser = d.JsonParser(prog="./course llm", description=__doc__)
+        commands = parser.add_subparsers(dest="command", required=True)
+        check = commands.add_parser("check", help="validate settings locally; --connect sends a synthetic request")
+        check.add_argument("--connect", action="store_true")
+        check.add_argument("--json", action="store_true")
+        for name in ("review", "coach", "handoff", "cancel"):
+            command = commands.add_parser(name)
+            command.add_argument("--id", required=True)
+            command.add_argument("--phase", required=name in ("review", "coach"))
+            command.add_argument("--json", action="store_true")
+            if name == "coach":
+                command.add_argument("--family", required=True)
+            if name == "handoff":
+                command.add_argument("--role", choices=ROLES, default="incident-response")
+                command.add_argument("--text", default="", help="your reply to the previous recipient question")
+            if name == "cancel":
+                command.add_argument("--request-id", required=True)
+        if json_mode:
+            with contextlib.redirect_stdout(io.StringIO()) as output:
+                try:
+                    args = parser.parse_args(argv)
+                except SystemExit as error:
+                    if error.code:
+                        raise
+                    args = None
+            if args is None:
+                print(json.dumps(dict(status="ok", help=output.getvalue())))
+                return 0
+        else:
+            args = parser.parse_args(argv)
+        if args.command == "check":
+            result = availability()
+            if args.connect:
+                config = configuration()
+                result = dict(status="ok", configuration=config.public(), result=generate(config, "check", {}))
+        else:
+            phase_id = args.phase or ("c06.exchange" if args.command == "handoff" else None)
+            view = d.session_status(args.id, phase_id)
+            phase_id = phase_id or view["current_phase_id"] or "exit.feedback"
+            payload = {}
+            if args.command == "coach":
+                payload = dict(family=args.family)
+            elif args.command == "handoff":
+                payload = dict(role=args.role, text=args.text)
+            elif args.command == "cancel":
+                payload = dict(request_id=args.request_id)
+            if not json_mode and args.command != "cancel":
+                settings = view["llm"]["configuration"]
+                print(f"Optional LLM: {settings.get('base_url', 'not configured')} · {settings.get('model', '')}", file=sys.stderr)
+                print(view["llm"]["notice"], file=sys.stderr)
+            result = d.act(args.id, dict(request_id=uuid.uuid4().hex, expected_revision=view["revision"],
+                                        phase_id=phase_id, action="llm_" + args.command, payload=payload))
         print(json.dumps(result, indent=2))
         return 0 if result["status"] in ("ok", "configured", "disabled") else 2
-    except LLMError as error:
-        result = dict(status="error", code=error.code, message=str(error))
-        print(json.dumps(result) if args.json else str(error), file=sys.stdout if args.json else sys.stderr)
-        return 4 if error.code in ("unavailable", "invalid-output") else 2
+    except (LLMError, d.DeliveryError, OSError) as error:
+        code = error.code if isinstance(error, (LLMError, d.DeliveryError)) else "filesystem"
+        message = "Could not access local LLM work files." if isinstance(error, OSError) else str(error)
+        result = dict(status="error", code=code, message=message)
+        print(json.dumps(result) if json_mode else message, file=sys.stdout if json_mode else sys.stderr)
+        return code if isinstance(code, int) else 4 if code in ("unavailable", "invalid-output", "filesystem") else 2
 
 
 if __name__ == "__main__":
