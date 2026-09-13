@@ -101,6 +101,36 @@ or server. Clear `BOOTCAMP_LLM_FEATURES` to hide inference actions and prevent
 new calls. A request already in flight can still finish; explicitly cancel
 its pending ID if its result should be discarded.
 
+### Tested local setup
+
+The [September 13 evaluation](../facilitator/local-model-validation.md) used
+the user's `openai/gpt-oss-120b` model in LM Studio 0.4.24+1 on an M3 Max with
+128 GiB RAM. Its loaded context was 44,032 tokens. Coaching and handoff were
+the best starting features in those limited synthetic tests; review and
+authoring did not meet the quality criteria. This does not qualify smaller
+models or establish learner benefit.
+
+For that already loaded, unauthenticated server:
+
+```sh
+export BOOTCAMP_LLM_FEATURES=coach,handoff
+export BOOTCAMP_LLM_BASE_URL=http://localhost:1234/v1
+export BOOTCAMP_LLM_MODEL=openai/gpt-oss-120b
+unset BOOTCAMP_LLM_API_KEY
+export BOOTCAMP_LLM_TOKEN_FIELD=max_tokens
+export BOOTCAMP_LLM_RESPONSE_FORMAT=json_schema
+export BOOTCAMP_LLM_MAX_INPUT_BYTES=16384
+export BOOTCAMP_LLM_MAX_OUTPUT_TOKENS=2048
+export BOOTCAMP_LLM_TIMEOUT_SECONDS=180
+./course llm check --connect
+```
+
+The course uses `/v1/chat/completions` on this server. Configure the `/v1`
+base URL even when an LM Studio example uses its native `/api/v1/chat` route;
+the native request/response format is different. No API key is needed while
+authentication is disabled. These settings affect only the launching shell;
+the course still defaults to disabled features.
+
 ## Learner actions
 
 In guided delivery, `lr`, `lc`, and `lh` appear when the respective feature and
@@ -273,10 +303,12 @@ New session reassessments are never generated at runtime.
 
 ## Evaluation status and commands
 
-No OpenAI or LM Studio model has been qualified in the current implementation
-environment. Transport tests use simulated OpenAI and LM Studio responses,
-including authenticated and unauthenticated settings. These tests establish
-client behavior, not real-model quality or learning benefit.
+The local GPT-OSS 120B setup has an initial, feature-specific
+[live evaluation](../facilitator/local-model-validation.md). Other models and
+OpenAI-hosted endpoints remain unqualified. Automated transport tests use
+simulated OpenAI and LM Studio responses, including authenticated and
+unauthenticated settings. Those tests establish client behavior; live schema
+success also requires separate content review and does not prove learner benefit.
 
 Ten synthetic examples cover all four features, with calibration and held-out
 splits. Their expectations are proposed checks, not facilitator annotations.

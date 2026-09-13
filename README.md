@@ -32,8 +32,9 @@ This README is the operational entry point for using the implemented material.
 
 Six teaching hours plus 60 minutes of breaks is the planned schedule, with
 installation additional. The [validation record](facilitator/validation.md)
-reports software checks separately from learner trials: observed learner
-attainment, class duration, and LLM feedback quality have not been established.
+reports software and model-specific checks separately from learner trials.
+Observed learner attainment, class duration, and the learning benefit of LLM
+feedback have not been established.
 
 ## Start Here
 
