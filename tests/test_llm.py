@@ -375,6 +375,20 @@ class AuthorTests(unittest.TestCase):
         self.assertEqual(saved["examples"][0]["split"], "held-out")
         self.assertIsNone(saved["examples"][0]["facilitator"]["grounded"])
 
+    def test_repeated_evaluation_records_configuration_and_bounds_calls(self):
+        evaluation = d.module_at("verification/check_llm.py")
+        with mock.patch.object(llm, "generate", side_effect=self.generated) as generate:
+            result = evaluation.evaluate("all", "calibration", "repeated.json", repeat=3, server_info="Synthetic server")
+            self.assertEqual(generate.call_count, 15)
+        saved = json.loads(Path(result["output"]).read_text())
+        self.assertEqual(saved["configuration"]["response_format"], "prompt")
+        self.assertEqual(saved["server_info"], "Synthetic server")
+        self.assertEqual({v["repetition"] for v in saved["examples"]}, {1, 2, 3})
+        self.assertTrue(all(v["output"]["input_bytes"] > 0 for v in saved["examples"]))
+        with mock.patch.object(llm, "generate", side_effect=AssertionError("network")):
+            with self.assertRaises(llm.LLMError):
+                evaluation.evaluate("author", "calibration", "invalid.json", repeat=0)
+
 
 if __name__ == "__main__":
     unittest.main()

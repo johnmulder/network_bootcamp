@@ -349,6 +349,30 @@ class AdvisoryTests(unittest.TestCase):
             fixtures.SessionTests.finish_day(self)
             self.assertTrue(d.session_status("learner")["completion"]["delivery_finished"])
 
+    def test_session_evaluation_exercises_real_actions_with_mocked_transport(self):
+        evaluation = d.module_at("verification/check_llm.py")
+
+        def evidence(argv, **kwargs):
+            source = next(arg for arg in argv if arg.startswith("labs/fixtures/"))
+            return dict(returncode=0, truncated=False, stdout=(d.ROOT / source).read_text())
+
+        def generate(config, feature, context):
+            value = self.generated(config, feature, context)
+            if feature == "review":
+                value["advice"] = dict(findings=[], insufficient_evidence=True)
+            return value
+
+        with mock.patch.object(d, "run_tool", side_effect=evidence), \
+                mock.patch.object(llm, "generate", side_effect=generate) as provider:
+            result = evaluation.evaluate_session("session-evaluation.json", "Synthetic server")
+            self.assertEqual(provider.call_count, 6)
+        from pathlib import Path
+        record = json.loads(Path(result["output"]).read_text())
+        self.assertEqual(record["status"], "human-review-pending")
+        self.assertTrue(record["budget_rejection_verified"])
+        self.assertTrue(record["replay_verified"])
+        self.assertEqual(len(record["examples"]), 6)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -291,6 +291,26 @@ python3 -B verification/check_llm.py --live --feature review --split calibration
 python3 -B verification/check_llm.py --live --feature review --split held-out --output review-held-out.json
 ```
 
+Use `--feature all --repeat 3` for three repetitions across the enabled
+features in one split. `--server-info` records non-secret server/backend,
+hardware, and loaded context-length details. Runs record input bytes,
+configuration, elapsed time, and token usage when available. Up to ten
+repetitions and 80 calls per invocation are accepted; there are no retries.
+Freeze the chosen configuration after calibration and before held-out runs.
+
+With `coach,review,handoff` enabled and core tools installed, also run:
+
+```sh
+python3 -B verification/check_llm.py --live-session --output session-evaluation.json
+```
+
+This uses temporary synthetic sessions and real evidence commands for up to
+six calls: coaching, incident review, three handoff turns, and capstone review.
+It verifies replay, private exports, and rejection of an over-budget request
+without inference. Failed advice is recorded; a failed handoff ends its
+exchange. This is a software rehearsal with synthetic structural artifacts,
+not an assessment of real learner work.
+
 Repeat for `coach`, `handoff`, and `author`, and for each model/server setup.
 Outputs go under `work/llm-evals`; use distinct names. Fill the facilitator
 fields and record the actual server version. Schema-valid output is not a
