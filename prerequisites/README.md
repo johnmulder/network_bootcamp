@@ -1,6 +1,6 @@
 # Prerequisites
 
-The course runs entirely on one Mac laptop. No second host, virtual machine,
+The required course runs on one Mac laptop. No second host, virtual machine,
 container runtime, cloud account, proprietary analyzer, or enterprise network
 access is required.
 
@@ -9,12 +9,14 @@ access is required.
 - macOS on Apple silicon or Intel
 - a local administrator account for initial installation and optional packet
   capture
-- Homebrew when installing missing or outdated tools
+- Homebrew when installing missing tools or Python older than 3.10
 - internet access during initial installation
 
 The core course reads local, saved evidence. It does not require `sudo`, create
 connections to lab targets, or depend on another machine. Optional live
 observations generate traffic only on the laptop's loopback interface (`lo0`).
+Optional [LLM support](../delivery/llm.md) has separate endpoint/model settings;
+setup does not install LM Studio, download models, or configure a hosted account.
 
 ## Install
 
@@ -38,6 +40,8 @@ system Python still takes precedence afterward, correct your shell's Homebrew
 PATH setup and rerun the check. A readiness
 check uses available commands and does not refresh Homebrew package metadata.
 Existing usable installations are accepted even if their formula names differ.
+Setup checks command availability and the Python version; it does not upgrade
+an existing TShark or jq merely because a newer release exists.
 Homebrew remains the installer for missing tools. Readiness checks do not need
 Homebrew when the commands are already available. `./course doctor --json`
 also checks representative jq operations and TShark fields.
@@ -63,7 +67,7 @@ There is no assigned iperf3 exercise in this course.
 
 | Tool | Course role | Requirement | License |
 | --- | --- | --- | --- |
-| Python | Builds fixtures and runs all three workbenches | Core | Python-2.0 |
+| Python | Runs the course, workbenches, verification, optional LLM client, and fixture builder | Core | Python-2.0 |
 | TShark | Decodes saved packet captures and optional local captures | Core | GPL-2.0-or-later |
 | Zeek | Produces and interprets network-security telemetry | Extended study | BSD-3-Clause |
 | jq | Filters JSON fixtures and structured logs | Core | MIT |

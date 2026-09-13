@@ -35,9 +35,10 @@ unauthenticated local judgments; no automated prose grading is introduced.
 
 State and JSON protocol version 3 reject older sessions without migration,
 reset, or regrading. Use the matching older course copy to resume or export old
-work; create a separate session for the new course. Default exports omit prose
-and answer keys. The local course remains an open learning environment, not an
-exam security boundary.
+work; create a separate session for the new course. Default exports omit learner
+answers, artifact text, and generated advice. JSON summaries still include
+computed experiment results and calibration feedback. The local course remains
+an open learning environment, not an exam security boundary.
 
 Support replaces part of the current block's practice time: one support and
 reassessment cycle per family during class, another fresh attempt optionally
@@ -61,8 +62,9 @@ assigned prompts and attempt counts, never pre-attempt keys.
 Terminal keys are `u` for support, `n` for reassessment, `b` to answer the assigned
 problem, and `j` for its answer-bearing help. An unfinished assignment is returned
 again instead of rerolled. A repeated request ID returns its saved result.
-Supported corrections count as recorded work; default exports include result
-categories and parameters without learner answers or authored keys.
+Supported corrections count as recorded work. Default JSON exports include
+result categories and parameters without learner answers or unshown
+reassessment keys.
 
 ## Optional LLM Advice
 
@@ -81,6 +83,7 @@ remain governed by the finite authored catalog.
 Advice and exposure are committed together before delivery. Pending, failed,
 cancelled, and stale advice do not consume an independent attempt. A lost
 response after commit retains exposure and replays the same saved advice.
-Default exports contain help metadata; explicit artifact exports include the
-private advice and context. LLM histories are separate from self/facilitator
-review histories and never represent authenticated external assessment.
+Default JSON exports contain help metadata; explicit JSON/Markdown artifact
+exports include private advice and context. LLM histories are separate from
+self/facilitator review histories and never represent authenticated external
+assessment.

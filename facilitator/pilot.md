@@ -76,7 +76,7 @@ navigation that consumed investigation time.
 
 Use separate anonymous sessions, including for partners. Save raw worksheets
 and exports under ignored `work/`; do not commit private free-text work.
-Default exports include per-objective attempt counts, first-response outcomes,
+Default JSON exports include per-objective attempt counts, first-response outcomes,
 supported corrections, fresh attainment, variant IDs, support use, error codes,
 review revisions, evidence-view order, and optional confidence/engagement data.
 

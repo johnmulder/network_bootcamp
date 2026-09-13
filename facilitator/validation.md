@@ -6,6 +6,25 @@ historical delivery and documentation checks. Their counts describe those
 snapshots. No software check establishes learner attainment or an observed
 class duration.
 
+## Current Documentation Audit
+
+The operational guides were checked against the current CLI, session/export
+code, optional LLM context builder, setup script, and fixture/package tools.
+Corrections cover the 31 evidence views, format-specific export contents,
+private status responses, feature-specific LLM context, configuration limits,
+request replay, and recovery using a matching course copy. Packaging uses Git
+for its file list and the working tree for file contents.
+
+Course verification passed for 36 fixtures, 83 questions, 36 phases, and the
+17-event timeline. Temporary-session probes confirmed export privacy and
+format differences; offline configuration probes confirmed endpoint path
+restrictions. Markdown lint passed for 136 files, local link/anchor checks
+passed for 248 links, and Git whitespace checks passed. Documentation edits
+preserve the assessed-content fingerprint. This audit does not revalidate
+every networking explanation in the reference
+library. The 103-test run below remains the latest full suite; live-provider
+qualification and learner validation remain pending.
+
 ## Course 3.0 Optional LLM Validation
 
 The client, session actions, maintainer drafts, and synthetic evaluation

@@ -12,6 +12,7 @@ enterprise hardware, or proprietary analyzers are required.
 
 | Curriculum element | Implemented material |
 | --- | --- |
+| Course / session protocol / learning contract | 3.0 / 3 / 2 |
 | Required one-day challenges | 6, plus opening and individual exit |
 | Required learner deliverables | 3 connected bundles |
 | Modules in the reference library | 3 |
@@ -28,6 +29,11 @@ enterprise hardware, or proprietary analyzers are required.
 
 The [course agenda](agenda.md) is the authoritative curriculum specification.
 This README is the operational entry point for using the implemented material.
+
+Six teaching hours plus 60 minutes of breaks is the planned schedule, with
+installation additional. The [validation record](facilitator/validation.md)
+reports software checks separately from learner trials: observed learner
+attainment, class duration, and LLM feedback quality have not been established.
 
 ## Start Here
 
@@ -71,6 +77,11 @@ return later. Edit the three deliverables in the displayed session directory.
 The menu also offers the reference library, optional practice, full timeline,
 verification, and read-only challenge browsing.
 
+The menu uses the session ID `bootcamp`, stored under `work/bootcamp/`. Use
+`./course learn --id my-session` for another workspace, including when
+`work/bootcamp/` already contains manually created files. Without a terminal,
+`./course` prints a command index; saved automation uses `./course session`.
+
 Direct commands remain available for repeatable facilitation and scripting:
 
 | Goal | Command |
@@ -106,7 +117,9 @@ finished delivery, passing rubric reviews, and independent completion.
 
 [LLM support](delivery/llm.md) is disabled by default and independently enables
 review, coaching, handoff practice, or maintainer drafting. Configure a base
-URL, model, and endpoint-specific API key to use OpenAI or local LM Studio.
+URL and model to use OpenAI or local LM Studio. Supply an endpoint-specific
+API key when the server requires authentication; an unauthenticated local
+server needs no key.
 The guide includes both setup examples and the optional connection check.
 The complete course remains usable offline with no credentials or model server.
 
@@ -140,6 +153,9 @@ combining each guide, its saved evidence, and the interactive workbench.
 ├── course             # Natural guided-course command
 ├── course.py          # Short course navigation and practice commands
 ├── delivery.py        # Saved sessions, evidence actions, and assessment state
+├── learning.py        # Deterministic scoring, reassessment, and experiments
+├── llm.py             # Optional HTTP client, validation, and maintainer drafts
+├── llm_delivery.py    # Session context, advisory history, and help exposure
 ├── delivery/          # Course definition and automation contract
 ├── prerequisites/    # Mac setup, tool roles, and readiness checks
 ├── labs/             # Fixture builder and reproducible saved evidence
@@ -175,10 +191,14 @@ python3 -B -m unittest discover -s tests -v
 ```
 
 The suite exercises the course navigator, fixture builder, all three
-workbenches, setup, and saved delivery. It covers packet construction,
-routing and architecture decisions, timeline correlation, question identity,
+workbenches, setup, saved delivery, and optional LLM support. It covers packet
+construction, routing and architecture decisions, timeline correlation,
+question identity,
 staged evidence, save/resume, concurrent requests, failure recovery, artifact
-validation, review staleness, and private exports.
+validation, review staleness, reassessment, and private exports. LLM tests use
+mocked HTTP responses to check configuration, output validation, credential
+handling, interrupted requests, and assessment exposure; they do not qualify
+a real provider or model.
 
 Tests build fixtures only in temporary directories. Setup tests use simulated
 macOS and Homebrew commands, so they never install software or depend on the

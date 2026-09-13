@@ -2,8 +2,9 @@
 
 The course includes four experimental advisory features: rubric-based review,
 adaptive explanations, a handoff practice partner, and maintainer drafting.
-Each is disabled by default. The complete course works offline with no model
-server, credentials, or additional Python packages.
+Each is disabled by default. After core prerequisites are installed, the
+complete required course works offline with no model server, credentials,
+or additional Python packages.
 
 Only an explicit LLM action sends context to the configured endpoint. Setup,
 normal submissions, status, exports, verification, and course packaging never
@@ -13,18 +14,24 @@ available. An unavailable local model never triggers a fallback to OpenAI.
 ## Configure a server
 
 Set these environment variables in the shell that launches `./course`.
-Configuration is not stored in course sessions. Model/endpoint provenance is
-recorded for each advisory result, but API keys are never stored or exported.
+Sessions record the configured model and endpoint as request provenance, but
+do not serialize the API-key setting. Selected learner text and files are
+not a general secret-redaction system; see the context and export rules below.
 
 | Variable | Default | Meaning |
 | --- | --- | --- |
 | `BOOTCAMP_LLM_FEATURES` | Empty | Comma-separated subset of `review`, `coach`, `handoff`, `author`. |
-| `BOOTCAMP_LLM_BASE_URL` | Unset | API root ending in `/v1`; HTTPS, or HTTP on loopback. |
+| `BOOTCAMP_LLM_BASE_URL` | Unset | API root whose path is exactly `/v1`; HTTPS, or HTTP on loopback. |
 | `BOOTCAMP_LLM_MODEL` | Unset | Exact model identifier available on that server. |
 | `BOOTCAMP_LLM_API_KEY` | Unset | Endpoint-specific bearer token. OpenAI requires it; local authentication may be disabled. |
 | `BOOTCAMP_LLM_TOKEN_FIELD` | `max_completion_tokens` | Set to `max_tokens` for the documented LM Studio profile. |
-| `BOOTCAMP_LLM_MAX_OUTPUT_TOKENS` | `2048` | Positive output budget, maximum 8192. |
-| `BOOTCAMP_LLM_TIMEOUT_SECONDS` | `60` | Positive request timeout, maximum 300 for slower local models. |
+| `BOOTCAMP_LLM_MAX_OUTPUT_TOKENS` | `2048` | Integer output budget, 1–8192. |
+| `BOOTCAMP_LLM_TIMEOUT_SECONDS` | `60` | Integer timeout for blocking network operations, 1–300 seconds; not a total elapsed-time limit. |
+
+Trailing slashes are normalized. Custom prefixes such as `/proxy/v1`, a full
+`/v1/chat/completions` URL, embedded credentials, query strings, and fragments
+are rejected. HTTP requires `localhost` or a loopback IP literal; other hosts
+require HTTPS. The selected model must be supplied explicitly.
 
 The client sends text to `/v1/chat/completions` without streaming, tools, or
 provider-specific structured-output options. It validates JSON advice locally.
@@ -73,7 +80,9 @@ the credential. Do not place literal keys in command history or tracked files.
 `check` is local configuration validation. `check --connect` explicitly sends
 one small synthetic request, with no learner work, and requires an enabled
 feature. Add `--json` for scripting. Run checks again after changing a model
-or server. Clear `BOOTCAMP_LLM_FEATURES` to disable all features immediately.
+or server. Clear `BOOTCAMP_LLM_FEATURES` to hide inference actions and prevent
+new calls. A request already in flight can still finish; explicitly cancel
+its pending ID if its result should be discarded.
 
 ## Learner actions
 
@@ -102,8 +111,10 @@ Review returns up to three findings with an exact quoted claim, evidence IDs,
 explanation, and revision question. Coaching uses the recorded misconception
 and asks one guiding question. Handoff roles are `network-operations`,
 `architecture`, `security`, and `incident-response`; each unchanged handoff has
-a maximum of three model turns. Reply to the previous question before the next
-turn. Editing the assessed handoff starts a new exchange.
+a maximum of three completed model turns. Reply to the previous question before
+the next turn. The bound artifact regions and cited ledger rows define the
+snapshot: changing them creates a different exchange. Changing only the role
+does not reset the limit, and restoring an earlier snapshot reuses its history.
 
 Start evaluation with Challenge 5. Review is also implemented for packet-path,
 architecture, and capstone regions, but these features have not yet been
@@ -111,16 +122,27 @@ validated with learners. No LLM advice is available in the independent exit.
 
 ## Evidence, assessment, and privacy
 
-Advice uses the bound artifact regions, relevant recorded answers, rubric,
-and evidence opened through the guided session. Open every cited ledger
-record's evidence view before requesting review. Reading a file manually does
-not record an evidence-view action.
+Each feature sends a different selection of context:
+
+| Feature | Learner content sent |
+| --- | --- |
+| Review | Current bound artifact regions, their cited ledger rows, the review guide, phase instructions, and opened evidence from that block. A prior explanation submission is required, but file edits since that submission are included. |
+| Coaching | The latest committed checkpoint explanation for the selected family, its answers and deterministic feedback, question prompts, and opened evidence. It does not coach an assigned reassessment response or reread edited artifact prose. |
+| Handoff | Current bound packet-path, architecture, and handoff regions, cited ledger rows, phase instructions, opened evidence, the selected role, and replies/questions from the same snapshot. |
+| Authoring | A supported catalog example and its authored/computed facts; no learner session is read. |
+
+Session evidence is limited to views opened in the same block at or before the
+requested phase. Open every cited ledger record's evidence view before review
+or handoff practice. Reading a file manually does not record a view action.
 
 The client reuses saved command output. A partial case view remains partial;
 it is never expanded to the complete source file. Incident-round records map
-back to their original IDs. Context excludes future rounds, reserved cases,
-unseen reassessment questions, linked worked solutions, and unrelated files.
-Quoted instructions in learner work or logs are data, not model permissions.
+back to their original IDs. The context builder does not fetch future rounds,
+reserved cases, unseen reassessment questions, linked worked solutions, or
+unrelated files. It does not identify such material if a learner pastes it into
+a selected field. Prompts treat quoted instructions as data, and the model has
+no filesystem, browser, shell, or course-action tools. These restrictions do
+not guarantee that generated advice is accurate or follows every instruction.
 
 Feedback remains advisory: a valid citation does not prove that its conclusion
 is correct. Only self/facilitator reviews supply rubric scores, and only the
@@ -134,23 +156,28 @@ authored catalog. Advice never modifies submissions or advances a phase.
 
 Requests contain only the selected context, fixed task instructions, and model
 settings. Hosted endpoints receive that content; their own data policies apply.
-For loopback servers, requests bypass environment HTTP proxies. Credentials
-are sent only in the authorization header. Redirects are rejected, TLS is
-verified, and raw provider error bodies are not printed or saved.
+For loopback servers, requests bypass environment HTTP proxies. The client
+adds the configured API key only to the authorization header. Redirects are
+rejected, TLS is verified, and raw provider error bodies are not printed or saved.
 
 Advisory history is stored locally under the session's ignored `work/` folder.
 It records model, endpoint, prompt version, context hashes, evidence IDs,
-latency, and token usage when available. Default exports include metadata,
-status, and help history. Explicit `--include-artifacts` exports also include
-private advice and context; review those files before sharing them.
+latency, and token usage when available. Default JSON exports include LLM
+metadata, status, and help history; default Markdown and phase CSV are shorter
+summaries. Explicit `--include-artifacts` in JSON or Markdown adds private
+advice and context. See the [export format table](README.md#export-commands).
 
 ## Failure and recovery
 
-There is one inference call per learner action and no automatic retry.
+An accepted new inference request makes at most one provider call. Status,
+cancellation, rejected requests, and replay make none. There is no automatic retry.
 Context is limited to 64 KiB and response bodies to 256 KiB. Refusals,
 truncation, malformed JSON, invalid quotes/citations, and connection failures
 produce an unavailable advisory result rather than a wrong learner answer.
-An operation can be processed successfully while reporting `advisory_failed`.
+An operation can exit successfully while reporting `advisory_failed`. For
+session actions, check `result.learning_result`; advice is present only for
+`advisory_complete`. Exit code 0 means the operation was processed, not that
+the model returned usable advice.
 
 Advice that cannot be encoded as UTF-8, or contains the configured API key
 after JSON decoding, is rejected before display or storage. This includes
@@ -160,6 +187,9 @@ The credential check does not detect every possible secret in free text.
 Requests reserve an ID before inference and release the session lock during
 the call. Repeating a completed JSON request replays its saved result; a
 duplicate in-flight request reports `advisory_pending` without another call.
+Direct `./course llm review`, `coach`, and `handoff` commands allocate a new
+request ID each time. To replay a lost response, retain and resubmit the same
+`./course session act` request body; repeating a direct command requests new advice.
 Advice is committed with its exposure record before it is returned. Edits or
 other accepted actions during inference discard the stale result. Failed or
 discarded advice does not change assessment eligibility.

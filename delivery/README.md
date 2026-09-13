@@ -101,9 +101,12 @@ Status and export do not change the session revision.
 
 ## Action Payloads
 
-The status response supplies only the current/revisited phase's prompt,
-checkpoint IDs, permitted evidence views, and allowed actions. Every action
-requires the same five envelope fields shown above.
+The status response supplies the current/revisited phase's prompt, checkpoint
+IDs, permitted evidence views, and allowed actions, plus overall progress and
+review summaries. It also includes that phase's saved submissions and bound
+artifact text. Treat status and action responses as private learner records;
+use a default export when a summary is sufficient. Every action requires the
+same five envelope fields shown above.
 
 | Action | Payload | Effect |
 | --- | --- | --- |
@@ -221,8 +224,9 @@ the same objective without rewriting the original history. Assignment is saved
 before presentation, resumes unchanged, and cannot be rerolled by retrying a
 request. A hint on a fresh variant exposes it permanently. Exhaustion explicitly
 leaves the objective unmet. See the [learning action contract](assessment.md#typed-learning-actions).
-The status and JSON export include per-objective original and fresh attainment;
-summary exports omit responses, prose, and authored answer keys.
+The status and JSON export include per-objective original and fresh attainment.
+Default JSON exports omit learner answers, artifact text, review comments, and
+LLM advice, but retain computed experiment results and calibration feedback.
 
 State and protocol version 3 reject old sessions without migration or regrading.
 Use their matching course copy to resume or export them; create a new session
@@ -260,7 +264,7 @@ reports dependencies addressed and residual risks; it does not promise that
 state synchronization, failover, or monitoring meets the requirement. These
 are computed teaching results, not new captures or evidence of real recovery.
 The fixed parameter schemas accept no commands, filters, paths, or live targets.
-Default exports include model results and omit written predictions.
+Default JSON exports include model results and omit written predictions.
 
 ### Export Commands
 
@@ -271,12 +275,21 @@ Default exports include model results and omit written predictions.
 ./course session export --id example --format markdown --include-artifacts --output review.md
 ```
 
-Default summaries include versions, anonymous labels, assignments, progress,
-factual results, rubric score history, hint/reveal use, and optional ratings.
-They omit learner answers and review comments. JSON and Markdown accept
-`--include-artifacts` to include all four learner files plus response/review
-history; the export lists those files. Extra attachments are not bundled.
-CSV is a progress table and does not support including free-text artifacts.
+Choose the format for the information you need:
+
+| Format | Default contents |
+| --- | --- |
+| `json` | Detailed metadata: versions, assignments, phases, objectives, review history, help/LLM metadata, experiment results, calibration, and optional ratings. |
+| `markdown` | Human-readable course/version summary, completion flags, phase/review table, and the two engagement ratings. |
+| `csv` | One row per phase with attempt/hint counts, factual totals, review status, and self-reported minutes. |
+| `objectives-csv` | One row per conceptual objective with original/fresh attainment, feedback codes, and variant summaries. |
+
+All four default formats omit learner answers, artifact text, review comments,
+and generated advice. JSON and Markdown accept `--include-artifacts` to add
+the four learner files, response/review and reassessment history, and private
+LLM context/advice. Extra attachments are not bundled. Neither CSV format
+supports `--include-artifacts`. The `--json` flag requires `--format json`;
+omit it when requesting Markdown or CSV.
 
 Output goes to stdout unless `--output` names a new file under
 `work/<id>/exports/`. Output paths cannot escape that directory or overwrite a
@@ -335,16 +348,17 @@ python3 -B verification/check_delivery.py --smoke --journey
 ```
 
 The content check validates local links/anchors and matches each teaching
-command to its registered argument array. The smoke check executes all 25
+command to its registered argument array. The smoke check executes all 31
 read-only views. The journey check uses fresh CLI processes, real evidence,
 both case assignments, an incorrect answer, save/resume, retry, skipped-work
 revision, hints, a reveal, synthetic rubric reviews, and portable exports. Its
 temporary session directories are cleaned afterward. These are scripted
 technical checks; their scores and timings are not learner-pilot results.
 
-To build a distributable archive, commit or stage the intended source files
-first. Packaging reads tracked files from the current checkout, includes the
-saved evidence and `RELEASE.json` with content/fixture fingerprints, and excludes
+To build a distributable archive, commit or stage any new source files first.
+Git determines which files are included, but packaging reads their current
+working-tree contents, including unstaged edits. The archive includes saved
+evidence and `RELEASE.json` with content/fixture fingerprints, and excludes
 `work/`, Git metadata, and implementation plans:
 
 ```sh

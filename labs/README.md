@@ -10,16 +10,27 @@ using only the Python standard library.
 
 ## Build and Verify
 
-Run these commands from the repository root:
+For routine verification, run this read-only command from the repository root:
 
 ```sh
-python3 labs/build_fixtures.py
 python3 labs/build_fixtures.py --check
 ```
 
-The first command regenerates the complete dataset. The second compares every
-expected path and SHA-256 digest with the generated manifest without changing
-the fixtures. A successful check reports `fixtures ready: 36 files`.
+It checks file presence and SHA-256 digests against the existing manifest,
+flags unlisted fixture files, parses JSON/JSONL, and checks the three original
+PCAP magic headers. A successful check reports `fixtures ready: 36 files`.
+It does not regenerate evidence or establish that an incident interpretation
+is correct.
+
+Maintainers can deliberately regenerate the dataset and manifest:
+
+```sh
+python3 labs/build_fixtures.py
+```
+
+Regeneration replaces generated evidence. Keep the builder and evidence from
+the course copy that matches any saved sessions; changed fingerprints prevent
+those sessions from resuming against a different copy.
 
 Treat `labs/fixtures/` as reproducible, read-only course evidence. Store notes,
 derived output, diagrams, ledgers, and assessments under `work/`; rebuilding
@@ -94,9 +105,11 @@ verifies this header and demonstrates how to normalize the 17-event timeline.
 ## Safety and Recovery
 
 Saved fixtures are the default evidence path and require neither elevated
-privileges nor network access. If a fixture is accidentally changed, regenerate
-the complete dataset and then rerun `--check`. Do not put learner answers inside
-`labs/fixtures/`, because regeneration replaces fixture content by design.
+privileges nor network access. If a fixture is accidentally changed, restore
+it and its manifest from the matching course copy, then rerun `--check`.
+Regeneration is a deliberate maintainer operation, not an automatic session
+recovery step. Do not put learner answers inside `labs/fixtures/`, because
+regeneration replaces fixture content by design.
 
 ## One-Day Challenge Evidence
 
