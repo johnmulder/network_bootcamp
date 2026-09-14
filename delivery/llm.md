@@ -334,13 +334,52 @@ simulated OpenAI and LM Studio responses, including authenticated and
 unauthenticated settings. Those tests establish client behavior; live schema
 success also requires separate content review and does not prove learner benefit.
 
-Ten synthetic examples cover all four features, with calibration and held-out
-splits. Their expectations are proposed checks, not facilitator annotations.
+Ten historical regression examples retain their original calibration and
+held-out labels for reproduction; they are no longer fresh qualification cases.
+The broader inventory adds 112 cases across 11 coaching families, all four
+handoff roles, both capstone cases, reviews, and transfer drafting. Expectations
+are proposed checks, not facilitator annotations.
 Run the offline inventory check without any LLM configuration:
 
 ```sh
 python3 -B verification/check_llm.py --check
 ```
+
+Create a frozen broader run offline, then explicitly run each live stage with
+the configured endpoint. Enable the evaluated features for these synthetic
+tests. The learner defaults remain disabled.
+
+```sh
+python3 -B verification/check_llm.py --create-run --run local-round --server-info "Record server and hardware details here"
+python3 -B verification/check_llm.py --run-stage probe --run local-round
+python3 -B verification/check_llm.py --run-stage baseline --run local-round --batch-size 8
+python3 -B verification/check_llm.py --run-stage baseline --run local-round --batch-size 8 --resume
+```
+
+Review calibration results, make the intended prompt changes, and collect the
+paired `candidate` stage. Freeze that candidate before `held-out`. Each stage
+records its settings and prompts; changing them during a stage is rejected.
+Use `--revision COMMIT` consistently within a stage to record the source commit.
+Already inspected held-out cases become regression data for future tuning.
+
+A run reserves at most 200 calls: 2 probes, 32 baseline, 32 candidate, 80
+held-out, 38 session/repeatability, and 16 explicit diagnostics. Each batch is
+limited to 80 calls and stops on rejected output for inspection. `--resume`
+continues only unattempted cases. Attempts are saved before sending; uncertain
+or interrupted attempts count against the budget and are not resent. Results,
+private synthetic inputs, and pending facilitator annotations are saved under
+`work/llm-evals/RUN/session.json`. Never put secrets in server notes or prose.
+
+To include real session actions in the same budget:
+
+```sh
+python3 -B verification/check_llm.py --live-session --run local-round --case A --extended --output local-session-a.json
+python3 -B verification/check_llm.py --live-session --run local-round --case B --extended --output local-session-b.json
+```
+
+These use authored partial work and real evidence commands, with up to eight
+calls per case. They check replay, rereading advice, exports, corrected answers,
+and revised handoffs. They are software rehearsals, not observations of learners.
 
 After configuring an endpoint and enabling the chosen feature, explicitly
 collect model outputs for human review:

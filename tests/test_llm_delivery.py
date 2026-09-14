@@ -310,6 +310,7 @@ class AdvisoryTests(unittest.TestCase):
                 self.act("llm_handoff", dict(role="security", text=[]))
             for index in range(3):
                 self.act("llm_handoff", dict(role="network-operations", text="A recipient reply" if index else ""))
+                self.assertEqual(support.learner_help("learner", "c06.exchange")["handoff_turns_remaining"], 2 - index)
             context = generate.call_args.args[2]
             self.assertNotIn("view:case.main.state", context["evidence"])
             self.assertNotIn("view:case.main.conditions", context["evidence"])
@@ -320,6 +321,9 @@ class AdvisoryTests(unittest.TestCase):
             path.write_text(path.read_text().replace("PRIVATE REHEARSAL TEXT", "Revised PRIVATE REHEARSAL TEXT"))
             self.act("llm_handoff", dict(role="security", text=""))
             self.assertEqual(generate.call_count, 4)
+            history = support.learner_help("learner", "c06.exchange")
+            self.assertEqual(history["handoff_turns_remaining"], 2)
+            self.assertEqual([entry["current"] for entry in history["entries"]], [False, False, False, True])
 
     def test_terminal_and_cli_share_the_session_action(self):
         self.prepare_coach()

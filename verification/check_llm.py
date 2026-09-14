@@ -82,22 +82,23 @@ def evaluate(feature: str, split: str, filename: str, repeat: int = 1, server_in
                   endpoint=config.base_url, prompt_version=llm.PROMPT_VERSION,
                   configuration=config.public(), server_info=server_info, repeat=repeat,
                   status="human-review-pending", examples=results,
-                  note="Synthetic cases and suggested expectations; no facilitator annotation or learner benefit is implied.")
+                  note="Historical regression cases; split names retained for reproduction, not fresh held-out qualification. No facilitator annotation or learner benefit is implied.")
     path = llm.write_work_json("llm-evals", filename, record)
     return dict(output=str(path), cases=len(results), human_review="pending")
 
 
-def evaluate_session(filename: str, server_info: str = "") -> dict:
+def evaluate_session(filename: str, server_info: str = "", case: str = "A", extended: bool = False) -> dict:
     """Up to six live calls through disposable sessions and real saved-evidence tools."""
     config = llm.configuration()
     if not {"coach", "review", "handoff"} <= config.features:
         raise llm.LLMError("Session evaluation needs coach, review, and handoff enabled.", "disabled")
     llm.work_output("llm-evals", filename)
     examples = d.module_at("tests/test_delivery.py")
+    scenarios = d.module_at("verification/llm_cases.py")
     results = []
     with tempfile.TemporaryDirectory(prefix="bootcamp llm evaluation ") as temporary, \
             mock.patch.object(d, "WORK_ROOT", Path(temporary)):
-        view = d.create_session("evaluation")
+        view = d.create_session("evaluation", case=case)
 
         def act(action, payload=None, phase=None):
             nonlocal view
@@ -120,14 +121,22 @@ def evaluate_session(filename: str, server_info: str = "") -> dict:
             assert "PRIVATE REHEARSAL TEXT" not in summary
             if record["status"] == "complete":
                 assert d.export_session("evaluation", True)["llm_history"][-1]["advice"] == record["advice"]
+                from llm_delivery import learner_help
+                before = (d.session_dir("evaluation") / "session.json").read_bytes()
+                history = learner_help("evaluation", request["phase_id"])
+                assert history["entries"][-1]["advice"] == record["advice"]
+                assert (d.session_dir("evaluation") / "session.json").read_bytes() == before
             print(f"Session {feature} at {request['phase_id']}: {record['status']}", file=sys.stderr, flush=True)
             return record["status"] == "complete"
 
         reach("c02.calculate")
         act("answer", dict(text="I treated the MTU as payload and omitted the headers.", answers={"transfer.payload": "1200 bytes"}))
         advice("coach", dict(family="transfer"))
+        if extended:
+            act("answer", dict(text="I now subtract both headers and keep the result in bytes.", answers={"transfer.payload": "1160 bytes"}))
+            advice("coach", dict(family="transfer"))
         reach("c05.narrative")
-        examples.fill_rehearsal_artifacts(d.session_dir("evaluation"))
+        scenarios.fill_artifacts(d.session_dir("evaluation"), case)
         for number in (1, 2, 3):
             act("evidence", dict(view=f"incident.round{number}"), f"c05.round{number}")
         act("answer", dict(text="Authentication succeeded; credential acquisition and intent remain uncertain."))
@@ -149,20 +158,25 @@ def evaluate_session(filename: str, server_info: str = "") -> dict:
         for suffix in ("observations", "state", "conditions"):
             act("evidence", dict(view="case.main." + suffix))
         act("answer", dict(text="The service failed after the recorded change; establish forwarding and return-state behavior.",
-                           answers=examples.answers_for(view["phase"], "A")))
+                           answers=examples.answers_for(view["phase"], case)))
         act("continue")
         act("answer", dict(text="Network operations should verify forwarding and return-state behavior before choosing an intervention."))
         act("continue")
         for turn in range(3):
-            if not advice("handoff", dict(role="network-operations", text="" if turn == 0 else
-                                         "The receiving network team will review the cited observations. Ownership and a validation method still need agreement.")):
+            reply = "" if turn == 0 else scenarios.learner_reply(results[-1]["advice"]["question"], case)
+            if not advice("handoff", dict(role="network-operations", text=reply)):
                 break
+        if extended:
+            path = d.session_dir("evaluation") / "incident.md"
+            path.write_text(path.read_text().replace("Recipient's next check, in their own words:", "Recipient's next check, in their own words: Proposed revision: obtain the authorized change record before any intervention."))
+            advice("handoff", dict(role="security", text=""))
         reach("c06.review")
         advice("review")
     record = dict(created_at=d.now(), configuration=config.public(), server_info=server_info,
                   prompt_version=llm.PROMPT_VERSION, status="human-review-pending",
                   budget_rejection_verified=True, replay_verified=True, private_exports_verified=True,
-                  examples=results, note="Synthetic structural session artifacts; agent or facilitator must review advice quality separately.")
+                  examples=results, case=case, saved_advice_verified=True,
+                  note="Authored partial synthetic work through real session actions; quality and learner benefit require separate review.")
     path = llm.write_work_json("llm-evals", filename, record)
     return dict(output=str(path), cases=len(results), human_review="pending")
 
@@ -173,6 +187,14 @@ def main(argv=None) -> int:
     mode.add_argument("--check", action="store_true", help="validate fixtures without inference")
     mode.add_argument("--live", action="store_true", help="send selected synthetic examples to the configured endpoint")
     mode.add_argument("--live-session", action="store_true", help="up to six calls through synthetic saved sessions; requires core tools")
+    mode.add_argument("--create-run", action="store_true", help="freeze the broader cases and a 200-call budget offline")
+    mode.add_argument("--run-stage", choices=("probe", "baseline", "candidate", "held-out"), help="explicit live stage of a frozen broader run")
+    parser.add_argument("--run", help="simple name under work/llm-evals for a durable broader run")
+    parser.add_argument("--resume", action="store_true", help="explicitly continue unattempted cases; never resend uncertain calls")
+    parser.add_argument("--batch-size", type=int, default=80, help="at most 80 attempted calls per invocation")
+    parser.add_argument("--revision", default="", help="source commit for the stage record")
+    parser.add_argument("--case", choices=("A", "B"), default="A", help="assigned case for a saved-session rehearsal")
+    parser.add_argument("--extended", action="store_true", help="also rehearse a corrected answer and revised handoff; up to eight calls")
     parser.add_argument("--feature", choices=["all", *sorted(llm.FEATURES)], default="review")
     parser.add_argument("--split", choices=("calibration", "held-out"), default="calibration")
     parser.add_argument("--output", help="new filename under work/llm-evals; required for --live")
@@ -184,11 +206,22 @@ def main(argv=None) -> int:
         if len({c["id"] for c in data}) != len(data) or {c["feature"] for c in data} != llm.FEATURES:
             raise ValueError("Invalid evaluation case inventory")
         if args.check:
-            print(f"LLM evaluation fixtures ready: {len(data)} synthetic cases; human annotations pending.")
+            broader = d.module_at("verification/llm_cases.py").check()
+            print(f"LLM fixtures ready: {len(data)} historical regression cases; broader inventory: {broader}; human annotations pending.")
+        elif args.create_run or args.run_stage:
+            if not args.run:
+                parser.error("Broader evaluation requires --run")
+            runner = d.module_at("verification/llm_run.py")
+            result = runner.create(args.run, args.server_info) if args.create_run else runner.batch(args.run, args.run_stage, args.batch_size, args.resume, args.revision)
+            print(json.dumps(result, indent=2))
         else:
             if not args.output:
                 parser.error("Live evaluation requires --output")
-            result = evaluate_session(args.output, args.server_info) if args.live_session else evaluate(args.feature, args.split, args.output, args.repeat, args.server_info)
+            if args.live_session and args.run:
+                runner = d.module_at("verification/llm_run.py")
+                result = runner.session(args.run, args.output, args.case, args.extended, args.resume, args.revision)
+            else:
+                result = evaluate_session(args.output, args.server_info, args.case, args.extended) if args.live_session else evaluate(args.feature, args.split, args.output, args.repeat, args.server_info)
             print(json.dumps(result, indent=2))
         return 0
     except (llm.LLMError, d.DeliveryError, OSError, ValueError) as error:

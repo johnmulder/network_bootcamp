@@ -1486,6 +1486,8 @@ def learn(ident: str, mode: str = "solo", case: str = "A", pair_label: str | Non
                 help_view = learner_help(ident, phase["id"])
                 if settings["status"] != "configured":
                     print("Optional model help: " + settings.get("message", "disabled; existing hints and rubric remain available."))
+                elif not help_view["readiness"]:
+                    print("No enabled model help applies to this phase. Use its existing course guidance.")
                 if settings["status"] == "configured" and any(
                         name in phase["allowed_actions"] for name in ("llm_review", "llm_coach", "llm_handoff")):
                     print(f"Optional LLM: {settings['base_url']} · {settings['model']}. Selecting lr/lc/lh sends your selected work.")
