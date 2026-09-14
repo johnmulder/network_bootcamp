@@ -21,7 +21,7 @@ import urllib.request
 import uuid
 
 FEATURES = frozenset({"review", "coach", "handoff", "author"})
-PROMPT_VERSION = 5
+PROMPT_VERSION = 6
 CONTEXT_LIMIT = 64 * 1024
 RESPONSE_LIMIT = 256 * 1024
 DIMENSIONS = {"mechanism", "evidence", "uncertainty", "action"}
@@ -60,6 +60,8 @@ that require a fabricated finding. Do not fill the list merely to be helpful."""
 language for this learner. Preserve its factual result; do not independently
 recompute or correct the learner's answers. Return {"explanation":
 "...", "question": "...", "evidence_ids": [...]}. Ask one guiding question.
+The application displays the original deterministic feedback as explanation;
+your contribution is the question. Do not embed a correction in that question.
 Use one short explanation sentence without naming internal feedback codes.
 On an incorrect answer, NEVER state the correct number, choice, route, boolean,
 or equivalent conclusion, even when it is easy to deduce from the conditions.
@@ -369,6 +371,12 @@ def generate(config: Config, feature: str, context: dict) -> dict:
         if choice["finish_reason"] != "stop" or message.get("refusal") or message.get("tool_calls"):
             raise LLMError("The model refused or returned incomplete advice; adjust the model or output budget.", "invalid-output")
         result = validate_output(feature, decode(message["content"]), context, api_key=config.api_key)
+        if feature == "coach" and context.get("results"):
+            # The learner already received these facts; only the question needs inference.
+            results = list(context["results"].values())
+            selected = next((r for r in results if not r["correct"]), results[0])
+            result["explanation"] = selected["feedback"]
+            validate_output(feature, result, context, api_key=config.api_key)
     except urllib.error.HTTPError as error:
         code = error.code
         error.close()

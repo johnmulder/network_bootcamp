@@ -19,6 +19,10 @@ passing score. The terminal explains prerequisites, shows a waiting message,
 and reports elapsed time. Existing hints and rubric guidance remain available
 when advice fails; another model request is always explicit.
 
+For coaching, the explanation preserves the course's recorded factual feedback;
+the model supplies the guiding question. This avoids model paraphrases changing
+the stated facts. Questions still need judgment and can be unhelpful or wrong.
+
 Use `la` in `./course learn` to reread advice for the selected phase, or:
 
 ```sh
@@ -377,9 +381,10 @@ python3 -B verification/check_llm.py --live-session --run local-round --case A -
 python3 -B verification/check_llm.py --live-session --run local-round --case B --extended --output local-session-b.json
 ```
 
-These use authored partial work and real evidence commands, with up to eight
+These use authored partial work and real evidence commands, with up to nine
 calls per case. They check replay, rereading advice, exports, corrected answers,
-and revised handoffs. They are software rehearsals, not observations of learners.
+UTC feedback, and revised handoffs. They are software rehearsals, not observations
+of learners.
 
 After configuring an endpoint and enabling the chosen feature, explicitly
 collect model outputs for human review:

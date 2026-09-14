@@ -59,6 +59,18 @@ class ClientTests(unittest.TestCase):
         patch.start()
         self.addCleanup(patch.stop)
 
+    def test_coaching_preserves_recorded_facts_and_uses_only_model_question(self):
+        context = dict(evidence={}, results={
+            "correct": dict(correct=True, feedback="A previously answered fact."),
+            "utc": dict(correct=False, feedback="A negative offset means local time is behind UTC. Move forward by the stated offset magnitude.")})
+        advice = dict(explanation="Add the signed negative offset to UTC.", question="How did you account for the signed offset?", evidence_ids=[])
+        with mock.patch("urllib.request.build_opener") as factory:
+            factory.return_value.open.return_value = io.BytesIO(envelope(advice))
+            result = llm.generate(llm.configuration(), "coach", context)
+        self.assertEqual(result["advice"]["explanation"], context["results"]["utc"]["feedback"])
+        self.assertEqual(result["advice"]["question"], advice["question"])
+        factory.return_value.open.assert_called_once()
+
     def test_offline_disabled_and_configuration(self):
         with mock.patch("urllib.request.build_opener", side_effect=AssertionError("network")):
             with mock.patch.dict(os.environ, {}, clear=True):

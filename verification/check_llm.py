@@ -136,6 +136,10 @@ def evaluate_session(filename: str, server_info: str = "", case: str = "A", exte
             act("answer", dict(text="I now subtract both headers and keep the result in bytes.", answers={"transfer.payload": "1160 bytes"}))
             advice("coach", dict(family="transfer"))
         reach("c05.narrative")
+        if extended:
+            act("answer", dict(text="I subtracted six hours when converting the negative offset to UTC.",
+                               answers={"incident.utc": "2026-08-15T04:04:01Z", "incident.auth-record": "2"}), "c05.round2")
+            advice("coach", dict(family="timestamps"), "c05.round2")
         scenarios.fill_artifacts(d.session_dir("evaluation"), case)
         for number in (1, 2, 3):
             act("evidence", dict(view=f"incident.round{number}"), f"c05.round{number}")
@@ -195,7 +199,7 @@ def main(argv=None) -> int:
     parser.add_argument("--batch-size", type=int, default=80, help="at most 80 attempted calls per invocation")
     parser.add_argument("--revision", default="", help="source commit for the stage record")
     parser.add_argument("--case", choices=("A", "B"), default="A", help="assigned case for a saved-session rehearsal")
-    parser.add_argument("--extended", action="store_true", help="also rehearse a corrected answer and revised handoff; up to eight calls")
+    parser.add_argument("--extended", action="store_true", help="also rehearse a corrected answer, UTC coaching, and revised handoff; up to nine calls")
     parser.add_argument("--feature", choices=["all", *sorted(llm.FEATURES)], default="review")
     parser.add_argument("--split", choices=("calibration", "held-out"), default="calibration")
     parser.add_argument("--output", help="new filename under work/llm-evals; required for --live")
