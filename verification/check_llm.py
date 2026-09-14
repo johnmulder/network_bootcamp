@@ -119,6 +119,8 @@ def evaluate_session(filename: str, server_info: str = "", case: str = "A", exte
             results.append(record)
             summary = json.dumps(d.export_session("evaluation"))
             assert "PRIVATE REHEARSAL TEXT" not in summary
+            private_excerpt = json.dumps(record["context"]["learner_text"][:80])[1:-1]
+            assert private_excerpt not in summary
             if record["status"] == "complete":
                 assert d.export_session("evaluation", True)["llm_history"][-1]["advice"] == record["advice"]
                 from llm_delivery import learner_help

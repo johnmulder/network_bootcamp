@@ -220,7 +220,7 @@ class AdvisoryTests(unittest.TestCase):
         for text in ("\ud800", "\udfff", "Café 🚀"):
             with self.subTest(text=ascii(text)), mock.patch("urllib.request.build_opener") as factory:
                 request = self.request("llm_coach", dict(family="transfer"))
-                advice = dict(explanation=text, question="What next?", evidence_ids=[])
+                advice = dict(explanation=text, question=text + " — what next?", evidence_ids=[])
                 factory.return_value.open.return_value = io.BytesIO(envelope(advice))
                 result = d.act("learner", request)
                 self.assertEqual(d.act("learner", request), result)
@@ -228,6 +228,7 @@ class AdvisoryTests(unittest.TestCase):
                 state = d.load_state(d.session_dir("learner"), d.definition())
                 entry = state["llm_requests"][request["request_id"]]
                 if text == "Café 🚀":
+                    advice["explanation"] = entry["context"]["results"]["transfer.payload"]["feedback"]
                     self.assertEqual(result["result"]["learning_result"], "advisory_complete")
                     self.assertEqual(entry["advice"], advice)
                     exported = d.export_session("learner", True)
@@ -324,6 +325,7 @@ class AdvisoryTests(unittest.TestCase):
             history = support.learner_help("learner", "c06.exchange")
             self.assertEqual(history["handoff_turns_remaining"], 2)
             self.assertEqual([entry["current"] for entry in history["entries"]], [False, False, False, True])
+            self.assertIn("Handoff / security", llm.format_history(history))
 
     def test_terminal_and_cli_share_the_session_action(self):
         self.prepare_coach()

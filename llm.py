@@ -497,7 +497,7 @@ def format_advice(feature: str, advice: dict) -> str:
             lines.append(advice["explanation"])
         lines.append(("Next step: " if feature == "coach" else "Recipient asks: ") + advice["question"])
         evidence(advice["evidence_ids"])
-    lines.append("Use the phase's evidence menu to revisit available views. Check the model's interpretation against the evidence.")
+    lines.append("In guided delivery, use g to revisit an evidence phase, then e to inspect its views. Check the model's interpretation against the evidence.")
     return "\n".join(lines)
 
 
@@ -505,7 +505,8 @@ def format_history(history: dict) -> str:
     lines = []
     for entry in history["entries"]:
         label = "Current work" if entry["current"] else "Earlier work; revise or request new advice before relying on it"
-        lines.extend([f"\n{entry['feature'].capitalize()} · {entry['at']} · {label}",
+        role = " / " + entry["role"] if entry.get("role") else ""
+        lines.extend([f"\n{entry['feature'].capitalize()}{role} · {entry['at']} · {label}",
                       format_advice(entry["feature"], entry["advice"])])
     if not lines:
         lines.append("No saved advice for this phase.")

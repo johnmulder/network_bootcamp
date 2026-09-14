@@ -125,8 +125,12 @@ The guide includes both setup examples and the optional connection check.
 The complete course remains usable offline with no credentials or model server.
 
 Advice is recorded as help and does not award scores or replace human reviews.
-Real-model qualification and learner trials remain pending; the implementation
-includes synthetic evaluation cases and an explicit evaluation command.
+The [expanded local evaluation](facilitator/local-model-expanded-validation.md)
+supports coaching as the starting feature for the tested GPT-OSS 120B setup:
+factual feedback is preserved while the model supplies a guiding question.
+Review, handoff, and drafting retain documented quality limitations. Other
+models and actual learner outcomes remain unqualified. The terminal displays
+readable advice; `la` rereads it locally, and `--json` supports automation.
 
 ## Reference Library
 

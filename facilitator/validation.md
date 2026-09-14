@@ -6,7 +6,23 @@ historical delivery and documentation checks. Their counts describe those
 snapshots. No software check establishes learner attainment or an observed
 class duration.
 
-## Local Model Support
+## Expanded Local Evaluation and Learner Interface
+
+The [second local evaluation](local-model-expanded-validation.md) records 190
+attempts against the supplied local setup, including a connection failure
+inside the sandbox. Of 189 provider responses, 188 passed local output
+validation. All 80 held-out responses were accepted, but content errors remained.
+Coaching now preserves deterministic factual feedback; the model contributes
+the guiding question. Review, handoff, and authoring remain experimental.
+
+The learner terminal presents readable advice, readiness and recovery guidance,
+local-only history, and handoff context. All 118 tests passed, including 43
+focused LLM tests. Course verification, all 31 real-tool views, and both full
+case journeys passed. Saved-session replay made no additional inference calls.
+Facilitator approval and learner trials remain pending. All features remain
+optional and disabled by default, with configurable endpoint, model, and key.
+
+## Initial Local Model Support
 
 Optional schema-constrained output, compact context, and a configurable input
 budget are implemented. The [local model evaluation](local-model-validation.md)

@@ -1498,7 +1498,7 @@ def learn(ident: str, mode: str = "solo", case: str = "A", pair_label: str | Non
                 for pending in view["llm"]["history"]:
                     if pending["status"] == "pending":
                         print(f"LLM pending: {pending['id']}. Recover with ./course llm cancel --id {ident} --request-id {pending['id']}")
-                choices = [f"{key}: {value}" for key, value in keys.items() if value in phase["allowed_actions"]]
+                choices = [f"{key}: {value.replace('llm_', 'optional model ').replace('_', ' ')}" for key, value in keys.items() if value in phase["allowed_actions"]]
                 action = input("\n" + " · ".join(choices) + f" · la: saved advice · g: revisit · q: quit [{default}]: ").strip().lower() or default
             if action == "q":
                 print(f"Saved. Resume with ./course learn --id {ident}")

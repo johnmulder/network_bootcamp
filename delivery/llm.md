@@ -1,7 +1,7 @@
 # Optional LLM Support
 
 The course includes four experimental advisory features: rubric-based review,
-adaptive explanations, a handoff practice partner, and maintainer drafting.
+targeted coaching questions, a handoff practice partner, and maintainer drafting.
 Each is disabled by default. After core prerequisites are installed, the
 complete required course works offline with no model server, credentials,
 or additional Python packages.
@@ -33,7 +33,7 @@ History is private session content. Reading it makes no inference request and
 does not change assessment or help exposure. Advice for revised work is labeled
 as earlier work. Before a handoff reply, the terminal displays the previous
 question for the current work and the remaining turns. Use the evidence menu
-to revisit available views and check the model's interpretation yourself.
+after revisiting its source phase with `g` to check the model's interpretation.
 
 `--json` retains structured output for automation. Interrupting a client or
 canceling its pending request does not guarantee that server inference stops.
@@ -131,17 +131,19 @@ its pending ID if its result should be discarded.
 
 ### Tested local setup
 
-The [September 13 evaluation](../facilitator/local-model-validation.md) used
-the user's `openai/gpt-oss-120b` model in LM Studio 0.4.24+1 on an M3 Max with
-128 GiB RAM. Its loaded context was 44,032 tokens. Coaching and handoff were
-the best starting features in those limited synthetic tests; review and
-authoring did not meet the quality criteria. This does not qualify smaller
-models or establish learner benefit.
+The [expanded evaluation](../facilitator/local-model-expanded-validation.md)
+used the user's `openai/gpt-oss-120b` model in LM Studio 0.4.24+1 on an M3 Max with
+128 GiB RAM. Its loaded context was 44,032 tokens. Coaching is the preferred
+starting feature with recorded factual feedback preserved. Review, handoff,
+and authoring still showed content errors; use them only with critical review.
+This narrows the [first report's](../facilitator/local-model-validation.md)
+provisional recommendation. It does not qualify smaller models or establish
+learner benefit.
 
 For that already loaded, unauthenticated server:
 
 ```sh
-export BOOTCAMP_LLM_FEATURES=coach,handoff
+export BOOTCAMP_LLM_FEATURES=coach
 export BOOTCAMP_LLM_BASE_URL=http://localhost:1234/v1
 export BOOTCAMP_LLM_MODEL=openai/gpt-oss-120b
 unset BOOTCAMP_LLM_API_KEY
@@ -216,8 +218,9 @@ For JSON evidence views, exact duplicate records may be replaced by
 observations, conflicting evidence, metadata, and partial-view boundaries
 remain available. Non-equivalent text remains intact. Saved context retains
 the original representation for validation and history. Prompt version 3
-includes the compact representation and asks reviewers to flag actual
-unsupported claims while accepting properly qualified conclusions.
+introduced that representation. The current prompt version 6 preserves
+deterministic coaching feedback and refines questions and review instructions;
+the model can still mishandle qualified conclusions.
 
 The client reuses saved command output. A partial case view remains partial;
 it is never expanded to the complete source file. Incident-round records map
@@ -331,8 +334,10 @@ New session reassessments are never generated at runtime.
 
 ## Evaluation status and commands
 
-The local GPT-OSS 120B setup has an initial, feature-specific
-[live evaluation](../facilitator/local-model-validation.md). Other models and
+The local GPT-OSS 120B setup has an
+[expanded live evaluation](../facilitator/local-model-expanded-validation.md),
+with the [initial report](../facilitator/local-model-validation.md) retained as
+history. Other models and
 OpenAI-hosted endpoints remain unqualified. Automated transport tests use
 simulated OpenAI and LM Studio responses, including authenticated and
 unauthenticated settings. Those tests establish client behavior; live schema

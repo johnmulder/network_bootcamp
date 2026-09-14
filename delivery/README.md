@@ -9,6 +9,12 @@ All four LLM features are disabled by default. Enabled advice is requested
 explicitly, uses the configured OpenAI-compatible endpoint, and remains
 separate from rubric scores and independent completion.
 
+Optional advice is displayed as readable text in guided delivery. Use `la` to
+reread saved advice without inference or new help exposure. Earlier-work advice
+is labeled, and handoff prompts show the previous question and remaining turns.
+Use `g` to revisit an evidence phase and `e` to inspect its views. See the
+[LLM guide](llm.md#read-and-revisit-advice) for direct commands and recovery.
+
 `course.json` gives phases stable IDs and ordered prerequisites. Teaching prose
 stays in Markdown between matching `delivery:start` and `delivery:end` comments.
 The validator checks references and the 360-minute teaching / 60-minute break
