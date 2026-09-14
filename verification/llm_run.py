@@ -84,7 +84,7 @@ class Run:
             return copy.deepcopy(entry)
 
 
-def batch(name, stage, count=80, resume=False, revision=""):
+def batch(name, stage, count=80, resume=False, revision="", case_ids=None):
     if type(count) is not int or not 1 <= count <= 80:
         raise ValueError("A batch allows 1–80 attempted calls")
     run = Run(name, stage, llm.configuration(), revision)
@@ -97,6 +97,10 @@ def batch(name, stage, count=80, resume=False, revision=""):
                     for name in ("connection", "connection-confirmation")]
     elif stage in ("baseline", "candidate", "held-out"):
         selected = [c for c in state["cases"] if c["split"] == ("held-out" if stage == "held-out" else "calibration")]
+    elif stage == "diagnostic":
+        selected = [c for c in state["cases"] if c["split"] == "calibration" and c["id"] in (case_ids or [])]
+        if not selected or {c["id"] for c in selected} != set(case_ids):
+            raise ValueError("Diagnostics require explicit calibration --case-id selections")
     else:
         raise ValueError("Use the session runner or explicit diagnostic calls for this stage")
     completed = {a["key"] for a in existing}

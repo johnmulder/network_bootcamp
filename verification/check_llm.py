@@ -188,7 +188,8 @@ def main(argv=None) -> int:
     mode.add_argument("--live", action="store_true", help="send selected synthetic examples to the configured endpoint")
     mode.add_argument("--live-session", action="store_true", help="up to six calls through synthetic saved sessions; requires core tools")
     mode.add_argument("--create-run", action="store_true", help="freeze the broader cases and a 200-call budget offline")
-    mode.add_argument("--run-stage", choices=("probe", "baseline", "candidate", "held-out"), help="explicit live stage of a frozen broader run")
+    mode.add_argument("--run-stage", choices=("probe", "baseline", "candidate", "held-out", "diagnostic"), help="explicit live stage of a frozen broader run")
+    parser.add_argument("--case-id", action="append", help="explicit calibration case ID for a diagnostic; repeat to select more")
     parser.add_argument("--run", help="simple name under work/llm-evals for a durable broader run")
     parser.add_argument("--resume", action="store_true", help="explicitly continue unattempted cases; never resend uncertain calls")
     parser.add_argument("--batch-size", type=int, default=80, help="at most 80 attempted calls per invocation")
@@ -212,7 +213,7 @@ def main(argv=None) -> int:
             if not args.run:
                 parser.error("Broader evaluation requires --run")
             runner = d.module_at("verification/llm_run.py")
-            result = runner.create(args.run, args.server_info) if args.create_run else runner.batch(args.run, args.run_stage, args.batch_size, args.resume, args.revision)
+            result = runner.create(args.run, args.server_info) if args.create_run else runner.batch(args.run, args.run_stage, args.batch_size, args.resume, args.revision, args.case_id)
             print(json.dumps(result, indent=2))
         else:
             if not args.output:
