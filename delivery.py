@@ -21,6 +21,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -1444,6 +1445,7 @@ class JsonParser(argparse.ArgumentParser):
 
 
 def learn(ident: str, mode: str = "solo", case: str = "A", pair_label: str | None = None) -> int:
+    from llm_delivery import learner_help
     if not sys.stdin.isatty() or not sys.stdout.isatty():
         raise DeliveryError("learn needs a terminal; use session commands with --json for automation")
     if not session_dir(ident).exists():
@@ -1481,15 +1483,21 @@ def learn(ident: str, mode: str = "solo", case: str = "A", pair_label: str | Non
                     print("Outstanding: predict and compare the bounded experiment (x, z).")
                 keys = {"a": "answer", "t": "submit_artifact", "k": "calibrate", "c": "continue", "s": "skip", "e": "evidence", "h": "hint", "v": "reveal", "r": "review", "f": "feedback", "d": "diagnose", "u": "support", "n": "reassess", "b": "problem_answer", "j": "problem_hint", "x": "experiment_predict", "z": "experiment_result", "lr": "llm_review", "lc": "llm_coach", "lh": "llm_handoff"}
                 settings = view["llm"]["configuration"]
+                help_view = learner_help(ident, phase["id"])
+                if settings["status"] != "configured":
+                    print("Optional model help: " + settings.get("message", "disabled; existing hints and rubric remain available."))
                 if settings["status"] == "configured" and any(
                         name in phase["allowed_actions"] for name in ("llm_review", "llm_coach", "llm_handoff")):
                     print(f"Optional LLM: {settings['base_url']} · {settings['model']}. Selecting lr/lc/lh sends your selected work.")
                     print(view["llm"]["notice"])
+                for item in help_view["readiness"]:
+                    label = item["feature"] + (" / " + item["family"] if item["family"] else "")
+                    print(f"Optional {label}: " + ("ready" if item["ready"] else item["reason"]))
                 for pending in view["llm"]["history"]:
                     if pending["status"] == "pending":
                         print(f"LLM pending: {pending['id']}. Recover with ./course llm cancel --id {ident} --request-id {pending['id']}")
                 choices = [f"{key}: {value}" for key, value in keys.items() if value in phase["allowed_actions"]]
-                action = input("\n" + " · ".join(choices) + f" · g: revisit · q: quit [{default}]: ").strip().lower() or default
+                action = input("\n" + " · ".join(choices) + f" · la: saved advice · g: revisit · q: quit [{default}]: ").strip().lower() or default
             if action == "q":
                 print(f"Saved. Resume with ./course learn --id {ident}")
                 return 0
@@ -1500,6 +1508,9 @@ def learn(ident: str, mode: str = "solo", case: str = "A", pair_label: str | Non
                     print("Choose a released phase ID.")
                     target = None
                 last_phase = None
+                continue
+            if action == "la" and phase is not None:
+                print(llm.format_history(help_view))
                 continue
             if phase is None or action not in keys or keys[action] not in phase["allowed_actions"]:
                 print("Choose an available action.")
@@ -1574,8 +1585,13 @@ def learn(ident: str, mode: str = "solo", case: str = "A", pair_label: str | Non
                 elif operation == "llm_coach":
                     families = list(dict.fromkeys(b["family"] for b in phase["assessment"].values() if b["role"] == "conceptual"))
                     print("Available families: " + ", ".join(families))
-                    payload = {"family": input("Family: ").strip()}
+                    default_family = families[0] if len(families) == 1 else ""
+                    payload = {"family": input(f"Family [{default_family}]: " if default_family else "Family: ").strip() or default_family}
                 elif operation == "llm_handoff":
+                    previous = [e for e in help_view["entries"] if e["feature"] == "handoff" and e["current"]]
+                    if previous:
+                        print("Previous recipient question: " + previous[-1]["advice"]["question"])
+                    print(f"Model turns remaining for this work: {help_view['handoff_turns_remaining']}")
                     print("Recipient roles: " + ", ".join(llm.ROLES))
                     payload = dict(role=input("Role [incident-response]: ").strip() or "incident-response",
                                    text=input("Reply to the previous question (Enter for the first turn): "))
@@ -1596,6 +1612,9 @@ def learn(ident: str, mode: str = "solo", case: str = "A", pair_label: str | Non
                 if operation in ("answer", "predict", "submit_artifact") and phase["block"] in ("c05", "c06", "exit"):
                     payload["confidence"] = input("Confidence after this evidence: low/medium/high (optional): ").strip() or None
                 request = dict(request_id=uuid.uuid4().hex, expected_revision=view["revision"], phase_id=phase["id"], action=operation, payload=payload)
+                if operation.startswith("llm_"):
+                    print(llm.waiting_message(operation.removeprefix("llm_")), flush=True)
+                started = time.monotonic()
                 response = act(ident, request)
                 result = response["result"]
                 if "output" in result:
@@ -1611,7 +1630,11 @@ def learn(ident: str, mode: str = "solo", case: str = "A", pair_label: str | Non
                 if "calibration" in result:
                     print(json.dumps(result["calibration"], indent=2))
                 if "advice" in result:
-                    print(json.dumps(result["advice"], indent=2, ensure_ascii=False))
+                    print(llm.format_advice(operation.removeprefix("llm_"), result["advice"]))
+                if operation.startswith("llm_"):
+                    print(f"Elapsed: {time.monotonic() - started:.1f} seconds.")
+                    if "advice" not in result:
+                        print(llm.recovery_message())
                 if "notice" in result:
                     print(result["notice"])
                 for dimension, prompt in result.get("revision_prompts", {}).items():
@@ -1628,6 +1651,8 @@ def learn(ident: str, mode: str = "solo", case: str = "A", pair_label: str | Non
                     target = None
             except (DeliveryError, OSError, ValueError) as error:
                 print(f"Could not record that action: {error}")
+                if operation.startswith("llm_"):
+                    print(llm.recovery_message())
     except (EOFError, KeyboardInterrupt):
         print(f"\nAccepted responses are saved. Resume with ./course learn --id {ident}")
         return 0

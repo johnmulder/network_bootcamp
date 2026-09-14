@@ -337,6 +337,61 @@ class AdvisoryTests(unittest.TestCase):
             self.assertEqual(course.main(["llm", "coach", "--json"]), 2)
         self.assertEqual(json.loads(output.getvalue())["status"], "error")
 
+    def test_saved_advice_is_read_only_private_and_marks_revised_answers(self):
+        self.prepare_coach()
+        with mock.patch.object(llm, "generate", side_effect=self.generated):
+            self.act("llm_coach", dict(family="transfer"))
+        path = d.session_dir("learner") / "session.json"
+        before = path.read_bytes()
+        with mock.patch.object(llm, "generate", side_effect=AssertionError("network")):
+            history = support.learner_help("learner", "c02.calculate")
+            self.assertTrue(history["entries"][0]["current"])
+            with contextlib.redirect_stdout(io.StringIO()) as output:
+                self.assertEqual(course.main(["llm", "history", "--id", "learner", "--phase", "c02.calculate", "--json"]), 0)
+            self.assertEqual(json.loads(output.getvalue())["entries"], history["entries"])
+            self.assertEqual(path.read_bytes(), before)
+            self.assertNotIn("Which header", json.dumps(d.export_session("learner")))
+        self.act("answer", dict(text="I have revised my calculation.", answers={"transfer.payload": "1160 bytes"}))
+        history = support.learner_help("learner", "c02.calculate")
+        self.assertFalse(history["entries"][0]["current"])
+        self.assertIn("Earlier work", llm.format_history(history))
+
+    def test_readiness_and_plain_feedback_preserve_json_contract(self):
+        self.reach("c02.calculate")
+        with mock.patch.object(llm, "generate", side_effect=AssertionError("network")):
+            help_view = support.learner_help("learner", "c02.calculate")
+            self.assertIn("Commit an answer", help_view["readiness"][0]["reason"])
+        self.act("answer", dict(text="My calculation", answers={"transfer.payload": "1200 bytes"}))
+        with mock.patch.object(llm, "generate", side_effect=self.generated), \
+                contextlib.redirect_stdout(io.StringIO()) as output, contextlib.redirect_stderr(io.StringIO()) as errors:
+            self.assertEqual(course.main(["llm", "coach", "--id", "learner", "--phase", "c02.calculate", "--family", "transfer"]), 0)
+        self.assertIn("Next step: Which header", output.getvalue())
+        self.assertIn("Elapsed:", output.getvalue())
+        self.assertNotIn('"advice":', output.getvalue())
+        self.assertIn("server inference may continue", errors.getvalue())
+        rendered = llm.format_advice("review", dict(findings=[], insufficient_evidence=True))
+        self.assertIn("not a passing score", rendered)
+        self.assertIn("could not fully assess", rendered)
+
+    def test_terminal_rereads_without_inference_and_defaults_single_family(self):
+        self.prepare_coach()
+        with contextlib.redirect_stdout(io.StringIO()) as output, mock.patch.object(d.sys.stdin, "isatty", return_value=True), \
+                mock.patch.object(d.sys.stdout, "isatty", return_value=True), \
+                mock.patch("builtins.input", side_effect=["lc", "", "la", "q"]), \
+                mock.patch.object(llm, "generate", side_effect=self.generated) as generate:
+            self.assertEqual(d.learn("learner"), 0)
+        self.assertEqual(generate.call_count, 1)
+        self.assertEqual(output.getvalue().count("Next step: Which header"), 2)
+
+    def test_plain_failure_gives_recovery_without_retry(self):
+        self.prepare_coach()
+        with mock.patch.object(llm, "generate", side_effect=llm.LLMError("Timed out", "unavailable")) as generate, \
+                contextlib.redirect_stdout(io.StringIO()) as output, contextlib.redirect_stderr(io.StringIO()):
+            self.assertEqual(course.main(["llm", "coach", "--id", "learner", "--phase", "c02.calculate", "--family", "transfer"]), 4)
+        self.assertEqual(generate.call_count, 1)
+        self.assertIn("saved work is still available", output.getvalue())
+        self.assertFalse(d.session_status("learner")["phase"]["progress"]["exposed"])
+
     def test_optional_settings_never_make_normal_delivery_contact_a_model(self):
         with mock.patch.object(llm, "generate", side_effect=AssertionError("inference")), \
                 mock.patch("urllib.request.build_opener", side_effect=AssertionError("network")):

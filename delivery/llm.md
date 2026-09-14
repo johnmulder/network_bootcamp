@@ -11,6 +11,30 @@ normal submissions, status, exports, verification, and course packaging never
 contact it. Static hints, worked examples, pair exchange, and self-review remain
 available. An unavailable local model never triggers a fallback to OpenAI.
 
+## Read and revisit advice
+
+The learner terminal and non-JSON LLM commands display feedback as plain text,
+with a next question and evidence IDs to revisit. An empty review is not a
+passing score. The terminal explains prerequisites, shows a waiting message,
+and reports elapsed time. Existing hints and rubric guidance remain available
+when advice fails; another model request is always explicit.
+
+Use `la` in `./course learn` to reread advice for the selected phase, or:
+
+```sh
+./course llm history --id demo --phase c02.calculate
+```
+
+History is private session content. Reading it makes no inference request and
+does not change assessment or help exposure. Advice for revised work is labeled
+as earlier work. Before a handoff reply, the terminal displays the previous
+question for the current work and the remaining turns. Use the evidence menu
+to revisit available views and check the model's interpretation yourself.
+
+`--json` retains structured output for automation. Interrupting a client or
+canceling its pending request does not guarantee that server inference stops.
+Inspect session status and cancel a pending request before requesting new help.
+
 ## Configure a server
 
 Set these environment variables in the shell that launches `./course`.

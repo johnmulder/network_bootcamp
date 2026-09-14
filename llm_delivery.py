@@ -34,6 +34,50 @@ def public_history(state: dict) -> list[dict]:
     return [{k: copy.deepcopy(entry[k]) for k in keys if k in entry} for entry in state["llm_requests"].values()]
 
 
+def learner_help(ident: str, phase_id: str) -> dict:
+    """Explicit private, read-only view; never included in default exports."""
+    data, directory = d.definition(), d.session_dir(ident)
+    with d.session_lock(directory):
+        state = d.load_state(directory, data)
+        phase = d.phase_by_id(data, phase_id)
+        hashes = d.review_hashes(directory, phase)
+        entries = []
+        for entry in state["llm_requests"].values():
+            if entry["phase"] != phase_id or entry["status"] != "complete":
+                continue
+            current = entry["artifact_hashes"] == hashes
+            if entry["feature"] == "coach":
+                family = entry["context"]["family"]
+                checks = {k for k, b in phase["assessment"].items() if b["family"] == family}
+                submissions = [s for s in state["phases"][phase_id]["submissions"] if checks.intersection(s["checks"])]
+                latest = submissions[-1] if submissions else {}
+                current = (latest.get("text") == entry["context"]["learner_text"] and
+                           {k: v for k, v in latest.get("answers", {}).items() if k in checks} == entry["context"]["answers"])
+            entries.append(dict(id=entry["id"], feature=entry["feature"], at=entry["at"],
+                                current=current, advice=copy.deepcopy(entry["advice"]),
+                                role=entry["context"].get("role"), latency_ms=entry.get("latency_ms")))
+        settings = llm.availability()
+        readiness = []
+        pending = next((r["id"] for r in state["llm_requests"].values() if r["status"] == "pending"), None)
+        for action in actions(phase):
+            feature = action.removeprefix("llm_")
+            families = list(dict.fromkeys(b["family"] for b in phase["assessment"].values() if b["role"] == "conceptual"))
+            payloads = [dict(family=f) for f in families] if feature == "coach" else [dict(role=llm.ROLES[0], text="Readiness check") if feature == "handoff" else {}]
+            for payload in payloads:
+                reason = None
+                try:
+                    if pending:
+                        raise d.DeliveryError(f"Request {pending} is pending; wait or cancel it before requesting more help.")
+                    context, _ = build_context(state, data, phase, feature, payload)
+                    llm.prepare_request(llm.configuration(), feature, context)
+                except (d.DeliveryError, llm.LLMError) as error:
+                    reason = str(error)
+                readiness.append(dict(feature=feature, family=payload.get("family"), ready=reason is None, reason=reason))
+        return dict(status="ok", entries=entries, readiness=readiness,
+                    configuration=settings, pending=pending,
+                    handoff_turns_remaining=max(0, 3 - sum(e["feature"] == "handoff" and e["current"] for e in entries)))
+
+
 def validate_state(state: dict) -> None:
     records = state["llm_requests"]
     if not isinstance(records, dict):

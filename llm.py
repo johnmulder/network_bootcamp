@@ -436,6 +436,53 @@ def author(family: str, kind: str, filename: str, seed: int = 1) -> dict:
     return dict(status="ok", output=str(path), draft_status=record["status"])
 
 
+def format_advice(feature: str, advice: dict) -> str:
+    """Plain terminal presentation of already validated advice."""
+    lines = []
+    def evidence(ids):
+        if ids:
+            lines.append("Evidence to revisit: " + ", ".join(ids))
+    if feature == "review":
+        for finding in advice["findings"]:
+            lines.extend([f"{finding['dimension'].capitalize()}: {finding['claim_quote']}",
+                          finding["explanation"], "Consider: " + finding["revision_question"]])
+            evidence(finding["evidence_ids"])
+            lines.append("")
+        if not advice["findings"]:
+            lines.append("The model returned no specific findings. This is not a passing score or a complete review.")
+        if advice["insufficient_evidence"]:
+            lines.append("The model could not fully assess this work from the supplied evidence. Revisit your explanation, opened evidence, and rubric.")
+    else:
+        if feature == "coach":
+            lines.append(advice["explanation"])
+        lines.append(("Next step: " if feature == "coach" else "Recipient asks: ") + advice["question"])
+        evidence(advice["evidence_ids"])
+    lines.append("Use the phase's evidence menu to revisit available views. Check the model's interpretation against the evidence.")
+    return "\n".join(lines)
+
+
+def format_history(history: dict) -> str:
+    lines = []
+    for entry in history["entries"]:
+        label = "Current work" if entry["current"] else "Earlier work; revise or request new advice before relying on it"
+        lines.extend([f"\n{entry['feature'].capitalize()} · {entry['at']} · {label}",
+                      format_advice(entry["feature"], entry["advice"])])
+    if not lines:
+        lines.append("No saved advice for this phase.")
+    return "\n".join(lines)
+
+
+def waiting_message(feature: str) -> str:
+    work = "your latest submitted answer and opened evidence" if feature == "coach" else "your bound artifact regions, ledger, and opened evidence"
+    return (f"Sending {work}. Waiting for optional model advice… "
+            "Ctrl-C interrupts this client; server inference may continue. "
+            "Inspect session status and cancel any pending request before requesting more advice.")
+
+
+def recovery_message() -> str:
+    return "Useful advice was not obtained. Your saved work is still available. Revisit the phase's evidence, hints, or rubric; another request is your choice."
+
+
 def cli(argv: list[str]) -> int:
     import delivery as d
     json_mode = "--json" in argv
@@ -451,7 +498,7 @@ def cli(argv: list[str]) -> int:
         draft.add_argument("--output", required=True, help="new filename relative to work/llm-drafts")
         draft.add_argument("--seed", type=int, default=1, help="seed for computed transfer candidates; other families use fixed supported conditions")
         draft.add_argument("--json", action="store_true")
-        for name in ("review", "coach", "handoff", "cancel"):
+        for name in ("review", "coach", "handoff", "cancel", "history"):
             command = commands.add_parser(name)
             command.add_argument("--id", required=True)
             command.add_argument("--phase", required=name in ("review", "coach"))
@@ -483,6 +530,13 @@ def cli(argv: list[str]) -> int:
                 result = dict(status="ok", configuration=config.public(), result=generate(config, "check", {}))
         elif args.command == "author":
             result = author(args.family, args.kind, args.output, args.seed)
+        elif args.command == "history":
+            from llm_delivery import learner_help
+            view = d.session_status(args.id, args.phase)
+            result = learner_help(args.id, args.phase or view["current_phase_id"] or "exit.feedback")
+            if not json_mode:
+                print(format_history(result))
+                return 0
         else:
             phase_id = args.phase or ("c06.exchange" if args.command == "handoff" else None)
             view = d.session_status(args.id, phase_id)
@@ -498,8 +552,19 @@ def cli(argv: list[str]) -> int:
                 settings = view["llm"]["configuration"]
                 print(f"Optional LLM: {settings.get('base_url', 'not configured')} · {settings.get('model', '')}", file=sys.stderr)
                 print(view["llm"]["notice"], file=sys.stderr)
+                print(waiting_message(args.command), file=sys.stderr, flush=True)
+            started = time.monotonic()
             result = d.act(args.id, dict(request_id=uuid.uuid4().hex, expected_revision=view["revision"],
                                         phase_id=phase_id, action="llm_" + args.command, payload=payload))
+            if not json_mode:
+                outcome = result["result"]
+                if "advice" in outcome:
+                    print(format_advice(args.command, outcome["advice"]))
+                elif args.command != "cancel":
+                    print(recovery_message())
+                print(outcome.get("notice", ""))
+                print(f"Elapsed: {time.monotonic() - started:.1f} seconds.")
+                return 0 if outcome["learning_result"] in ("advisory_complete", "advisory_cancelled") else 4
         print(json.dumps(result, indent=2))
         return 0 if result["status"] in ("ok", "configured", "disabled") else 2
     except KeyboardInterrupt:
@@ -512,6 +577,8 @@ def cli(argv: list[str]) -> int:
         message = "Could not access local LLM work files." if isinstance(error, OSError) else str(error)
         result = dict(status="error", code=code, message=message)
         print(json.dumps(result) if json_mode else message, file=sys.stdout if json_mode else sys.stderr)
+        if not json_mode:
+            print(recovery_message(), file=sys.stderr)
         return code if isinstance(code, int) else 4 if code in ("unavailable", "invalid-output", "filesystem") else 2
 
 
