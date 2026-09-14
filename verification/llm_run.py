@@ -93,7 +93,8 @@ def batch(name, stage, count=80, resume=False, revision=""):
     if existing and not resume:
         raise ValueError("Stage already has attempts; use explicit --resume")
     if stage == "probe":
-        selected = [dict(id="connection", feature="check", context={}, expectation="Return ready true.")]
+        selected = [dict(id=name, feature="check", context={}, expectation="Return ready true.")
+                    for name in ("connection", "connection-confirmation")]
     elif stage in ("baseline", "candidate", "held-out"):
         selected = [c for c in state["cases"] if c["split"] == ("held-out" if stage == "held-out" else "calibration")]
     else:
