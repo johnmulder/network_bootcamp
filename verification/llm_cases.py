@@ -167,6 +167,9 @@ def cases():
         ("c06.review", CAPSTONE["B"], "B3 proves that the firewall denied this attempt.", {r["id"]: {"record": r} for r in d.workbench(1).read_json("challenges/case-b.json")["observations"]}),
     ]
     for phase, good, bad, evidence in reviews:
+        if phase == "c06.review":
+            packet = d.workbench(1).read_json("challenges/case-b.json")
+            evidence["case-state"] = dict(record={k: packet[k] for k in ("before", "after", "routes")})
         for kind, text in (("correct", good), ("mistaken", bad)):
             examples.append(dict(id=f"held-out-review-{phase}-{kind}", split="held-out", feature="review", kind=kind,
                                  context=dict(phase=phase, learner_text=text, evidence=evidence, rubric=d.REVIEW_GUIDE),
