@@ -1,0 +1,160 @@
+{
+  "version": 1,
+  "files": [
+    {
+      "path": "tls13-rfc8446.pcap",
+      "url": "https://raw.githubusercontent.com/wireshark/wireshark/575b2bf4746e29e35a99e50fbec0de9fcaa1155a/test/captures/tls13-rfc8446.pcap",
+      "revision": "575b2bf4746e29e35a99e50fbec0de9fcaa1155a",
+      "publisher": "Wireshark project",
+      "source_page": "https://github.com/wireshark/wireshark/tree/575b2bf4746e29e35a99e50fbec0de9fcaa1155a/test/captures/",
+      "retrieved": "2026-09-14",
+      "bytes": 4158,
+      "sha256": "e24aaedb2912f9ea371f8a1fbd360ccccc0154737aa5e422e206cd8bc0b783aa",
+      "format": "pcap",
+      "attribution": "Peter Wu",
+      "license": "GPL-2.0-or-later",
+      "license_source": "https://raw.githubusercontent.com/wireshark/wireshark/575b2bf4746e29e35a99e50fbec0de9fcaa1155a/COPYING",
+      "transformation": "none; original bytes",
+      "frame_mapping": "identity",
+      "introduction": "https://github.com/wireshark/wireshark/commit/62874e37789272afdcf97d25339428b60b2c84b0",
+      "packets": 13,
+      "checks": [
+        {
+          "filter": "tls.handshake.type == 1",
+          "frames": [
+            1,
+            7
+          ]
+        },
+        {
+          "filter": "tls.handshake.type == 20",
+          "frames": [
+            2,
+            3,
+            9,
+            11
+          ],
+          "keylog": "tls13-rfc8446.keys"
+        },
+        {
+          "filter": "http.response.code == 200",
+          "frames": [
+            6,
+            10,
+            13
+          ],
+          "keylog": "tls13-rfc8446.keys"
+        }
+      ],
+      "companions": [
+        "COPYING.wireshark",
+        "tls13-rfc8446.keys"
+      ]
+    },
+    {
+      "path": "tls13-rfc8446.keys",
+      "url": "https://raw.githubusercontent.com/wireshark/wireshark/575b2bf4746e29e35a99e50fbec0de9fcaa1155a/test/keys/tls13-rfc8446.keys",
+      "revision": "575b2bf4746e29e35a99e50fbec0de9fcaa1155a",
+      "publisher": "Wireshark project",
+      "source_page": "https://github.com/wireshark/wireshark/tree/575b2bf4746e29e35a99e50fbec0de9fcaa1155a/test/keys/",
+      "retrieved": "2026-09-14",
+      "bytes": 1422,
+      "sha256": "cefaad7c60d41c4aaa9c02aa6ce5d08a9566216b29f9bc3d74495a799e4ec946",
+      "format": "keylog",
+      "attribution": "Peter Wu",
+      "license": "GPL-2.0-or-later",
+      "license_source": "https://raw.githubusercontent.com/wireshark/wireshark/575b2bf4746e29e35a99e50fbec0de9fcaa1155a/COPYING",
+      "transformation": "none; original bytes",
+      "frame_mapping": null,
+      "introduction": "https://github.com/wireshark/wireshark/commit/62874e37789272afdcf97d25339428b60b2c84b0"
+    },
+    {
+      "path": "dns+icmp.pcapng.gz",
+      "url": "https://raw.githubusercontent.com/wireshark/wireshark/575b2bf4746e29e35a99e50fbec0de9fcaa1155a/test/captures/dns+icmp.pcapng.gz",
+      "revision": "575b2bf4746e29e35a99e50fbec0de9fcaa1155a",
+      "publisher": "Wireshark project",
+      "source_page": "https://github.com/wireshark/wireshark/tree/575b2bf4746e29e35a99e50fbec0de9fcaa1155a/test/captures/",
+      "retrieved": "2026-09-14",
+      "bytes": 1588,
+      "sha256": "c266c5eca471de11bc85600f4cf75d02c54f2879f8164d15b4bbb8986a72005d",
+      "format": "pcapng+gzip",
+      "attribution": "Gerald Combs",
+      "license": "GPL-2.0-or-later",
+      "license_source": "https://raw.githubusercontent.com/wireshark/wireshark/575b2bf4746e29e35a99e50fbec0de9fcaa1155a/COPYING",
+      "transformation": "none; original bytes",
+      "frame_mapping": "identity",
+      "introduction": "https://github.com/wireshark/wireshark/commit/bfe9967fc8f56ac5982a52ddf23e1eabfa4b7229",
+      "packets": 33,
+      "checks": [
+        {
+          "filter": "frame.number >= 24 && frame.number <= 29 && dns.flags.response == 1 && dns.flags.rcode == 0",
+          "frames": [
+            25,
+            27
+          ]
+        },
+        {
+          "filter": "frame.number >= 28 && frame.number <= 29 && icmp",
+          "frames": [
+            28,
+            29
+          ]
+        }
+      ],
+      "companions": [
+        "COPYING.wireshark"
+      ]
+    },
+    {
+      "path": "quic-with-secrets.pcapng",
+      "url": "https://raw.githubusercontent.com/wireshark/wireshark/575b2bf4746e29e35a99e50fbec0de9fcaa1155a/test/captures/quic-with-secrets.pcapng",
+      "revision": "575b2bf4746e29e35a99e50fbec0de9fcaa1155a",
+      "publisher": "Wireshark project",
+      "source_page": "https://github.com/wireshark/wireshark/tree/575b2bf4746e29e35a99e50fbec0de9fcaa1155a/test/captures/",
+      "retrieved": "2026-09-14",
+      "bytes": 44236,
+      "sha256": "b7c9de1238aef44d53dbe1add125a7b9e344e9063b98850c78dec23632b83942",
+      "format": "pcapng",
+      "attribution": "Niels Widger",
+      "license": "GPL-2.0-or-later",
+      "license_source": "https://raw.githubusercontent.com/wireshark/wireshark/575b2bf4746e29e35a99e50fbec0de9fcaa1155a/COPYING",
+      "transformation": "none; original bytes",
+      "frame_mapping": "identity",
+      "introduction": "https://github.com/wireshark/wireshark/commit/289a159042e3b81c2c135031dd4da9590aea848e",
+      "packets": 83,
+      "checks": [
+        {
+          "filter": "http3.headers.method == \"GET\"",
+          "frames": [
+            55
+          ]
+        },
+        {
+          "filter": "http3.headers.status == 200",
+          "frames": [
+            62
+          ]
+        }
+      ],
+      "companions": [
+        "COPYING.wireshark"
+      ]
+    },
+    {
+      "path": "COPYING.wireshark",
+      "url": "https://raw.githubusercontent.com/wireshark/wireshark/575b2bf4746e29e35a99e50fbec0de9fcaa1155a/COPYING",
+      "revision": "575b2bf4746e29e35a99e50fbec0de9fcaa1155a",
+      "publisher": "Wireshark project",
+      "source_page": "https://github.com/wireshark/wireshark/tree/575b2bf4746e29e35a99e50fbec0de9fcaa1155a/",
+      "retrieved": "2026-09-14",
+      "bytes": 18092,
+      "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643",
+      "format": "license",
+      "attribution": "Wireshark contributors",
+      "license": "GPL-2.0-or-later",
+      "license_source": "https://raw.githubusercontent.com/wireshark/wireshark/575b2bf4746e29e35a99e50fbec0de9fcaa1155a/COPYING",
+      "transformation": "none; original bytes",
+      "frame_mapping": null
+    }
+  ]
+}

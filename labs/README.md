@@ -1,12 +1,14 @@
 # Local Lab Dataset
 
-The course uses one fictional network and incident across all three modules.
-Every address is private or reserved for documentation, and no exercise needs
-traffic from an external system.
+The core course uses a fictional factory and separately labeled snapshots.
+Its generated addresses are private or reserved for documentation. The
+[public exemplars](exemplars/README.md) are independent historical captures
+and may contain real addresses. All exercises read local files offline.
 
 The checked-in dataset contains 36 manifest-tracked evidence files plus
-`labs/fixtures/manifest.json`. The builder creates every file deterministically
-using only the Python standard library.
+`labs/fixtures/manifest.json`. The builder creates those files deterministically
+using only the Python standard library. Public captures have their own source
+manifest, license notice, acquisition step, and checks under `labs/exemplars/`.
 
 ## Build and Verify
 

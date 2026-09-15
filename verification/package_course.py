@@ -22,10 +22,13 @@ import delivery as d
 def package(output: Path) -> None:
     d.definition()
     d.evidence_integrity()
+    exemplars = d.module_at("labs/exemplars/manage.py")
+    exemplars.verify()
     result = subprocess.run(["git", "-C", str(ROOT), "ls-files", "-z"], check=True, capture_output=True)
     names = sorted(name for name in result.stdout.decode().split("\0") if name
                    and name != "PLAN.md" and not any(part in {"work", ".git", "__pycache__"} for part in Path(name).parts))
-    metadata = dict(format_version=1, **d.versions(d.definition()))
+    metadata = dict(format_version=1, **d.versions(d.definition()),
+                    exemplars_sha256=exemplars.fingerprint())
     members = [(name, d.confined(ROOT, name)) for name in names]
     for name, path in members:
         if not path.is_file() or path.is_symlink():
@@ -64,6 +67,7 @@ def check_archive(output: Path, journey: bool = False) -> None:
         if (root / ".git").exists() or (root / "work").exists() or (root / "PLAN.md").exists():
             raise d.DeliveryError("Archive contains development or learner data")
         commands = [[str(root / "course"), "verify"],
+                    [sys.executable, "-B", str(root / "labs/exemplars/manage.py"), "--decode"],
                     [str(root / "course"), "llm", "check", "--json"],
                     [sys.executable, "-B", str(root / "verification/check_llm.py"), "--check"],
                     [sys.executable, "-B", str(root / "verification/check_delivery.py")]]
@@ -79,6 +83,10 @@ def check_archive(output: Path, journey: bool = False) -> None:
         result = subprocess.run([sys.executable, "-B", "-c", code], cwd=root, check=True, capture_output=True, text=True)
         if any(metadata[key] != value for key, value in json.loads(result.stdout).items()):
             raise d.DeliveryError("Packaged content does not match release metadata")
+        code = "import delivery; print(delivery.module_at('labs/exemplars/manage.py').fingerprint())"
+        result = subprocess.run([sys.executable, "-B", "-c", code], cwd=root, check=True, capture_output=True, text=True)
+        if metadata["exemplars_sha256"] != result.stdout.strip():
+            raise d.DeliveryError("Packaged exemplars do not match release metadata")
         print("Extracted archive passed verification at a path containing spaces, without Git metadata.", flush=True)
 
 

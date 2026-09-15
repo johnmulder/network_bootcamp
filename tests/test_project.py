@@ -730,11 +730,12 @@ class CourseNavigatorTests(unittest.TestCase):
     def test_verify_runs_every_check_and_reports_aggregate_status(self):
         stdout = io.StringIO()
         stderr = io.StringIO()
-        with mock.patch.object(COURSE, "run_script", side_effect=(0, 7, 0, 2)) as run:
+        with mock.patch.object(COURSE, "run_script", side_effect=(0, 7, 0, 2, 0)) as run:
             with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
                 self.assertEqual(COURSE.main(["verify"]), 7)
-        self.assertEqual(run.call_count, 4)
+        self.assertEqual(run.call_count, 5)
         self.assertIn("== Evidence fixtures ==", stdout.getvalue())
+        self.assertIn("== Public exemplars ==", stdout.getvalue())
         self.assertIn("== Module 3 workbench ==", stdout.getvalue())
         self.assertIn("Course verification failed", stderr.getvalue())
 
@@ -742,7 +743,7 @@ class CourseNavigatorTests(unittest.TestCase):
         with mock.patch.object(COURSE, "run_script", return_value=0) as run:
             with contextlib.redirect_stdout(stdout):
                 self.assertEqual(COURSE.main(["verify"]), 0)
-        self.assertEqual(run.call_count, 4)
+        self.assertEqual(run.call_count, 5)
         self.assertIn("Course verification passed", stdout.getvalue())
 
     def test_run_script_uses_python_and_preserves_exit_status(self):

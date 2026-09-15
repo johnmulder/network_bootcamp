@@ -326,6 +326,7 @@ def timeline(source: str | None) -> int:
 def verify() -> int:
     checks = (
         ("Evidence fixtures", ROOT / "labs" / "build_fixtures.py", ("--check",)),
+        ("Public exemplars", ROOT / "labs" / "exemplars" / "manage.py", ()),
         ("Module 1 workbench", workbench_path(1), ("self-test",)),
         ("Module 2 workbench", workbench_path(2), ("self-test",)),
         ("Module 3 workbench", workbench_path(3), ("self-test",)),

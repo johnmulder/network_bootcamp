@@ -182,6 +182,11 @@ tables, architecture records, and incident telemetry from
 [`labs/fixtures/`](labs/fixtures/). This path does not require elevated
 privileges and does not contact external systems.
 
+Optional [public PCAP lessons](labs/exemplars/README.md) add DNS, completed
+TLS 1.3, and QUIC/HTTP3 comparisons. Their upstream captures, public test keys,
+source notices, and pinned hashes ship with the offline course. Maintainer
+downloads are explicit; class startup and normal verification stay offline.
+
 Some guides also show optional live observations with macOS networking tools.
 Only packet capture requires `sudo`; capture only traffic on the learner's own
 Mac or on a network where capture is explicitly authorized. The saved fixtures
