@@ -5,7 +5,7 @@ Its generated addresses are private or reserved for documentation. The
 [public exemplars](exemplars/README.md) are independent historical captures
 and may contain real addresses. All exercises read local files offline.
 
-The checked-in dataset contains 36 manifest-tracked evidence files plus
+The checked-in dataset contains 39 manifest-tracked evidence files plus
 `labs/fixtures/manifest.json`. The builder creates those files deterministically
 using only the Python standard library. Public captures have their own source
 manifest, license notice, acquisition step, and checks under `labs/exemplars/`.
@@ -20,7 +20,7 @@ python3 labs/build_fixtures.py --check
 
 It checks file presence and SHA-256 digests against the existing manifest,
 flags unlisted fixture files, parses JSON/JSONL, and checks the three original
-PCAP magic headers. A successful check reports `fixtures ready: 36 files`.
+PCAP magic headers. A successful check reports `fixtures ready: 39 files`.
 It does not regenerate evidence or establish that an incident interpretation
 is correct.
 
@@ -42,13 +42,13 @@ fixtures does not modify that learner directory.
 
 | Group | Files | Evidence represented |
 | --- | ---: | --- |
-| `architecture/` | 6 | Reference topology, component behavior, approved flows, cloud routes, WAN state, and failure events |
+| `architecture/` | 7 | Reference topology, component behavior, approved flows, cloud routes, WAN state, and failure events |
 | `incident/` | 10 | Assets, DNS, flow, firewall, authentication, endpoint, proxy, VPN, SIEM, and the ledger template |
-| `network/` | 3 | DHCP, IPv6, and Layer 2 control-plane state |
+| `network/` | 4 | DHCP, IPv6, and Layer 2 control-plane state |
 | `pcaps/` | 3 | Foundations, MTU failure, and incident packet captures |
 | `routing/` | 7 | macOS routes, route candidates and events, traceroute, VRFs, OSPF, and BGP |
-| `challenges/` | 7 | Neutral transfer capture, three staged incident rounds, two independent capstones, and provenance map |
-| **Total evidence files** | **36** | All manifest-tracked fixtures, excluding the manifest itself |
+| `challenges/` | 8 | Neutral transfer capture, three staged incident rounds, two independent capstones, and provenance map |
+| **Total evidence files** | **39** | All manifest-tracked fixtures, excluding the manifest itself |
 
 The manifest is generated alongside those files and records each relative
 path, byte length, and SHA-256 digest.

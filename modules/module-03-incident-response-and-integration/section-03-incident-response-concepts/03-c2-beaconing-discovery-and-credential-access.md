@@ -40,67 +40,36 @@ credentials.
 
 ## Teaching Instructions
 
-1. From the repository root, verify the lab dataset and create the output
-   file:
+Use the [shared extended-study workflow](../../README.md#learning-workflow).
+This task defines the required observations for this guide. The reasoning
+checklist above is a general method: when device state is not supplied,
+record it as unknown or explain a stated hypothetical; do not invent it.
 
-   ```sh
-   python3 labs/build_fixtures.py --check
-   mkdir -p work/module-03-incident-response-and-integration/section-03-incident-response-concepts
-   touch work/module-03-incident-response-and-integration/section-03-incident-response-concepts/03-c2-beaconing-discovery-and-credential-access.md
-   ```
+**Predict and explain:** Predict which observation distinguishes an updater
+from malicious command traffic.
 
-2. Before examining the evidence, write one falsifiable prediction about **C2,
-   Beaconing, Discovery, and Credential Access** in
-   `work/module-03-incident-response-and-integration/section-03-incident-response-concepts/03-c2-beaconing-discovery-and-credential-access.md`.
-   State the exact fixture field, packet, or log record that would support or
-   contradict it.
+Run from the repository root:
 
-3. Run the evidence commands exactly as shown:
+```sh
+jq '.' labs/fixtures/incident/flows.jsonl
+jq '.' labs/fixtures/incident/endpoint.jsonl
+```
 
-   ```sh
-   jq -c '.' labs/fixtures/incident/siem.jsonl
-   jq -c '.' labs/fixtures/incident/endpoint.jsonl
-   jq -c '.' labs/fixtures/incident/auth.jsonl
-   jq -c '.' labs/fixtures/incident/flows.jsonl
-   jq -c '.' labs/fixtures/incident/firewall.jsonl
-   ```
+## Expected Evidence and Worked Reasoning
 
-4. In the output file, add a `## Evidence Analysis` section for **C2, Beaconing,
-   Discovery, and Credential Access**. Apply the numbered Reasoning Process in
-   order. Tie every claim to a frame or log record and label it observed,
-   inferred, hypothesized, or unknown.
-
-5. Add an evidence-ledger table with the columns `evidence ID`, `source`,
-   `collection point`, `raw time`, `normalized time`, `entity`, `observation`,
-   `classification`, `limitation`, and `confidence`. Cite exact frames or
-   records.
-
-6. Apply every step in the Reasoning Process, answer all Check Your
-   Understanding questions, and keep at least one plausible alternative
-   hypothesis in the same output file.
-
-## Expected Evidence
-
-* The SIEM alert is created at `16:04:10Z` by `WORKSTATION-SMB-FANOUT`; it is
-  an alert, not proof of an incident.
-
-* Endpoint evidence places `update-agent` before `smb-client`, and
-  authentication records a successful `svc-backup` network login to `file-01`
-  from `10.0.10.23`.
-
-* Frames 6, 10, and 14 show repeated TLS ClientHello messages. Frames 15–16
-  show a TCP SYN/SYN-ACK on port 445; the authentication log separately
-  records a successful network login. Completed TLS, file access, remote
-  execution, credential theft, persistence, and exfiltration remain unproven.
+Repeated flow timing and update-agent ancestry fit more than one hypothesis.
+Socket attribution, approved updater identity, and command content are not
+supplied.
 
 ## Completion Standard
 
-Submit
-`work/module-03-incident-response-and-integration/section-03-incident-response-concepts/03-c2-beaconing-discovery-and-credential-access.md`.
-It is complete when it contains the prediction, exact commands used, at least
-three cited observations, a timeline or conclusion tied to this subsection,
-claim-level confidence, all knowledge-check answers, one alternative
-hypothesis, and one explicitly labeled visibility gap.
+Keep both explanations and choose one discriminating endpoint record.
+
+Keep a prediction, the decisive citation or stated assumption, your revised
+explanation, and one unresolved question in your existing module notes.
+For optional separate notes, mirror this guide path under `work/`.
+Knowledge checks below extend the conceptual model; unavailable device
+state is a valid unknown, never a requirement to fabricate evidence.
 
 ## Check Your Understanding
 
@@ -109,3 +78,12 @@ hypothesis, and one explicitly labeled visibility gap.
 2. Which network pattern can suggest internal discovery?
 
 3. Why is credential access difficult to prove from flow data alone?
+
+## Sources
+
+Reviewed September 14, 2026. The exercise is self-contained and offline.
+These references support the general model, not the fictional observations.
+
+[MITRE ATT&CK — Command and Control tactic](https://attack.mitre.org/tactics/TA0011/)
+
+[NIST SP 800-86 §§3, 6 — forensic process and network traffic](https://csrc.nist.gov/pubs/sp/800/86/final)

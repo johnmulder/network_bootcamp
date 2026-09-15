@@ -38,67 +38,36 @@ malicious explanations. Visibility gaps determine what cannot be concluded.
 
 ## Teaching Instructions
 
-1. From the repository root, verify the lab dataset and create the output
-   file:
+Use the [shared extended-study workflow](../../README.md#learning-workflow).
+This task defines the required observations for this guide. The reasoning
+checklist above is a general method: when device state is not supplied,
+record it as unknown or explain a stated hypothetical; do not invent it.
 
-   ```sh
-   python3 labs/build_fixtures.py --check
-   mkdir -p work/module-03-incident-response-and-integration/section-04-investigation-exercise
-   touch work/module-03-incident-response-and-integration/section-04-investigation-exercise/04-alternative-explanations-and-visibility-gaps.md
-   ```
+**Predict and explain:** Predict what approved updater or target audit
+evidence would do to the leading hypothesis.
 
-2. Before examining the evidence, write one falsifiable prediction about
-   **Alternative Explanations and Visibility Gaps** in
-   `work/module-03-incident-response-and-integration/section-04-investigation-exercise/04-alternative-explanations-and-visibility-gaps.md`.
-   State the exact fixture field, packet, or log record that would support or
-   contradict it.
+Run from the repository root:
 
-3. Run the evidence commands exactly as shown:
+```sh
+jq '.' labs/fixtures/incident/endpoint.jsonl
+jq '.' labs/fixtures/incident/flows.jsonl
+```
 
-   ```sh
-   python3 labs/build_fixtures.py --check
-   jq '.' labs/fixtures/incident/assets.json
-   jq -c '.' labs/fixtures/incident/dns.jsonl
-   jq -c '.' labs/fixtures/incident/flows.jsonl
-   jq -c '.' labs/fixtures/incident/firewall.jsonl
-   jq -c '.' labs/fixtures/incident/auth.jsonl
-   jq -c '.' labs/fixtures/incident/endpoint.jsonl
-   sed -n '1,12p' labs/fixtures/incident/evidence-ledger-template.csv
-   ```
+## Expected Evidence and Worked Reasoning
 
-4. In the output file, add a `## Evidence Analysis` section for **Alternative
-   Explanations and Visibility Gaps**. Apply the numbered Reasoning Process in
-   order. Tie every claim to a frame or log record and label it observed,
-   inferred, hypothesized, or unknown.
-
-5. Add an evidence-ledger table with the columns `evidence ID`, `source`,
-   `collection point`, `raw time`, `normalized time`, `entity`, `observation`,
-   `classification`, `limitation`, and `confidence`. Cite exact frames or
-   records.
-
-6. Apply every step in the Reasoning Process, answer all Check Your
-   Understanding questions, and keep at least one plausible alternative
-   hypothesis in the same output file.
-
-## Expected Evidence
-
-* The checksum check passes before analysis, and the ledger template shows the
-  required claim-classification and confidence fields.
-
-* The evidence orders process start, DNS, three periodic TLS connections, child
-  SMB client, recorded successful network authentication, and the SIEM alert.
-
-* Direct user-to-OT HTTPS is denied at `16:08:00Z`; no fixture proves
-  successful OT access, credential theft, persistence, or exfiltration.
+The supplied records are compatible with multiple causes; approval history and
+target operations are missing. A useful alternative predicts a different
+future observation.
 
 ## Completion Standard
 
-Submit
-`work/module-03-incident-response-and-integration/section-04-investigation-exercise/04-alternative-explanations-and-visibility-gaps.md`.
-It is complete when it contains the prediction, exact commands used, at least
-three cited observations, a timeline or conclusion tied to this subsection,
-claim-level confidence, all knowledge-check answers, one alternative
-hypothesis, and one explicitly labeled visibility gap.
+Write competing predictions and request the smallest discriminating artifact.
+
+Keep a prediction, the decisive citation or stated assumption, your revised
+explanation, and one unresolved question in your existing module notes.
+For optional separate notes, mirror this guide path under `work/`.
+Knowledge checks below extend the conceptual model; unavailable device
+state is a valid unknown, never a requirement to fabricate evidence.
 
 ## Check Your Understanding
 
@@ -107,3 +76,10 @@ hypothesis, and one explicitly labeled visibility gap.
 2. When does a visibility gap prevent a negative conclusion?
 
 3. Which missing source has the highest decision value?
+
+## Sources
+
+Reviewed September 14, 2026. The exercise is self-contained and offline.
+These references support the general model, not the fictional observations.
+
+[NIST SP 800-86 §§3, 6 — forensic process and network traffic](https://csrc.nist.gov/pubs/sp/800/86/final)

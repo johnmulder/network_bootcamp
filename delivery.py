@@ -186,6 +186,7 @@ EVIDENCE = {
 }
 EVIDENCE.update({
     'dhcp': ['jq', '.', 'labs/fixtures/network/dhcp.jsonl'],
+    'dns.contrast': ['jq', '.scope, .dns[1], .dns[3]', 'labs/fixtures/network/troubleshooting.json'],
     'foundations.summary': ['tshark', '-n', '-r', 'labs/fixtures/pcaps/foundations.pcap'],
     'foundations.fields': ['tshark', '-n', '-r', 'labs/fixtures/pcaps/foundations.pcap', '-T', 'fields', '-E', 'header=y', '-e', 'frame.number', '-e', 'vlan.id', '-e', 'eth.src', '-e', 'eth.dst', '-e', 'ip.src', '-e', 'ip.dst', '-e', 'tcp.flags', '-e', 'dns.qry.name', '-e', 'http.response.code'],
     'routes': ['column', '-s,', '-t', 'labs/fixtures/routing/route-candidates.csv'],

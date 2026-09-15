@@ -21,7 +21,7 @@ enterprise hardware, or proprietary analyzers are required.
 | Interactive workbenches | 3 |
 | Workbench questions | 83 |
 | Saved delivery | 36 phases, with terminal and JSON interfaces |
-| Evidence fixtures | 36 manifest-tracked files plus the manifest |
+| Evidence fixtures | 39 manifest-tracked files plus the manifest |
 | Incident timeline | 17 normalized events across 8 sources |
 | Automated tests | Standard-library tests plus complete delivery rehearsals |
 | Optional LLM support | Review, coaching, handoff practice, and maintainer drafts |

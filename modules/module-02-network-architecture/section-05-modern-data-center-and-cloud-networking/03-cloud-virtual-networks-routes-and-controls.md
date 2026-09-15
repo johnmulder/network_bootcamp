@@ -39,61 +39,34 @@ distributed controls, and platform-owned dependencies.
 
 ## Teaching Instructions
 
-1. From the repository root, verify the lab dataset and create the output
-   file:
+Use the [shared extended-study workflow](../../README.md#learning-workflow).
+This task defines the required observations for this guide. The reasoning
+checklist above is a general method: when device state is not supplied,
+record it as unknown or explain a stated hypothetical; do not invent it.
 
-   ```sh
-   python3 labs/build_fixtures.py --check
-   mkdir -p work/module-02-network-architecture/section-05-modern-data-center-and-cloud-networking
-   touch work/module-02-network-architecture/section-05-modern-data-center-and-cloud-networking/03-cloud-virtual-networks-routes-and-controls.md
-   ```
+**Predict and explain:** Predict whether rt-corp's security default applies to
+on-premises 10.0.20.40.
 
-2. Before examining the evidence, write one falsifiable prediction about **Cloud
-   Virtual Networks, Routes, and Controls** in
-   `work/module-02-network-architecture/section-05-modern-data-center-and-cloud-networking/03-cloud-virtual-networks-routes-and-controls.md`.
-   State the exact fixture field, packet, or log record that would support or
-   contradict it.
+Run from the repository root:
 
-3. Run the evidence commands exactly as shown:
+```sh
+jq '.' labs/fixtures/architecture/cloud-routes.json
+```
 
-   ```sh
-   jq '.' labs/fixtures/architecture/cloud-routes.json
-   jq '.attachments | to_entries[] | {attachment: .key, route_table: .value}' labs/fixtures/architecture/cloud-routes.json
-   jq '.routes | to_entries[] | {table: .key, routes: .value}' labs/fixtures/architecture/cloud-routes.json
-   ```
+## Expected Evidence and Worked Reasoning
 
-4. In the output file, add a `## Architecture Analysis` section for **Cloud
-   Virtual Networks, Routes, and Controls**. Apply the numbered Reasoning
-   Process in order. Tie every design or failure claim to a named component,
-   boundary, route, policy, or fixture field.
-
-5. Add an architecture table with the columns `component or boundary`,
-   `intended role`, `dependency`, `failure effect`, `evidence`, and
-   `uncertainty`. Cite exact fixture fields.
-
-6. Apply every step in the Reasoning Process, then answer all Check Your
-   Understanding questions in the same output file.
-
-## Expected Evidence
-
-* `corp-vpc` associates with `rt-corp`, which sends its default route through
-  `security-vpc` and on-premises prefixes toward `on-prem`.
-
-* `rt-security` targets `corp-vpc` for `10.20.0.0/16`. This is a modeled
-  route, not proof of symmetric inspection or preserved state. The more
-  specific on-premises route in `rt-corp` bypasses its security default.
-
-* `rt-hybrid` has no default route, so attachment alone does not provide
-  internet reachability.
+Its matching 10.0.0.0/8 targets on-prem and wins over the security default.
+Cloud subnet names do not prove Ethernet broadcast behavior.
 
 ## Completion Standard
 
-Submit
-`work/module-02-network-architecture/section-05-modern-data-center-and-cloud-networking/03-cloud-virtual-networks-routes-and-controls.md`.
-It is complete when it contains the prediction, exact commands used, at least
-three cited architecture facts, a forward and return-path or failure
-explanation tied to this subsection, all knowledge-check answers, and one
-explicitly labeled uncertainty.
+Trace the selected target and identify the absent inspection-state evidence.
+
+Keep a prediction, the decisive citation or stated assumption, your revised
+explanation, and one unresolved question in your existing module notes.
+For optional separate notes, mirror this guide path under `work/`.
+Knowledge checks below extend the conceptual model; unavailable device
+state is a valid unknown, never a requirement to fabricate evidence.
 
 ## Check Your Understanding
 
@@ -102,3 +75,10 @@ explicitly labeled uncertainty.
 2. How can stateful and stateless controls interact?
 
 3. What part of a managed service path may remain outside customer visibility?
+
+## Sources
+
+Reviewed September 14, 2026. The exercise is self-contained and offline.
+These references support the general model, not the fictional observations.
+
+[AWS — transit route-table association and propagation](https://docs.aws.amazon.com/vpc/latest/tgw/tgw-route-tables.html)

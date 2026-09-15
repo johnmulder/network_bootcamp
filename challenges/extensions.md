@@ -4,6 +4,15 @@ These activities are outside the six-hour course and do not affect completion.
 Use existing deliverables for notes. Every network address below is local or
 from the saved fixtures; no task sends traffic to enterprise or external hosts.
 
+## Additional Saved Comparisons
+
+- [Naming, attachment, and application failures](comparisons.md) — 25 minutes.
+- [Capacity, goodput, RTT, loss, and receiver limits](comparisons.md#performance-is-more-than-link-speed--20-minutes)
+  — 20 minutes.
+- [Public DNS, TLS 1.3, and QUIC captures](../labs/exemplars/README.md) —
+  10–15 minutes per card, with supplied test secrets clearly identified.
+- [Recovery and closure](recovery.md) — ten minutes after both assessed cases.
+
 ## IPv6 Neighbor Detective — 15 Minutes
 
 Prerequisite: distinguish local neighbors from routed destinations.

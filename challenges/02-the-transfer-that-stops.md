@@ -11,6 +11,10 @@ observation needed before recommending a repair.
 Prerequisite: distinguish a TCP handshake from application success. Consult
 the [reference card](reference.md) as needed. This is a constructed transfer
 drill; port 443 and the dummy data do not establish a valid TLS session.
+
+The quality coordinator needs a batch report transferred before shift
+review. A small successful request is insufficient; define a large-transfer
+success observation before proposing a repair.
 <!-- delivery:end c02.brief -->
 
 <!-- delivery:start c02.predict -->

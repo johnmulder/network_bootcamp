@@ -49,3 +49,41 @@ A satisfactory explanation identifies two different reachability questions:
 can the outer packet reach the remote VTEP, and does the overlay know where the
 inner destination belongs? It also identifies MTU and policy as independent
 constraints. Keep any optional notes in your architecture assessment.
+
+## Teaching Instructions
+
+Use the [shared extended-study workflow](../../README.md#learning-workflow).
+This task defines the required observations for this guide. The reasoning
+checklist above is a general method: when device state is not supplied,
+record it as unknown or explain a stated hypothetical; do not invent it.
+
+**Predict and explain:** Assume VTEP A/B share VNI 100 and the underlay
+reaches both. Predict what a missing destination MAC mapping can prevent.
+
+This is a conceptual exercise under the assumptions above; no device
+configuration or observed takeover/fabric state is supplied.
+
+## Expected Evidence and Worked Reasoning
+
+Outer IP reachability does not establish inner destination mapping or policy.
+VXLAN adds an outer Ethernet/IP/UDP/VXLAN wrapper; EVPN distributes
+reachability. No VXLAN capture is supplied.
+
+## Completion Standard
+
+Distinguish outer transport, inner identity, mapping, and MTU.
+
+Keep a prediction, the decisive citation or stated assumption, your revised
+explanation, and one unresolved question in your existing module notes.
+For optional separate notes, mirror this guide path under `work/`.
+Knowledge checks below extend the conceptual model; unavailable device
+state is a valid unknown, never a requirement to fabricate evidence.
+
+## Sources
+
+Reviewed September 14, 2026. The exercise is self-contained and offline.
+These references support the general model, not the fictional observations.
+
+[RFC 7348 §5 — VXLAN frame format](https://www.rfc-editor.org/rfc/rfc7348.html#section-5)
+
+[RFC 7432 §§7, 9 — EVPN routes and learning](https://www.rfc-editor.org/rfc/rfc7432.html)

@@ -2,8 +2,9 @@
 
 > **Theme:** How packets actually get from A to B.
 
-Each subsection guide explains the technical model, then provides exact local
-commands, expected evidence, a submission path, and a completion standard.
+Each subsection guide explains a technical model and gives a focused evidence
+task or explicit conceptual assumptions. Use the
+[shared workflow and evidence matrix](../README.md) for extended study.
 
 ## One-Day Route
 

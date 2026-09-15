@@ -38,61 +38,35 @@ packet-forwarding narrative.
 
 ## Teaching Instructions
 
-1. From the repository root, verify the lab dataset and create the output
-   file:
+Use the [shared extended-study workflow](../../README.md#learning-workflow).
+This task defines the required observations for this guide. The reasoning
+checklist above is a general method: when device state is not supplied,
+record it as unknown or explain a stated hypothetical; do not invent it.
 
-   ```sh
-   python3 labs/build_fixtures.py --check
-   mkdir -p work/module-01-operational-networking/section-03-layer-3-and-packet-forwarding
-   touch work/module-01-operational-networking/section-03-layer-3-and-packet-forwarding/09-routing-table-exercise.md
-   ```
+**Predict and explain:** Choose routes for the server and external-77, then
+remove only the server /32.
 
-2. Before examining the evidence, write one falsifiable prediction about
-   **Routing-Table Exercise** in
-   `work/module-01-operational-networking/section-03-layer-3-and-packet-forwarding/09-routing-table-exercise.md`.
-   State the exact fixture field, packet, or log record that would support or
-   contradict it.
+Run from the repository root:
 
-3. Run the evidence commands exactly as shown:
+```sh
+column -s, -t labs/fixtures/routing/route-candidates.csv
+```
 
-   ```sh
-   sed -n '1,120p' labs/fixtures/routing/macos-routes.txt
-   column -s, -t labs/fixtures/routing/route-candidates.csv
-   jq '.' labs/fixtures/network/ipv6.json
-   jq '.' labs/fixtures/routing/traceroute.json
-   tshark -r labs/fixtures/pcaps/mtu-failure.pcap -Y 'tcp || icmp' -T fields -E header=y -E separator=, -e frame.number -e ip.src -e ip.dst -e ip.len -e ip.hdr_len -e tcp.hdr_len -e tcp.len -e tcp.seq -e tcp.options.mss_val -e icmp.type -e icmp.code -e icmp.mtu
-   ```
+## Expected Evidence and Worked Reasoning
 
-4. In the output file, add a `## Analysis` section for **Routing-Table
-   Exercise**. Apply the numbered Reasoning Process in order. For each step,
-   cite at least one exact command result and label the statement as an
-   observation or interpretation.
-
-5. Add an evidence table with the columns `source`, `observation`,
-   `interpretation`, and `uncertainty`. Cite exact frame numbers, prefixes,
-   JSON fields, or log records.
-
-6. Apply every step in the Reasoning Process, then answer all Check Your
-   Understanding questions in the same output file.
-
-## Expected Evidence
-
-* `10.0.20.40/32` wins for `10.0.20.40`, while the two equal OSPF `/24` routes
-  are candidates for other addresses in `10.0.20.0/24`.
-
-* The IPv6 host uses `fe80::1%en0` as its default router, and traceroute hop 3
-  is unknown rather than proven absent from the path.
-
-* The MTU capture advertises MSS 1460, sends a 1400-byte TCP payload, receives
-  ICMP type 3 code 4 with MTU 1200, and retransmits the oversized segment.
+Both destinations have host routes through .252; removing the server /32
+leaves its /24 choices without removing the external host route. No policy
+decision follows from selection alone.
 
 ## Completion Standard
 
-Submit
-`work/module-01-operational-networking/section-03-layer-3-and-packet-forwarding/09-routing-table-exercise.md`.
-It is complete when it contains the prediction, exact commands used, at least
-three cited observations, a decision explanation tied to this subsection, all
-knowledge-check answers, and one explicitly labeled uncertainty.
+Report changed and unchanged lookups with prefix citations.
+
+Keep a prediction, the decisive citation or stated assumption, your revised
+explanation, and one unresolved question in your existing module notes.
+For optional separate notes, mirror this guide path under `work/`.
+Knowledge checks below extend the conceptual model; unavailable device
+state is a valid unknown, never a requirement to fabricate evidence.
 
 ## Check Your Understanding
 
@@ -101,3 +75,10 @@ knowledge-check answers, and one explicitly labeled uncertainty.
 2. Did you confirm reachability of every recursive next hop?
 
 3. Did you trace the return path instead of mirroring the forward path?
+
+## Sources
+
+Reviewed September 14, 2026. The exercise is self-contained and offline.
+These references support the general model, not the fictional observations.
+
+[RFC 1812 §5.2.4.3 — forwarding selection](https://www.rfc-editor.org/rfc/rfc1812.html#section-5.2.4.3)

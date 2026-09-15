@@ -65,6 +65,8 @@ ___
 
 Recipient's next check, in their own words: ___
 
+Closure condition / monitoring window / accepting owner / remaining risk: ___
+
 <!-- artifact:end c06-handoff -->
 
 ## Individual Exit

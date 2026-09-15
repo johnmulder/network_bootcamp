@@ -38,59 +38,35 @@ observations prove the conclusion.
 
 ## Teaching Instructions
 
-1. From the repository root, verify the lab dataset and create the output
-   file:
+Use the [shared extended-study workflow](../../README.md#learning-workflow).
+This task defines the required observations for this guide. The reasoning
+checklist above is a general method: when device state is not supplied,
+record it as unknown or explain a stated hypothetical; do not invent it.
 
-   ```sh
-   python3 labs/build_fixtures.py --check
-   mkdir -p work/module-01-operational-networking/section-01-introduction-and-mental-model
-   touch work/module-01-operational-networking/section-01-introduction-and-mental-model/05-path-policy-state-and-evidence.md
-   ```
+**Predict and explain:** Predict whether the intended external deny agrees
+with the incident firewall decision.
 
-2. Before examining the evidence, write one falsifiable prediction about **Path,
-   Policy, State, and Evidence** in
-   `work/module-01-operational-networking/section-01-introduction-and-mental-model/05-path-policy-state-and-evidence.md`.
-   State the exact fixture field, packet, or log record that would support or
-   contradict it.
+Run from the repository root:
 
-3. Run the evidence commands exactly as shown:
+```sh
+column -s, -t labs/fixtures/architecture/traffic-flows.csv
+jq '.' labs/fixtures/incident/firewall.jsonl
+```
 
-   ```sh
-   python3 labs/build_fixtures.py --check
-   sed -n '1,120p' labs/fixtures/architecture/enterprise.md
-   python3 -m json.tool labs/fixtures/manifest.json | sed -n '1,80p'
-   ```
+## Expected Evidence and Worked Reasoning
 
-4. In the output file, add a `## Analysis` section for **Path, Policy, State,
-   and Evidence**. Apply the numbered Reasoning Process in order. For each step,
-   cite at least one exact command result and label the statement as an
-   observation or interpretation.
-
-5. Add an evidence table with the columns `source`, `observation`,
-   `interpretation`, and `uncertainty`. Cite exact frame numbers, prefixes,
-   JSON fields, or log records.
-
-6. Apply every step in the Reasoning Process, then answer all Check Your
-   Understanding questions in the same output file.
-
-## Expected Evidence
-
-* The manifest reports the case name `network-bootcamp-reference` and 36
-  checksum-protected fixture files.
-
-* The architecture places `ws-23` at `10.0.10.23`, `file-01` at `10.0.20.40`,
-  and the OT networks behind two explicit firewall boundaries.
-
-* Your explanation identifies path, policy, state, and evidence as separate
-  questions rather than treating the diagram as proof of live behavior.
+F2 intends deny; firewall record 1 allows the external flow using
+TEMP-EGRESS-17. A design intention and a later observed decision can differ.
 
 ## Completion Standard
 
-Submit
-`work/module-01-operational-networking/section-01-introduction-and-mental-model/05-path-policy-state-and-evidence.md`.
-It is complete when it contains the prediction, exact commands used, at least
-three cited observations, a decision explanation tied to this subsection, all
-knowledge-check answers, and one explicitly labeled uncertainty.
+Write intent, observation, and a change-owner question separately.
+
+Keep a prediction, the decisive citation or stated assumption, your revised
+explanation, and one unresolved question in your existing module notes.
+For optional separate notes, mirror this guide path under `work/`.
+Knowledge checks below extend the conceptual model; unavailable device
+state is a valid unknown, never a requirement to fabricate evidence.
 
 ## Check Your Understanding
 
@@ -99,3 +75,12 @@ knowledge-check answers, and one explicitly labeled uncertainty.
 2. Which state can make one direction work while the reverse initiation fails?
 
 3. What evidence would distinguish a routing failure from a policy denial?
+
+## Sources
+
+Reviewed September 14, 2026. The exercise is self-contained and offline.
+These references support the general model, not the fictional observations.
+
+[NIST SP 800-41r1 §§2–4 — firewalls and policy](https://csrc.nist.gov/pubs/sp/800/41/r1/final)
+
+[NIST SP 800-86 §§3, 6 — forensic process and network traffic](https://csrc.nist.gov/pubs/sp/800/86/final)

@@ -37,61 +37,34 @@ or border leaves.
 
 ## Teaching Instructions
 
-1. From the repository root, verify the lab dataset and create the output
-   file:
+Use the [shared extended-study workflow](../../README.md#learning-workflow).
+This task defines the required observations for this guide. The reasoning
+checklist above is a general method: when device state is not supplied,
+record it as unknown or explain a stated hypothetical; do not invent it.
 
-   ```sh
-   python3 labs/build_fixtures.py --check
-   mkdir -p work/module-02-network-architecture/section-05-modern-data-center-and-cloud-networking
-   touch work/module-02-network-architecture/section-05-modern-data-center-and-cloud-networking/01-leaf-spine-and-traffic-directions.md
-   ```
+**Predict and explain:** Assume leaves L1/L2 each connect to spines S1/S2, no
+leaf-to-leaf link, equal costs, and hosts A on L1 and B on L2. Predict
+cross-leaf paths.
 
-2. Before examining the evidence, write one falsifiable prediction about
-   **Leaf/Spine Architecture and Traffic Directions** in
-   `work/module-02-network-architecture/section-05-modern-data-center-and-cloud-networking/01-leaf-spine-and-traffic-directions.md`.
-   State the exact fixture field, packet, or log record that would support or
-   contradict it.
+This is a conceptual exercise under the assumptions above; no device
+configuration or observed takeover/fabric state is supplied.
 
-3. Run the evidence commands exactly as shown:
+## Expected Evidence and Worked Reasoning
 
-   ```sh
-   jq '.' labs/fixtures/architecture/cloud-routes.json
-   jq '.attachments | to_entries[] | {attachment: .key, route_table: .value}' labs/fixtures/architecture/cloud-routes.json
-   jq '.routes | to_entries[] | {table: .key, routes: .value}' labs/fixtures/architecture/cloud-routes.json
-   ```
-
-4. In the output file, add a `## Architecture Analysis` section for **Leaf/Spine
-   Architecture and Traffic Directions**. Apply the numbered Reasoning Process
-   in order. Tie every design or failure claim to a named component, boundary,
-   route, policy, or fixture field.
-
-5. Add an architecture table with the columns `component or boundary`,
-   `intended role`, `dependency`, `failure effect`, `evidence`, and
-   `uncertainty`. Cite exact fixture fields.
-
-6. Apply every step in the Reasoning Process, then answer all Check Your
-   Understanding questions in the same output file.
-
-## Expected Evidence
-
-* `corp-vpc` associates with `rt-corp`, which sends its default route through
-  `security-vpc` and on-premises prefixes toward `on-prem`.
-
-* `rt-security` targets `corp-vpc` for `10.20.0.0/16`. This is a modeled
-  route, not proof of symmetric inspection or preserved state. The more
-  specific on-premises route in `rt-corp` bypasses its security default.
-
-* `rt-hybrid` has no default route, so attachment alone does not provide
-  internet reachability.
+Two conceptual paths exist: L1-S1-L2 and L1-S2-L2. Same-leaf traffic can stay
+on its leaf under local-forwarding assumptions. The cloud tables provide no
+fabric links or ECMP state.
 
 ## Completion Standard
 
-Submit
-`work/module-02-network-architecture/section-05-modern-data-center-and-cloud-networking/01-leaf-spine-and-traffic-directions.md`.
-It is complete when it contains the prediction, exact commands used, at least
-three cited architecture facts, a forward and return-path or failure
-explanation tied to this subsection, all knowledge-check answers, and one
-explicitly labeled uncertainty.
+Enumerate both paths and the effect of losing S1 without inventing deployed
+topology.
+
+Keep a prediction, the decisive citation or stated assumption, your revised
+explanation, and one unresolved question in your existing module notes.
+For optional separate notes, mirror this guide path under `work/`.
+Knowledge checks below extend the conceptual model; unavailable device
+state is a valid unknown, never a requirement to fabricate evidence.
 
 ## Check Your Understanding
 
@@ -100,3 +73,10 @@ explicitly labeled uncertainty.
 2. Where should an endpoint normally attach?
 
 3. How can a required firewall make a nominally short east-west path longer?
+
+## Sources
+
+Reviewed September 14, 2026. The exercise is self-contained and offline.
+These references support the general model, not the fictional observations.
+
+[RFC 7938 §3 — data-center topology](https://www.rfc-editor.org/rfc/rfc7938.html#section-3)

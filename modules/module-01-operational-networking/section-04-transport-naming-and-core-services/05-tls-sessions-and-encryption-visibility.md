@@ -10,8 +10,9 @@ before claiming what a sensor can prove.
 
 ## Core Model
 
-* A TLS handshake negotiates protocol parameters, authenticates the server with
-  certificates, and establishes traffic keys.
+* A TLS handshake negotiates protocol parameters and establishes traffic keys.
+  Certificate-based handshakes authenticate with certificates; PSK-based
+  handshakes, including resumption, can authenticate without a new certificate.
 
 * Server Name Indication can expose the requested hostname in many TLS versions
   and configurations, while encrypted client hello can reduce that visibility.
@@ -27,10 +28,12 @@ before claiming what a sensor can prove.
 
 ## Reasoning Process
 
-1. Locate the TCP connection and identify the TLS handshake messages.
+1. In this TCP-based example, locate the connection and TLS messages. Secure
+   application traffic can also use QUIC over UDP; TCP is not universal.
 
-2. Record visible names, versions, cipher choices, certificate facts, and
-   alerts.
+2. Separate ClientHello offers from ServerHello selections. Record certificate
+   facts only if actually visible. TLS 1.3 encrypts most handshake content
+   after ServerHello; supplied test secrets can change the analyst's view.
 
 3. Mark each encryption termination point on the architecture.
 
@@ -38,59 +41,49 @@ before claiming what a sensor can prove.
 
 ## Teaching Instructions
 
-1. From the repository root, verify the lab dataset and create the output
-   file:
+### Recognize QUIC
 
-   ```sh
-   python3 labs/build_fixtures.py --check
-   mkdir -p work/module-01-operational-networking/section-04-transport-naming-and-core-services
-   touch work/module-01-operational-networking/section-04-transport-naming-and-core-services/05-tls-sessions-and-encryption-visibility.md
-   ```
+QUIC uses UDP and supplies its own connections, reliable streams, loss
+recovery, congestion control, and TLS security. HTTP/3 uses QUIC. UDP's base
+datagrams do not imply that the protocol built above them lacks reliability.
+Port 443 alone distinguishes neither TCP/TLS from QUIC nor benign from
+malicious use. Compare the
+[public TLS and QUIC lesson cards](../../../labs/exemplars/README.md)
+after the factory ClientHello exercise. Their public test secrets explain
+visibility that an ordinary passive observer may lack.
 
-2. Before examining the evidence, write one falsifiable prediction about **TLS
-   Sessions and Encryption Visibility** in
-   `work/module-01-operational-networking/section-04-transport-naming-and-core-services/05-tls-sessions-and-encryption-visibility.md`.
-   State the exact fixture field, packet, or log record that would support or
-   contradict it.
+[RFC 9000 §§2, 7](https://www.rfc-editor.org/rfc/rfc9000.html)
+describes QUIC streams and connection establishment.
 
-3. Run the evidence commands exactly as shown:
+Use the [shared extended-study workflow](../../README.md#learning-workflow).
+This task defines the required observations for this guide. The reasoning
+checklist above is a general method: when device state is not supplied,
+record it as unknown or explain a stated hypothetical; do not invent it.
 
-   ```sh
-   tshark -r labs/fixtures/pcaps/foundations.pcap -Y 'dns || http || tcp.flags.syn == 1' -T fields -E header=y -E separator=, -e frame.number -e ip.src -e ip.dst -e tcp.srcport -e tcp.dstport -e tcp.flags -e dns.qry.name -e dns.a -e http.request.uri -e http.response.code
-   tshark -r labs/fixtures/pcaps/incident.pcap -Y 'tls.handshake.type == 1' -T fields -E header=y -E separator=, -e frame.time_relative -e ip.src -e ip.dst -e tls.handshake.extensions_server_name
-   jq -c '.' labs/fixtures/network/dhcp.jsonl
-   ```
+**Predict and explain:** Predict which claims a ClientHello can establish
+without a ServerHello or Finished.
 
-4. In the output file, add a `## Analysis` section for **TLS Sessions and
-   Encryption Visibility**. Apply the numbered Reasoning Process in order. For
-   each step, cite at least one exact command result and label the statement as
-   an observation or interpretation.
+Run from the repository root:
 
-5. Add an evidence table with the columns `source`, `observation`,
-   `interpretation`, and `uncertainty`. Cite exact frame numbers, prefixes,
-   JSON fields, or log records.
+```sh
+tshark -n -r labs/fixtures/pcaps/incident.pcap -Y 'tcp || dns' -T fields -E header=y -e frame.number -e frame.time_relative -e ip.src -e ip.dst -e tcp.dstport -e tcp.flags -e tls.handshake.type -e dns.qry.name
+```
 
-6. Apply every step in the Reasoning Process, then answer all Check Your
-   Understanding questions in the same output file.
+## Expected Evidence and Worked Reasoning
 
-## Expected Evidence
-
-* The DNS answer maps `app.example.test` to `10.0.20.40`, followed by a TCP
-  handshake and `GET /health` with HTTP status 200.
-
-* The incident capture contains three TLS ClientHello records naming
-  `cdn-update.example.test` at 60-second intervals.
-
-* The DHCP fixture follows DISCOVER, OFFER, REQUEST, ACK and assigns address
-  `10.0.10.23/24`, gateway `10.0.10.1`, and DNS `10.0.10.53`.
+Frames 6, 10, and 14 offer TLS parameters. They do not establish negotiation,
+certificates, Finished, or application success. Compare the separate public
+TLS exemplar after this attempt.
 
 ## Completion Standard
 
-Submit
-`work/module-01-operational-networking/section-04-transport-naming-and-core-services/05-tls-sessions-and-encryption-visibility.md`.
-It is complete when it contains the prediction, exact commands used, at least
-three cited observations, a decision explanation tied to this subsection, all
-knowledge-check answers, and one explicitly labeled uncertainty.
+Distinguish offered, selected, and encrypted/unobserved fields.
+
+Keep a prediction, the decisive citation or stated assumption, your revised
+explanation, and one unresolved question in your existing module notes.
+For optional separate notes, mirror this guide path under `work/`.
+Knowledge checks below extend the conceptual model; unavailable device
+state is a valid unknown, never a requirement to fabricate evidence.
 
 ## Check Your Understanding
 
@@ -99,3 +92,10 @@ knowledge-check answers, and one explicitly labeled uncertainty.
 2. Why can a proxy observe plaintext that a network tap cannot?
 
 3. Which useful flow facts remain visible when payloads are encrypted?
+
+## Sources
+
+Reviewed September 14, 2026. The exercise is self-contained and offline.
+These references support the general model, not the fictional observations.
+
+[RFC 8446 §§2, 4 — TLS 1.3 handshake](https://www.rfc-editor.org/rfc/rfc8446.html)

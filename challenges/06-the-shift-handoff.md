@@ -6,6 +6,10 @@
 A fresh service problem arrives before the next shift. Use your three
 deliverables to analyze it without a prescribed sequence of commands.
 Prerequisite: complete Challenges 1–5, with hints and revisions as needed.
+
+The incoming operator must make the next check without reconstructing your
+reasoning from scratch. Name the service, deciding record, owner, and an
+observable success condition.
 <!-- delivery:end c06.brief -->
 
 <!-- delivery:start c06.receive -->

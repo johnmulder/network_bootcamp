@@ -36,60 +36,35 @@ detection, capacity, and stateful-service continuity.
 
 ## Teaching Instructions
 
-1. From the repository root, verify the lab dataset and create the output
-   file:
+Use the [shared extended-study workflow](../../README.md#learning-workflow).
+This task defines the required observations for this guide. The reasoning
+checklist above is a general method: when device state is not supplied,
+record it as unknown or explain a stated hypothetical; do not invent it.
 
-   ```sh
-   python3 labs/build_fixtures.py --check
-   mkdir -p work/module-02-network-architecture/section-04-wan-and-remote-connectivity
-   touch work/module-02-network-architecture/section-04-wan-and-remote-connectivity/04-redundant-circuits-routing-and-failover.md
-   ```
+**Predict and explain:** Predict whether an up backup is sufficient during
+partial loss on the preferred circuit.
 
-2. Before examining the evidence, write one falsifiable prediction about
-   **Redundant Circuits, Routing, and Failover** in
-   `work/module-02-network-architecture/section-04-wan-and-remote-connectivity/04-redundant-circuits-routing-and-failover.md`.
-   State the exact fixture field, packet, or log record that would support or
-   contradict it.
+Run from the repository root:
 
-3. Run the evidence commands exactly as shown:
+```sh
+jq '.' labs/fixtures/architecture/wan.json
+jq '.' labs/fixtures/architecture/performance.json
+```
 
-   ```sh
-   jq '.' labs/fixtures/architecture/wan.json
-   jq '.circuits[] | {name, provider, state, loss_percent, capacity_mbps, preference}' labs/fixtures/architecture/wan.json
-   jq '.routes, .sdwan_policy, .mpls' labs/fixtures/architecture/wan.json
-   ```
+## Expected Evidence and Worked Reasoning
 
-4. In the output file, add a `## Architecture Analysis` section for **Redundant
-   Circuits, Routing, and Failover**. Apply the numbered Reasoning Process in
-   order. Tie every design or failure claim to a named component, boundary,
-   route, policy, or fixture field.
-
-5. Add an architecture table with the columns `component or boundary`,
-   `intended role`, `dependency`, `failure effect`, `evidence`, and
-   `uncertainty`. Cite exact fixture fields.
-
-6. Apply every step in the Reasoning Process, then answer all Check Your
-   Understanding questions in the same output file.
-
-## Expected Evidence
-
-* `private-1` is preferred but degraded with 20 percent loss; `internet-vpn-1`
-  is up, lower capacity, and encrypted.
-
-* The branch default still points through HQ on the degraded private circuit,
-  while the specific HQ prefix uses the VPN fixture.
-
-* The MPLS service is provider-managed private routing but is explicitly not
-  encrypted; SD-WAN policy chooses paths by application intent.
+private-1 has 20 percent loss despite its lower preference number. The
+separate performance comparisons show capacity differs from achieved goodput.
 
 ## Completion Standard
 
-Submit
-`work/module-02-network-architecture/section-04-wan-and-remote-connectivity/04-redundant-circuits-routing-and-failover.md`.
-It is complete when it contains the prediction, exact commands used, at least
-three cited architecture facts, a forward and return-path or failure
-explanation tied to this subsection, all knowledge-check answers, and one
-explicitly labeled uncertainty.
+Explain detection, route choice, and capacity as independent requirements.
+
+Keep a prediction, the decisive citation or stated assumption, your revised
+explanation, and one unresolved question in your existing module notes.
+For optional separate notes, mirror this guide path under `work/`.
+Knowledge checks below extend the conceptual model; unavailable device
+state is a valid unknown, never a requirement to fabricate evidence.
 
 ## Check Your Understanding
 
@@ -98,3 +73,12 @@ explicitly labeled uncertainty.
 2. Why is interface-up status an incomplete WAN health check?
 
 3. What should be validated before automatic failback?
+
+## Sources
+
+Reviewed September 14, 2026. The exercise is self-contained and offline.
+These references support the general model, not the fictional observations.
+
+[RFC 1812 §5.2.4.3 — forwarding selection](https://www.rfc-editor.org/rfc/rfc1812.html#section-5.2.4.3)
+
+[RFC 9293 §3 — TCP operation](https://www.rfc-editor.org/rfc/rfc9293.html#section-3)

@@ -7,6 +7,9 @@ Your mission: explain how the workstation reaches its DNS resolver and an
 application server. Start with [addresses and paths](reference.md#addresses-and-paths)
 if IP addresses, prefixes, or MAC addresses are unfamiliar. No command syntax
 needs to be memorized; run the commands below from the repository root.
+
+The reporting analyst needs a dashboard response. Your explanation should
+show where naming, local delivery, and the application each contribute.
 <!-- delivery:end c01.brief -->
 
 <!-- delivery:start c01.model -->
@@ -56,6 +59,9 @@ request. Identify which missing neighbor information would require ARP.
 <!-- delivery:start c01.inspect -->
 ## Inspect and Trace — 25 Minutes
 
+Use 20 minutes for the healthy trace and five for the naming/application
+contrast below. This replaces five minutes of repeated trace reporting.
+
 ```sh
 jq '.' labs/fixtures/network/dhcp.jsonl
 tshark -n -r labs/fixtures/pcaps/foundations.pcap
@@ -91,6 +97,18 @@ Use the packet sheet to record observations and cite frame numbers:
 Readable orientation: frame 1 is an ARP request, frame 3 a DNS query, and
 frame 5 a TCP SYN. The modeled capture is on a VLAN 10 trunk. It does not
 show the entire routed path or prove that the real network matches the diagram.
+
+Five-minute contrast: predict the next check for a name failure versus an
+application failure, then inspect two independent saved comparisons:
+
+```sh
+jq '.scope, .dns[1], .dns[3]' labs/fixtures/network/troubleshooting.json
+```
+
+Explain how D2 and D4 differ and name the next owner and evidence to request.
+Use the existing packet sheet. The fuller
+[comparison key](comparisons.md#naming-attachment-or-application--25-minutes)
+is available after this attempt.
 <!-- delivery:end c01.inspect -->
 
 <!-- delivery:start c01.change -->

@@ -230,7 +230,8 @@
       "evidence": [
         "dhcp",
         "foundations.summary",
-        "foundations.fields"
+        "foundations.fields",
+        "dns.contrast"
       ],
       "checkpoints": [],
       "hints": [

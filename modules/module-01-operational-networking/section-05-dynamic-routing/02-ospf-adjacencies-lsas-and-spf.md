@@ -38,58 +38,34 @@ neighbor's complete route choice.
 
 ## Teaching Instructions
 
-1. From the repository root, verify the lab dataset and create the output
-   file:
+Use the [shared extended-study workflow](../../README.md#learning-workflow).
+This task defines the required observations for this guide. The reasoning
+checklist above is a general method: when device state is not supplied,
+record it as unknown or explain a stated hypothetical; do not invent it.
 
-   ```sh
-   python3 labs/build_fixtures.py --check
-   mkdir -p work/module-01-operational-networking/section-05-dynamic-routing
-   touch work/module-01-operational-networking/section-05-dynamic-routing/02-ospf-adjacencies-lsas-and-spf.md
-   ```
+**Predict and explain:** Predict whether two FULL neighbors prove a complete
+shortest-path reconstruction.
 
-2. Before examining the evidence, write one falsifiable prediction about **OSPF
-   Adjacencies, LSAs, and SPF** in
-   `work/module-01-operational-networking/section-05-dynamic-routing/02-ospf-adjacencies-lsas-and-spf.md`.
-   State the exact fixture field, packet, or log record that would support or
-   contradict it.
+Run from the repository root:
 
-3. Run the evidence commands exactly as shown:
+```sh
+jq '.' labs/fixtures/routing/ospf.json
+```
 
-   ```sh
-   jq '.' labs/fixtures/routing/ospf.json
-   jq '.' labs/fixtures/routing/bgp.json
-   jq -c '.' labs/fixtures/routing/route-events.jsonl
-   ```
+## Expected Evidence and Worked Reasoning
 
-4. In the output file, add a `## Analysis` section for **OSPF Adjacencies, LSAs,
-   and SPF**. Apply the numbered Reasoning Process in order. For each step, cite
-   at least one exact command result and label the statement as an observation
-   or interpretation.
-
-5. Add an evidence table with the columns `source`, `observation`,
-   `interpretation`, and `uncertainty`. Cite exact frame numbers, prefixes,
-   JSON fields, or log records.
-
-6. Apply every step in the Reasoning Process, then answer all Check Your
-   Understanding questions in the same output file.
-
-## Expected Evidence
-
-* OSPF has two equal-cost paths to `10.0.20.0/24`, each with total cost 20.
-
-* The BGP path through peer `192.0.2.2` has higher local preference 200 and is
-  preferred despite its longer AS path.
-
-* After the modeled link failure, the remaining OSPF next hop is installed 80
-  milliseconds after detection and existing ECMP flows are rehashed.
+R1 has two FULL neighbors and two cost-20 candidates for 10.0.20.0/24. No
+complete LSDB, timer configuration, or flooding trace is supplied.
 
 ## Completion Standard
 
-Submit
-`work/module-01-operational-networking/section-05-dynamic-routing/02-ospf-adjacencies-lsas-and-spf.md`.
-It is complete when it contains the prediction, exact commands used, at least
-three cited observations, a decision explanation tied to this subsection, all
-knowledge-check answers, and one explicitly labeled uncertainty.
+Explain the equal costs and identify what prevents building a full SPF tree.
+
+Keep a prediction, the decisive citation or stated assumption, your revised
+explanation, and one unresolved question in your existing module notes.
+For optional separate notes, mirror this guide path under `work/`.
+Knowledge checks below extend the conceptual model; unavailable device
+state is a valid unknown, never a requirement to fabricate evidence.
 
 ## Check Your Understanding
 
@@ -98,3 +74,10 @@ knowledge-check answers, and one explicitly labeled uncertainty.
 2. What information does an LSA carry compared with an installed route?
 
 3. How does area design limit control-plane scope?
+
+## Sources
+
+Reviewed September 14, 2026. The exercise is self-contained and offline.
+These references support the general model, not the fictional observations.
+
+[RFC 2328 §§10, 16 — adjacency and route calculation](https://www.rfc-editor.org/rfc/rfc2328.html)

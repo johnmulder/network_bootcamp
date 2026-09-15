@@ -38,59 +38,36 @@ return paths and policy.
 
 ## Teaching Instructions
 
-1. From the repository root, verify the lab dataset and create the output
-   file:
+Use the [shared extended-study workflow](../../README.md#learning-workflow).
+This task defines the required observations for this guide. The reasoning
+checklist above is a general method: when device state is not supplied,
+record it as unknown or explain a stated hypothetical; do not invent it.
 
-   ```sh
-   python3 labs/build_fixtures.py --check
-   mkdir -p work/module-01-operational-networking/section-06-vrfs-and-network-segmentation
-   touch work/module-01-operational-networking/section-06-vrfs-and-network-segmentation/02-route-isolation-and-route-leaking.md
-   ```
+**Predict and explain:** Predict whether adding a permit alone supplies the
+missing OT return route.
 
-2. Before examining the evidence, write one falsifiable prediction about **Route
-   Isolation and Route Leaking** in
-   `work/module-01-operational-networking/section-06-vrfs-and-network-segmentation/02-route-isolation-and-route-leaking.md`.
-   State the exact fixture field, packet, or log record that would support or
-   contradict it.
+Run from the repository root:
 
-3. Run the evidence commands exactly as shown:
+```sh
+jq '.' labs/fixtures/routing/vrfs.json
+column -s, -t labs/fixtures/architecture/traffic-flows.csv
+```
 
-   ```sh
-   jq 'to_entries[] | {vrf: .key, routes: .value}' labs/fixtures/routing/vrfs.json
-   jq '.CORP, .OT, .MGMT' labs/fixtures/routing/vrfs.json
-   ```
+## Expected Evidence and Worked Reasoning
 
-4. In the output file, add a `## Analysis` section for **Route Isolation and
-   Route Leaking**. Apply the numbered Reasoning Process in order. For each
-   step, cite at least one exact command result and label the statement as an
-   observation or interpretation.
-
-5. Add an evidence table with the columns `source`, `observation`,
-   `interpretation`, and `uncertainty`. Cite exact frame numbers, prefixes,
-   JSON fields, or log records.
-
-6. Apply every step in the Reasoning Process, then answer all Check Your
-   Understanding questions in the same output file.
-
-## Expected Evidence
-
-* `CORP` contains user, server, and default reachability; `OT` contains only
-  `10.0.30.0/24` and `10.0.40.0/24`; `MGMT` contains management plus selected
-  enterprise routes.
-
-* `OT` has no default route and no route to `10.0.10.0/24`, so physical
-  presence on the same device would not create reachability.
-
-* A safe leak must specify both the exact destination and return reachability;
-  importing the CORP default into OT would exceed the stated requirement.
+F3 expresses desired server-to-historian permission, but the OT table lacks
+the server prefix. A proposed leak needs scope, reverse reachability, and
+policy validation.
 
 ## Completion Standard
 
-Submit
-`work/module-01-operational-networking/section-06-vrfs-and-network-segmentation/02-route-isolation-and-route-leaking.md`.
-It is complete when it contains the prediction, exact commands used, at least
-three cited observations, a decision explanation tied to this subsection, all
-knowledge-check answers, and one explicitly labeled uncertainty.
+Label a narrow leak as a proposal, not an existing or approved route.
+
+Keep a prediction, the decisive citation or stated assumption, your revised
+explanation, and one unresolved question in your existing module notes.
+For optional separate notes, mirror this guide path under `work/`.
+Knowledge checks below extend the conceptual model; unavailable device
+state is a valid unknown, never a requirement to fabricate evidence.
 
 ## Check Your Understanding
 
@@ -99,3 +76,12 @@ knowledge-check answers, and one explicitly labeled uncertainty.
 2. How can a shared-services VRF become a transit risk?
 
 3. What is the difference between route visibility and policy permission?
+
+## Sources
+
+Reviewed September 14, 2026. The exercise is self-contained and offline.
+These references support the general model, not the fictional observations.
+
+[RFC 4364 §3 — separate VRF forwarding tables](https://www.rfc-editor.org/rfc/rfc4364.html#section-3)
+
+[NIST SP 800-41r1 §§2–4 — firewalls and policy](https://csrc.nist.gov/pubs/sp/800/41/r1/final)

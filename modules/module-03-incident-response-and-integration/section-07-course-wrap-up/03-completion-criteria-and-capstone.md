@@ -37,69 +37,38 @@ analysis on one Mac—not memorizing every protocol or command.
 
 ## Teaching Instructions
 
-1. From the repository root, verify the lab dataset and create the output
-   file:
+Use the [shared extended-study workflow](../../README.md#learning-workflow).
+This task defines the required observations for this guide. The reasoning
+checklist above is a general method: when device state is not supplied,
+record it as unknown or explain a stated hypothetical; do not invent it.
 
-   ```sh
-   python3 labs/build_fixtures.py --check
-   mkdir -p work/module-03-incident-response-and-integration/section-07-course-wrap-up
-   touch work/module-03-incident-response-and-integration/section-07-course-wrap-up/03-completion-criteria-and-capstone.md
-   ```
+**Predict and explain:** Predict whether a high factual workbench score
+substitutes for an evidence-backed final explanation.
 
-2. Before examining the evidence, write one falsifiable prediction about
-   **Completion Criteria and Capstone** in
-   `work/module-03-incident-response-and-integration/section-07-course-wrap-up/03-completion-criteria-and-capstone.md`.
-   State the exact fixture field, packet, or log record that would support or
-   contradict it.
+Run from the repository root:
 
-3. Run the evidence commands exactly as shown:
+```sh
+tshark -n -r labs/fixtures/pcaps/foundations.pcap -Y 'frame.number == 3 || frame.number == 5 || frame.number == 6' -T fields -E header=y -e frame.number -e eth.src -e eth.dst -e ip.src -e ip.dst -e vlan.id -e tcp.flags
+column -s, -t labs/fixtures/architecture/traffic-flows.csv
+jq '.' labs/fixtures/incident/auth.jsonl
+```
 
-   ```sh
-   python3 labs/build_fixtures.py --check
-   sed -n '1,160p' labs/fixtures/architecture/enterprise.md
-   column -s, -t labs/fixtures/architecture/traffic-flows.csv
-   jq -c '.' labs/fixtures/incident/flows.jsonl
-   jq -c '.' labs/fixtures/incident/firewall.jsonl
-   jq -c '.' labs/fixtures/incident/endpoint.jsonl
-   ```
+## Expected Evidence and Worked Reasoning
 
-4. In the output file, add a `## Evidence Analysis` section for **Completion
-   Criteria and Capstone**. Apply the numbered Reasoning Process in order. Tie
-   every claim to a frame or log record and label it observed, inferred,
-   hypothesized, or unknown.
-
-5. Add an evidence-ledger table with the columns `evidence ID`, `source`,
-   `collection point`, `raw time`, `normalized time`, `entity`, `observation`,
-   `classification`, `limitation`, and `confidence`. Cite exact frames or
-   records.
-
-6. Apply every step in the Reasoning Process, answer all Check Your
-   Understanding questions, and keep at least one plausible alternative
-   hypothesis in the same output file.
-
-## Expected Evidence
-
-* The final model separates intended policy from observed behavior: external
-  workstation TLS is intended to be denied but is allowed by a temporary
-  firewall rule.
-
-* Endpoint records associate a process with DNS; packets show repeated
-  ClientHello messages; authentication records a successful network login;
-  the firewall records an OT deny. Completed TLS and SMB file access remain
-  unknown, and stronger attack claims remain hypotheses.
-
-* A complete capstone cites fixture evidence, names the return-path and
-  visibility assumptions, recommends removal or review of the temporary rule,
-  and identifies proportionate containment.
+The sources support different path, policy, and identity claims. A finished
+artifact still needs mechanism, citations, uncertainty, and an actionable
+handoff.
 
 ## Completion Standard
 
-Submit
-`work/module-03-incident-response-and-integration/section-07-course-wrap-up/03-completion-criteria-and-capstone.md`.
-It is complete when it contains the prediction, exact commands used, at least
-three cited observations, a timeline or conclusion tied to this subsection,
-claim-level confidence, all knowledge-check answers, one alternative
-hypothesis, and one explicitly labeled visibility gap.
+Use the course outcome map and seven review anchors; keep independent
+attainment separate from completion of reference notes.
+
+Keep a prediction, the decisive citation or stated assumption, your revised
+explanation, and one unresolved question in your existing module notes.
+For optional separate notes, mirror this guide path under `work/`.
+Knowledge checks below extend the conceptual model; unavailable device
+state is a valid unknown, never a requirement to fabricate evidence.
 
 ## Check Your Understanding
 
@@ -108,3 +77,12 @@ hypothesis, and one explicitly labeled visibility gap.
 2. Did the analysis independently establish the return path?
 
 3. Is the next action owned, proportionate, testable, and reversible?
+
+## Sources
+
+Reviewed September 14, 2026. The exercise is self-contained and offline.
+These references support the general model, not the fictional observations.
+
+[NIST SP 800-86 §§3, 6 — forensic process and network traffic](https://csrc.nist.gov/pubs/sp/800/86/final)
+
+[NIST SP 800-61r3 §2 — response in risk management](https://csrc.nist.gov/pubs/sp/800/61/r3/final)

@@ -39,67 +39,34 @@ often detailed protocol state.
 
 ## Teaching Instructions
 
-1. From the repository root, verify the lab dataset and create the output
-   file:
+Use the [shared extended-study workflow](../../README.md#learning-workflow).
+This task defines the required observations for this guide. The reasoning
+checklist above is a general method: when device state is not supplied,
+record it as unknown or explain a stated hypothetical; do not invent it.
 
-   ```sh
-   python3 labs/build_fixtures.py --check
-   mkdir -p work/module-03-incident-response-and-integration/section-02-network-security-telemetry
-   touch work/module-03-incident-response-and-integration/section-02-network-security-telemetry/02-netflow-and-ipfix.md
-   ```
+**Predict and explain:** Predict whether repeated TCP/443 tuples identify the
+source process.
 
-2. Before examining the evidence, write one falsifiable prediction about
-   **NetFlow and IPFIX** in
-   `work/module-03-incident-response-and-integration/section-02-network-security-telemetry/02-netflow-and-ipfix.md`.
-   State the exact fixture field, packet, or log record that would support or
-   contradict it.
+Run from the repository root:
 
-3. Run the evidence commands exactly as shown:
+```sh
+jq '.' labs/fixtures/incident/flows.jsonl
+```
 
-   ```sh
-   tshark -r labs/fixtures/pcaps/incident.pcap -T fields -E header=y -E separator=, -e frame.number -e frame.time_epoch -e ip.src -e tcp.srcport -e ip.dst -e tcp.dstport -e dns.qry.name -e dns.a -e tls.handshake.extensions_server_name
-   mkdir -p work/zeek-incident
-   (cd work/zeek-incident && zeek -r ../../labs/fixtures/pcaps/incident.pcap LogAscii::use_json=T)
-   jq -c '.' work/zeek-incident/conn.log | sed -n '1,12p'
-   jq -c '.' labs/fixtures/incident/flows.jsonl
-   jq -c '.' labs/fixtures/incident/endpoint.jsonl
-   ```
+## Expected Evidence and Worked Reasoning
 
-4. In the output file, add a `## Evidence Analysis` section for **NetFlow and
-   IPFIX**. Apply the numbered Reasoning Process in order. Tie every claim to a
-   frame or log record and label it observed, inferred, hypothesized, or
-   unknown.
-
-5. Add an evidence-ledger table with the columns `evidence ID`, `source`,
-   `collection point`, `raw time`, `normalized time`, `entity`, `observation`,
-   `classification`, `limitation`, and `confidence`. Cite exact frames or
-   records.
-
-6. Apply every step in the Reasoning Process, answer all Check Your
-   Understanding questions, and keep at least one plausible alternative
-   hypothesis in the same output file.
-
-## Expected Evidence
-
-* The PCAP contains a DNS answer for `cdn-update.example.test`, three TLS
-  ClientHello connections exactly 60 seconds apart, one answered SMB SYN, and
-  two unanswered discovery SYNs.
-
-* Zeek derives connection and DNS records from the same PCAP, so those records
-  corroborate parsing but are not an independent observation source.
-
-* Endpoint data connects `update-agent` to the DNS query and shows `smb-client`
-  as its child; flow data summarizes four completed or observed conversations
-  without payload.
+Three external summaries have periodic starts, but no process-to-socket
+attribution or payload. Exporter sampling/placement must not be invented.
 
 ## Completion Standard
 
-Submit
-`work/module-03-incident-response-and-integration/section-02-network-security-telemetry/02-netflow-and-ipfix.md`.
-It is complete when it contains the prediction, exact commands used, at least
-three cited observations, a timeline or conclusion tied to this subsection,
-claim-level confidence, all knowledge-check answers, one alternative
-hypothesis, and one explicitly labeled visibility gap.
+Measure periodicity and separate tuple evidence from process attribution.
+
+Keep a prediction, the decisive citation or stated assumption, your revised
+explanation, and one unresolved question in your existing module notes.
+For optional separate notes, mirror this guide path under `work/`.
+Knowledge checks below extend the conceptual model; unavailable device
+state is a valid unknown, never a requirement to fabricate evidence.
 
 ## Check Your Understanding
 
@@ -108,3 +75,10 @@ hypothesis, and one explicitly labeled visibility gap.
 2. What can byte counters suggest but not prove?
 
 3. How does exporter location affect attribution through NAT?
+
+## Sources
+
+Reviewed September 14, 2026. The exercise is self-contained and offline.
+These references support the general model, not the fictional observations.
+
+[RFC 7011 §2 — IPFIX observation and metering](https://www.rfc-editor.org/rfc/rfc7011.html#section-2)

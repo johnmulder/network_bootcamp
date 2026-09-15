@@ -1,0 +1,55 @@
+{
+  "A": {
+    "acceptance": {
+      "id": "RA4",
+      "owner": "production-reporting service owner",
+      "remaining_risk": "change cause and other services remain unverified",
+      "result": "accepts restoration of the scoped health-check service"
+    },
+    "after": {
+      "id": "RA3",
+      "result": "30 of 30 health checks complete TLS and HTTP 200; request IDs agree at client and server",
+      "sensor": "client application and server request logs",
+      "window": "10:10:10Z through 10:15:00Z"
+    },
+    "before": {
+      "id": "RA2",
+      "result": "client timeout; see original A1-A4 only for pre-repair evidence"
+    },
+    "change": {
+      "action": "restore on-prem 10.20.0.0/16 via corp-vpc",
+      "approval": "service owner approves restoring the removed return route",
+      "id": "RA1",
+      "owner": "network-operations",
+      "rollback": "restore the prior table if unrelated traffic changes",
+      "time": "2026-08-16T10:10:00Z"
+    }
+  },
+  "B": {
+    "acceptance": {
+      "id": "RB4",
+      "owner": "diagnostic service owner",
+      "remaining_risk": "backend cause unknown; retain scoped permission and monitoring",
+      "result": "route restoration accepted; service restoration rejected; application team owns backend investigation"
+    },
+    "after": {
+      "id": "RB3",
+      "result": "30 of 30 TCP and TLS exchanges complete; 30 HTTP 503 responses; service log says backend unavailable",
+      "sensor": "client and external test-service application logs",
+      "window": "11:10:10Z through 11:15:00Z"
+    },
+    "before": {
+      "id": "RB2",
+      "result": "no matching destination prefix; original B1-B3 describe pre-repair state"
+    },
+    "change": {
+      "action": "restore client ingress to CORP",
+      "approval": "owner confirms reassignment was accidental and approves restoring CORP for the diagnostic",
+      "id": "RB1",
+      "owner": "network-operations",
+      "rollback": "restore prior assignment if the approved diagnostic scope is exceeded",
+      "time": "2026-08-16T11:10:00Z"
+    }
+  },
+  "scope": "Separate hypothetical epilogues; open only after both assessed A/B attempts. These are new conditions, not historical evidence for the original cases or incident."
+}

@@ -19,6 +19,8 @@ Dependency chain and what can be cached: ___
 
 Route-selection reasoning and its effect on the path: ___
 
+Initial claim → decisive record → revised claim: ___
+
 Return path: what is observed, what is predicted, and what evidence is missing?
 ___
 

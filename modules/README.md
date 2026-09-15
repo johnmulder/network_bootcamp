@@ -4,14 +4,11 @@ These modules turn the [course agenda](../agenda.md) into exact teaching and
 practice instructions. Everything runs on one Mac using the open-source tools
 described in the [prerequisites](../prerequisites/README.md).
 
-Most subsection guides name their evidence, provide runnable commands, explain
-the expected observations, assign a unique submission path under `work/`, and
-define completion. The
-[VXLAN/EVPN reference](module-02-network-architecture/section-05-modern-data-center-and-cloud-networking/02-underlays-overlays-vxlan-and-evpn.md)
-is a conceptual exception: it uses a hypothetical diagram and requests no
-separate submission. The [local lab dataset](../labs/README.md) supplies the
-evidence for practical exercises, and each module includes a Python workbench
-for immediate feedback.
+The [104-guide evidence matrix](evidence-matrix.md) maps each topic to its
+prediction, demonstration, exact source, and completion criterion. Practical
+guides use focused local commands. FHRP, collapsed-core, leaf/spine, and
+VXLAN/EVPN exercises state conceptual assumptions where device evidence is
+absent. No exercise requires inventing a table, packet, or measurement.
 
 ## One-Day Route and Extended Study
 
@@ -43,6 +40,13 @@ Each module's final artifact becomes useful context for the next:
 For optional extended study with saved evidence, use this sequence for a
 selected subsection. Conceptual references provide their own self-checks.
 
+Run `./course verify` once at the start. Keep notes in the existing packet,
+architecture, or incident artifact, or create a Markdown file under `work/`
+mirroring the selected guide's path. There is no need to repeat setup or
+copy every command output for every guide. A few decisive citations are
+more useful than an unannotated transcript. Read worked reasoning after
+predicting; opening worked reference answers can expose a related assessment.
+
 1. **Orient:** Read the guide's objective, mental model, and named fixture
    paths before running commands.
 2. **Predict:** Write the expected path, state, policy decision, or evidence
@@ -61,6 +65,20 @@ selected subsection. Conceptual references provide their own self-checks.
 The workbench score checks exact facts. The written artifact checks the harder
 skill: making a defensible claim, citing the evidence that supports it, and
 preserving the limitations of that evidence.
+
+## Suggested Study Routes
+
+These optional estimates need learner validation; they add no required time.
+
+| Need | Prerequisite | Route | Suggested time |
+| --- | --- | --- | --- |
+| Foundations | Read one TShark row using Challenge 1 | Module 1 addressing → ARP → inter-VLAN → route selection → DNS contrasts | 60–90 minutes |
+| Architecture | Explain both directions of a routed exchange | Module 2 foundation check → flows → firewall/NAT → cloud → failure domains | 60–90 minutes |
+| Incident reasoning | Separate path, policy, and state | Module 3 packet/flow evidence → endpoint/SIEM → visibility gaps → ledger → handoff | 60–90 minutes |
+| Modern transport | TCP and TLS boundaries | Public TLS exemplar → QUIC exemplar → saved performance comparison | 45–50 minutes |
+
+Use the directory order below for a longer course. The concise routes select
+related guides; they do not require completing all 104 in one day.
 
 ## Workbench Entry Points
 

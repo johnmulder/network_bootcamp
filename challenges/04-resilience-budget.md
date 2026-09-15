@@ -6,6 +6,10 @@
 The factory can fund two improvements this quarter. Defend a design that
 protects useful services, rather than counting redundant devices. Use the
 packet-path sheet and [architecture vocabulary](reference.md#recognize-the-architecture-vocabulary).
+
+The shift manager can fund only two improvements. Preserve the stated
+reporting and management services under the selected faults, and explain
+which remaining outage the budget cannot prevent.
 <!-- delivery:end c04.brief -->
 
 <!-- delivery:start c04.requirements -->

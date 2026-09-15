@@ -39,61 +39,35 @@ reproduce the complete dependency chain.
 
 ## Teaching Instructions
 
-1. From the repository root, verify the lab dataset and create the output
-   file:
+Use the [shared extended-study workflow](../../README.md#learning-workflow).
+This task defines the required observations for this guide. The reasoning
+checklist above is a general method: when device state is not supplied,
+record it as unknown or explain a stated hypothetical; do not invent it.
 
-   ```sh
-   python3 labs/build_fixtures.py --check
-   mkdir -p work/module-01-operational-networking/section-07-network-troubleshooting
-   touch work/module-01-operational-networking/section-07-network-troubleshooting/05-dns-and-application-checks.md
-   ```
+**Predict and explain:** Predict how NXDOMAIN differs from NOERROR with no
+AAAA answers.
 
-2. Before examining the evidence, write one falsifiable prediction about **DNS
-   and Application Checks** in
-   `work/module-01-operational-networking/section-07-network-troubleshooting/05-dns-and-application-checks.md`.
-   State the exact fixture field, packet, or log record that would support or
-   contradict it.
+Run from the repository root:
 
-3. Run the evidence commands exactly as shown:
+```sh
+jq '.' labs/fixtures/network/troubleshooting.json
+```
 
-   ```sh
-   tcpdump -nn -r labs/fixtures/pcaps/foundations.pcap
-   tcpdump -nn -r labs/fixtures/pcaps/mtu-failure.pcap
-   sed -n '1,120p' labs/fixtures/routing/macos-routes.txt
-   jq -c '.' labs/fixtures/incident/firewall.jsonl
-   ```
+## Expected Evidence and Worked Reasoning
 
-4. In the output file, add a `## Analysis` section for **DNS and Application
-   Checks**. Apply the numbered Reasoning Process in order. For each step, cite
-   at least one exact command result and label the statement as an observation
-   or interpretation.
-
-5. Add an evidence table with the columns `source`, `observation`,
-   `interpretation`, and `uncertainty`. Cite exact frame numbers, prefixes,
-   JSON fields, or log records.
-
-6. Apply every step in the Reasoning Process, then answer all Check Your
-   Understanding questions in the same output file.
-
-## Expected Evidence
-
-* The healthy baseline shows ARP, DNS, a TCP handshake, and an HTTP response.
-  Frames 10–11 begin connection closure, but the final server ACK is absent;
-  the capture does not establish completed TCP closure.
-
-* The MTU case completes the handshake but fails after a 1400-byte payload and
-  ICMP MTU 1200 response.
-
-* The firewall evidence distinguishes an allowed translated egress session,
-  allowed user-to-server SMB, and denied user-to-OT HTTPS.
+D2 reports name nonexistence; D3 has NOERROR, empty AAAA answers, SOA, and no
+referral, consistent with NODATA for that type. D4 resolves but returns HTTP
+503.
 
 ## Completion Standard
 
-Submit
-`work/module-01-operational-networking/section-07-network-troubleshooting/05-dns-and-application-checks.md`.
-It is complete when it contains the prediction, exact commands used, at least
-three cited observations, a decision explanation tied to this subsection, all
-knowledge-check answers, and one explicitly labeled uncertainty.
+Distinguish timeout, name absence, type absence, and application failure.
+
+Keep a prediction, the decisive citation or stated assumption, your revised
+explanation, and one unresolved question in your existing module notes.
+For optional separate notes, mirror this guide path under `work/`.
+Knowledge checks below extend the conceptual model; unavailable device
+state is a valid unknown, never a requirement to fabricate evidence.
 
 ## Check Your Understanding
 
@@ -102,3 +76,12 @@ knowledge-check answers, and one explicitly labeled uncertainty.
 2. What does a completed handshake prove about the application?
 
 3. When is absence from a network capture expected rather than suspicious?
+
+## Sources
+
+Reviewed September 14, 2026. The exercise is self-contained and offline.
+These references support the general model, not the fictional observations.
+
+[RFC 1034 §§4–5 — name servers and resolvers](https://www.rfc-editor.org/rfc/rfc1034.html)
+
+[RFC 2308 §2 — negative DNS responses](https://www.rfc-editor.org/rfc/rfc2308.html#section-2)

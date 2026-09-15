@@ -37,58 +37,34 @@ scale.
 
 ## Teaching Instructions
 
-1. From the repository root, verify the lab dataset and create the output
-   file:
+Use the [shared extended-study workflow](../../README.md#learning-workflow).
+This task defines the required observations for this guide. The reasoning
+checklist above is a general method: when device state is not supplied,
+record it as unknown or explain a stated hypothetical; do not invent it.
 
-   ```sh
-   python3 labs/build_fixtures.py --check
-   mkdir -p work/module-01-operational-networking/section-05-dynamic-routing
-   touch work/module-01-operational-networking/section-05-dynamic-routing/03-bgp-peers-prefixes-and-path-attributes.md
-   ```
+**Predict and explain:** Predict whether the shortest AS path necessarily wins
+this local policy.
 
-2. Before examining the evidence, write one falsifiable prediction about **BGP
-   Peers, Prefixes, and Path Attributes** in
-   `work/module-01-operational-networking/section-05-dynamic-routing/03-bgp-peers-prefixes-and-path-attributes.md`.
-   State the exact fixture field, packet, or log record that would support or
-   contradict it.
+Run from the repository root:
 
-3. Run the evidence commands exactly as shown:
+```sh
+jq '.' labs/fixtures/routing/bgp.json
+```
 
-   ```sh
-   jq '.' labs/fixtures/routing/ospf.json
-   jq '.' labs/fixtures/routing/bgp.json
-   jq -c '.' labs/fixtures/routing/route-events.jsonl
-   ```
+## Expected Evidence and Worked Reasoning
 
-4. In the output file, add a `## Analysis` section for **BGP Peers, Prefixes,
-   and Path Attributes**. Apply the numbered Reasoning Process in order. For
-   each step, cite at least one exact command result and label the statement as
-   an observation or interpretation.
-
-5. Add an evidence table with the columns `source`, `observation`,
-   `interpretation`, and `uncertainty`. Cite exact frame numbers, prefixes,
-   JSON fields, or log records.
-
-6. Apply every step in the Reasoning Process, then answer all Check Your
-   Understanding questions in the same output file.
-
-## Expected Evidence
-
-* OSPF has two equal-cost paths to `10.0.20.0/24`, each with total cost 20.
-
-* The BGP path through peer `192.0.2.2` has higher local preference 200 and is
-  preferred despite its longer AS path.
-
-* After the modeled link failure, the remaining OSPF next hop is installed 80
-  milliseconds after detection and existing ECMP flows are rehashed.
+The modeled peer 192.0.2.2 has LOCAL_PREF 200 and is selected ahead of AS-path
+length. Next-hop reachability still needs an independent route lookup.
 
 ## Completion Standard
 
-Submit
-`work/module-01-operational-networking/section-05-dynamic-routing/03-bgp-peers-prefixes-and-path-attributes.md`.
-It is complete when it contains the prediction, exact commands used, at least
-three cited observations, a decision explanation tied to this subsection, all
-knowledge-check answers, and one explicitly labeled uncertainty.
+Cite the competing attributes and distinguish policy from reachability.
+
+Keep a prediction, the decisive citation or stated assumption, your revised
+explanation, and one unresolved question in your existing module notes.
+For optional separate notes, mirror this guide path under `work/`.
+Knowledge checks below extend the conceptual model; unavailable device
+state is a valid unknown, never a requirement to fabricate evidence.
 
 ## Check Your Understanding
 
@@ -98,3 +74,10 @@ knowledge-check answers, and one explicitly labeled uncertainty.
 2. What role does `AS_PATH` play in loop prevention?
 
 3. Why can an unresolved `NEXT_HOP` invalidate an otherwise preferred route?
+
+## Sources
+
+Reviewed September 14, 2026. The exercise is self-contained and offline.
+These references support the general model, not the fictional observations.
+
+[RFC 4271 §9 — BGP decision process](https://www.rfc-editor.org/rfc/rfc4271.html#section-9)

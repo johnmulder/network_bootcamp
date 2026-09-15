@@ -39,67 +39,36 @@ content.
 
 ## Teaching Instructions
 
-1. From the repository root, verify the lab dataset and create the output
-   file:
+Use the [shared extended-study workflow](../../README.md#learning-workflow).
+This task defines the required observations for this guide. The reasoning
+checklist above is a general method: when device state is not supplied,
+record it as unknown or explain a stated hypothetical; do not invent it.
 
-   ```sh
-   python3 labs/build_fixtures.py --check
-   mkdir -p work/module-03-incident-response-and-integration/section-02-network-security-telemetry
-   touch work/module-03-incident-response-and-integration/section-02-network-security-telemetry/06-evidence-quality-and-visibility-gaps.md
-   ```
+**Predict and explain:** Predict whether a missing packet establishes absence
+of the corresponding activity.
 
-2. Before examining the evidence, write one falsifiable prediction about
-   **Evidence Quality and Visibility Gaps** in
-   `work/module-03-incident-response-and-integration/section-02-network-security-telemetry/06-evidence-quality-and-visibility-gaps.md`.
-   State the exact fixture field, packet, or log record that would support or
-   contradict it.
+Run from the repository root:
 
-3. Run the evidence commands exactly as shown:
+```sh
+tshark -n -r labs/fixtures/pcaps/incident.pcap -Y 'tcp || dns' -T fields -E header=y -e frame.number -e frame.time_relative -e ip.src -e ip.dst -e tcp.dstport -e tcp.flags -e tls.handshake.type -e dns.qry.name
+jq '.' labs/fixtures/incident/flows.jsonl
+```
 
-   ```sh
-   tshark -r labs/fixtures/pcaps/incident.pcap -T fields -E header=y -E separator=, -e frame.number -e frame.time_epoch -e ip.src -e tcp.srcport -e ip.dst -e tcp.dstport -e dns.qry.name -e dns.a -e tls.handshake.extensions_server_name
-   mkdir -p work/zeek-incident
-   (cd work/zeek-incident && zeek -r ../../labs/fixtures/pcaps/incident.pcap LogAscii::use_json=T)
-   jq -c '.' work/zeek-incident/conn.log | sed -n '1,12p'
-   jq -c '.' labs/fixtures/incident/flows.jsonl
-   jq -c '.' labs/fixtures/incident/endpoint.jsonl
-   ```
+## Expected Evidence and Worked Reasoning
 
-4. In the output file, add a `## Evidence Analysis` section for **Evidence
-   Quality and Visibility Gaps**. Apply the numbered Reasoning Process in order.
-   Tie every claim to a frame or log record and label it observed, inferred,
-   hypothesized, or unknown.
-
-5. Add an evidence-ledger table with the columns `evidence ID`, `source`,
-   `collection point`, `raw time`, `normalized time`, `entity`, `observation`,
-   `classification`, `limitation`, and `confidence`. Cite exact frames or
-   records.
-
-6. Apply every step in the Reasoning Process, answer all Check Your
-   Understanding questions, and keep at least one plausible alternative
-   hypothesis in the same output file.
-
-## Expected Evidence
-
-* The PCAP contains a DNS answer for `cdn-update.example.test`, three TLS
-  ClientHello connections exactly 60 seconds apart, one answered SMB SYN, and
-  two unanswered discovery SYNs.
-
-* Zeek derives connection and DNS records from the same PCAP, so those records
-  corroborate parsing but are not an independent observation source.
-
-* Endpoint data connects `update-agent` to the DNS query and shows `smb-client`
-  as its child; flow data summarizes four completed or observed conversations
-  without payload.
+The small PCAP and flow summaries have different granularity; full collection
+coverage and loss measurements are not supplied. Absence depends on sensor
+scope and health.
 
 ## Completion Standard
 
-Submit
-`work/module-03-incident-response-and-integration/section-02-network-security-telemetry/06-evidence-quality-and-visibility-gaps.md`.
-It is complete when it contains the prediction, exact commands used, at least
-three cited observations, a timeline or conclusion tied to this subsection,
-claim-level confidence, all knowledge-check answers, one alternative
-hypothesis, and one explicitly labeled visibility gap.
+Attach a coverage limitation to one negative claim.
+
+Keep a prediction, the decisive citation or stated assumption, your revised
+explanation, and one unresolved question in your existing module notes.
+For optional separate notes, mirror this guide path under `work/`.
+Knowledge checks below extend the conceptual model; unavailable device
+state is a valid unknown, never a requirement to fabricate evidence.
 
 ## Check Your Understanding
 
@@ -108,3 +77,12 @@ hypothesis, and one explicitly labeled visibility gap.
 2. How can clock skew reverse the apparent order of events?
 
 3. Which transformation prevents direct tuple matching?
+
+## Sources
+
+Reviewed September 14, 2026. The exercise is self-contained and offline.
+These references support the general model, not the fictional observations.
+
+[NIST SP 800-86 §§3, 6 — forensic process and network traffic](https://csrc.nist.gov/pubs/sp/800/86/final)
+
+[RFC 7011 §2 — IPFIX observation and metering](https://www.rfc-editor.org/rfc/rfc7011.html#section-2)

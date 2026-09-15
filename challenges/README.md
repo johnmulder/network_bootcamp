@@ -5,6 +5,12 @@ approved services available, investigate a transfer failure, then decide what
 the evidence supports about suspicious activity. The outage drills and the
 incident are separate episodes on the same network.
 
+Scenario conditions: the factory packages batches of components. An
+operations dashboard and historian reports support quality review and shift
+planning. PLCs run local control; these exercises do not establish that a
+dashboard outage stops the line. The OT process owner controls changes that
+could interrupt supervisory monitoring or alarm visibility.
+
 **Six teaching hours; seven elapsed hours with lunch and breaks.** Work in
 pairs, remotely, or alone. You need no previous vendor configuration experience.
 Install and check the [prerequisites](../prerequisites/README.md) beforehand;

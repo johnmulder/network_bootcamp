@@ -38,59 +38,34 @@ designs.
 
 ## Teaching Instructions
 
-1. From the repository root, verify the lab dataset and create the output
-   file:
+Use the [shared extended-study workflow](../../README.md#learning-workflow).
+This task defines the required observations for this guide. The reasoning
+checklist above is a general method: when device state is not supplied,
+record it as unknown or explain a stated hypothetical; do not invent it.
 
-   ```sh
-   python3 labs/build_fixtures.py --check
-   mkdir -p work/module-01-operational-networking/section-01-introduction-and-mental-model
-   touch work/module-01-operational-networking/section-01-introduction-and-mental-model/02-engineering-vs-protocol-implementation.md
-   ```
+**Predict and explain:** Predict whether a TCP handshake alone guarantees the
+large transfer will work.
 
-2. Before examining the evidence, write one falsifiable prediction about
-   **Network Engineering vs. Protocol Implementation** in
-   `work/module-01-operational-networking/section-01-introduction-and-mental-model/02-engineering-vs-protocol-implementation.md`.
-   State the exact fixture field, packet, or log record that would support or
-   contradict it.
+Run from the repository root:
 
-3. Run the evidence commands exactly as shown:
+```sh
+tshark -n -r labs/fixtures/pcaps/mtu-failure.pcap -Y 'tcp || icmp' -T fields -E header=y -e frame.number -e ip.len -e ip.hdr_len -e tcp.hdr_len -e tcp.len -e tcp.seq -e tcp.options.mss_val -e icmp.type -e icmp.code -e icmp.mtu
+```
 
-   ```sh
-   python3 labs/build_fixtures.py --check
-   sed -n '1,120p' labs/fixtures/architecture/enterprise.md
-   python3 -m json.tool labs/fixtures/manifest.json | sed -n '1,80p'
-   ```
+## Expected Evidence and Worked Reasoning
 
-4. In the output file, add a `## Analysis` section for **Network Engineering vs.
-   Protocol Implementation**. Apply the numbered Reasoning Process in order. For
-   each step, cite at least one exact command result and label the statement as
-   an observation or interpretation.
-
-5. Add an evidence table with the columns `source`, `observation`,
-   `interpretation`, and `uncertainty`. Cite exact frame numbers, prefixes,
-   JSON fields, or log records.
-
-6. Apply every step in the Reasoning Process, then answer all Check Your
-   Understanding questions in the same output file.
-
-## Expected Evidence
-
-* The manifest reports the case name `network-bootcamp-reference` and 36
-  checksum-protected fixture files.
-
-* The architecture places `ws-23` at `10.0.10.23`, `file-01` at `10.0.20.40`,
-  and the OT networks behind two explicit firewall boundaries.
-
-* Your explanation identifies path, policy, state, and evidence as separate
-  questions rather than treating the diagram as proof of live behavior.
+Small handshake packets fit while the large segment exceeds the reported path
+limit. A functioning TCP implementation does not establish a usable full path.
 
 ## Completion Standard
 
-Submit
-`work/module-01-operational-networking/section-01-introduction-and-mental-model/02-engineering-vs-protocol-implementation.md`.
-It is complete when it contains the prediction, exact commands used, at least
-three cited observations, a decision explanation tied to this subsection, all
-knowledge-check answers, and one explicitly labeled uncertainty.
+Separate protocol progress from one operational dependency.
+
+Keep a prediction, the decisive citation or stated assumption, your revised
+explanation, and one unresolved question in your existing module notes.
+For optional separate notes, mirror this guide path under `work/`.
+Knowledge checks below extend the conceptual model; unavailable device
+state is a valid unknown, never a requirement to fabricate evidence.
 
 ## Check Your Understanding
 
@@ -100,3 +75,12 @@ knowledge-check answers, and one explicitly labeled uncertainty.
 
 3. What remains true when a vendor command is replaced by another vendor's
    syntax?
+
+## Sources
+
+Reviewed September 14, 2026. The exercise is self-contained and offline.
+These references support the general model, not the fictional observations.
+
+[RFC 9293 §3 — TCP operation](https://www.rfc-editor.org/rfc/rfc9293.html#section-3)
+
+[RFC 1191 §3 — path MTU discovery](https://www.rfc-editor.org/rfc/rfc1191.html#section-3)

@@ -159,14 +159,14 @@ class FixtureBuilderTests(unittest.TestCase):
                 manifest = json.loads((fixtures / "manifest.json").read_text())
 
         entries = manifest["files"]
-        self.assertEqual(len(entries), 36)
+        self.assertEqual(len(entries), 39)
         self.assertEqual(
             Counter(Path(entry["path"]).parts[0] for entry in entries),
             {
-                "architecture": 6,
-                "challenges": 7,
+                "architecture": 7,
+                "challenges": 8,
                 "incident": 10,
-                "network": 3,
+                "network": 4,
                 "pcaps": 3,
                 "routing": 7,
             },
@@ -215,7 +215,7 @@ class FixtureBuilderTests(unittest.TestCase):
                 stdout = io.StringIO()
                 with mock.patch.object(sys, "argv", ["build_fixtures.py"]), contextlib.redirect_stdout(stdout):
                     self.assertEqual(BUILDER.main(), 0)
-                self.assertIn("fixtures ready: 36 files", stdout.getvalue())
+                self.assertIn("fixtures ready: 39 files", stdout.getvalue())
 
                 with mock.patch.object(sys, "argv", ["build_fixtures.py", "--check"]):
                     with contextlib.redirect_stdout(io.StringIO()):

@@ -37,58 +37,35 @@ individual flows still follow specific members.
 
 ## Teaching Instructions
 
-1. From the repository root, verify the lab dataset and create the output
-   file:
+Use the [shared extended-study workflow](../../README.md#learning-workflow).
+This task defines the required observations for this guide. The reasoning
+checklist above is a general method: when device state is not supplied,
+record it as unknown or explain a stated hypothetical; do not invent it.
 
-   ```sh
-   python3 labs/build_fixtures.py --check
-   mkdir -p work/module-01-operational-networking/section-02-layer-2-networking
-   touch work/module-01-operational-networking/section-02-layer-2-networking/06-link-aggregation-and-lacp.md
-   ```
+**Predict and explain:** Predict whether one listed flow uses both members and
+whether one failed member meets minimum_links.
 
-2. Before examining the evidence, write one falsifiable prediction about **Link
-   Aggregation and LACP** in
-   `work/module-01-operational-networking/section-02-layer-2-networking/06-link-aggregation-and-lacp.md`.
-   State the exact fixture field, packet, or log record that would support or
-   contradict it.
+Run from the repository root:
 
-3. Run the evidence commands exactly as shown:
+```sh
+jq '.lacp' labs/fixtures/network/l2-control.json
+```
 
-   ```sh
-   tshark -r labs/fixtures/pcaps/foundations.pcap -Y 'arp || vlan' -T fields -E header=y -E separator=, -e frame.number -e vlan.id -e eth.src -e eth.dst -e arp.opcode -e arp.src.proto_ipv4 -e arp.dst.proto_ipv4
-   jq '.stp, .lacp' labs/fixtures/network/l2-control.json
-   ```
+## Expected Evidence and Worked Reasoning
 
-4. In the output file, add a `## Analysis` section for **Link Aggregation and
-   LACP**. Apply the numbered Reasoning Process in order. For each step, cite at
-   least one exact command result and label the statement as an observation or
-   interpretation.
-
-5. Add an evidence table with the columns `source`, `observation`,
-   `interpretation`, and `uncertainty`. Cite exact frame numbers, prefixes,
-   JSON fields, or log records.
-
-6. Apply every step in the Reasoning Process, then answer all Check Your
-   Understanding questions in the same output file.
-
-## Expected Evidence
-
-* Every frame in `foundations.pcap` is tagged with VLAN 10 at the modeled trunk
-  capture point.
-
-* Frame 1 is a broadcast ARP request from `02:00:00:00:10:23` asking for
-  `10.0.10.1`; frame 2 is the unicast reply from `02:00:00:00:10:01`.
-
-* The STP root is `sw-dist-1`; the access-to-access link discards on
-  `sw-access-2`; LACP flow assignments show that one flow uses one member.
+Each modeled tuple maps to one member; ae1 has two members with minimum_links
+set to one. Partner state and hash algorithm are absent; capacity and
+reassignment must be checked separately.
 
 ## Completion Standard
 
-Submit
-`work/module-01-operational-networking/section-02-layer-2-networking/06-link-aggregation-and-lacp.md`.
-It is complete when it contains the prediction, exact commands used, at least
-three cited observations, a decision explanation tied to this subsection, all
-knowledge-check answers, and one explicitly labeled uncertainty.
+Cite a tuple/member and minimum_links; do not invent the hash.
+
+Keep a prediction, the decisive citation or stated assumption, your revised
+explanation, and one unresolved question in your existing module notes.
+For optional separate notes, mirror this guide path under `work/`.
+Knowledge checks below extend the conceptual model; unavailable device
+state is a valid unknown, never a requirement to fabricate evidence.
 
 ## Check Your Understanding
 
@@ -98,3 +75,10 @@ knowledge-check answers, and one explicitly labeled uncertainty.
 2. How does LACP differ from the traffic-distribution hash?
 
 3. What symptom suggests one aggregation member is faulty?
+
+## Sources
+
+Reviewed September 14, 2026. The exercise is self-contained and offline.
+These references support the general model, not the fictional observations.
+
+[IEEE 802.1AX — link aggregation scope](https://1.ieee802.org/tsn/802-1ax-rev/)

@@ -810,12 +810,60 @@ def build_manifest() -> None:
     )
 
 
+def build_extension_fixtures() -> None:
+    """Independent authored comparisons, never additional original incident facts."""
+    write_json("network/troubleshooting.json", {
+        "scope": "Independent saved teaching comparisons; not live measurements or factory incident events.",
+        "dns": [
+            {"id": "D1", "query": "missing.example.test", "type": "A", "resolver": "192.0.2.53", "client_observation": "query sent; no response in 3 seconds", "rcode": None, "answers": None},
+            {"id": "D2", "query": "missing.example.test", "type": "A", "resolver": "192.0.2.53", "client_observation": "response received", "rcode": "NXDOMAIN", "answers": []},
+            {"id": "D3", "query": "v4-only.example.test", "type": "AAAA", "resolver": "192.0.2.53", "client_observation": "response received", "rcode": "NOERROR", "answers": [], "authority": "SOA example.test; no referral"},
+            {"id": "D4", "query": "app.example.test", "type": "A", "resolver": "192.0.2.53", "client_observation": "response received; TCP handshake complete; HTTP 503", "rcode": "NOERROR", "answers": ["192.0.2.40"]},
+        ],
+        "attachment_conditions": {"interface": "en0", "address": "192.0.2.23/24", "gateway": "192.0.2.1", "expected_access_vlan": 10, "counter_interval_seconds": 10, "counter_semantics": "deltas during this isolated authorized test", "server": "192.0.2.40:443"},
+        "attachment": [
+            {"id": "L1", "link": "down", "access_vlan": 10, "rx_frames": 0, "rx_errors": 0, "gateway_neighbor": "INCOMPLETE", "switch_mac": None, "test": "no reply"},
+            {"id": "L2", "link": "up", "access_vlan": 20, "rx_frames": 15, "rx_errors": 0, "gateway_neighbor": "INCOMPLETE", "switch_mac": "client learned in VLAN 20", "test": "no ARP reply"},
+            {"id": "L3", "link": "up", "access_vlan": 10, "rx_frames": 15, "rx_errors": 0, "gateway_neighbor": "INCOMPLETE", "switch_mac": "client learned in VLAN 10", "test": "ARP request seen; peer reply absent; peer state not supplied"},
+            {"id": "L4", "link": "up", "access_vlan": 10, "rx_frames": 25, "rx_errors": 0, "gateway_neighbor": "REACHABLE", "server_neighbor": "REACHABLE", "switch_mac": "client learned in VLAN 10", "test": "server receives SYN and emits RST; authorized host socket inventory shows no TCP/443 listener"},
+        ],
+    })
+    write_json("architecture/performance.json", {
+        "scope": "Independent synthetic saved measurements for comparison; not wan.json observations.",
+        "method": "One TCP stream, same endpoints and payload, 60-second receive interval after warmup; no TLS; all rates decimal Mbps.",
+        "jitter_definition": "Mean absolute difference between successive RTT samples from the same 60 one-per-second probes; RTT variation, not one-way RTP jitter.",
+        "measurements": [
+            {"id": "P1", "capacity_mbps": 200, "received_bytes": 1125000000, "goodput_mbps": 150, "rtt_ms": 20, "probe_loss_percent": 0, "rtt_jitter_ms": 1, "receiver_window_bytes": 2000000},
+            {"id": "P2", "capacity_mbps": 200, "received_bytes": 262500000, "goodput_mbps": 35, "rtt_ms": 20, "probe_loss_percent": 2, "rtt_jitter_ms": 12, "receiver_window_bytes": 2000000},
+            {"id": "P3", "capacity_mbps": 200, "received_bytes": 300000000, "goodput_mbps": 40, "rtt_ms": 80, "probe_loss_percent": 0, "rtt_jitter_ms": 1, "receiver_window_bytes": 400000},
+        ],
+        "backup": {"capacity_mbps": 200, "demands_mbps": {"process_reporting": 120, "voice_and_operations": 40, "bulk_replication": 60}, "overhead_and_other_load_mbps": None},
+        "limits": "Probe loss need not equal TCP loss. Congestion window, receiver CPU, disk, and competing load are unmeasured. A correlation suggests a check, not a unique cause.",
+    })
+    write_json("challenges/recovery.json", {
+        "scope": "Separate hypothetical epilogues; open only after both assessed A/B attempts. These are new conditions, not historical evidence for the original cases or incident.",
+        "A": {
+            "change": {"id": "RA1", "time": "2026-08-16T10:10:00Z", "owner": "network-operations", "approval": "service owner approves restoring the removed return route", "action": "restore on-prem 10.20.0.0/16 via corp-vpc", "rollback": "restore the prior table if unrelated traffic changes"},
+            "before": {"id": "RA2", "result": "client timeout; see original A1-A4 only for pre-repair evidence"},
+            "after": {"id": "RA3", "sensor": "client application and server request logs", "window": "10:10:10Z through 10:15:00Z", "result": "30 of 30 health checks complete TLS and HTTP 200; request IDs agree at client and server"},
+            "acceptance": {"id": "RA4", "owner": "production-reporting service owner", "result": "accepts restoration of the scoped health-check service", "remaining_risk": "change cause and other services remain unverified"},
+        },
+        "B": {
+            "change": {"id": "RB1", "time": "2026-08-16T11:10:00Z", "owner": "network-operations", "approval": "owner confirms reassignment was accidental and approves restoring CORP for the diagnostic", "action": "restore client ingress to CORP", "rollback": "restore prior assignment if the approved diagnostic scope is exceeded"},
+            "before": {"id": "RB2", "result": "no matching destination prefix; original B1-B3 describe pre-repair state"},
+            "after": {"id": "RB3", "sensor": "client and external test-service application logs", "window": "11:10:10Z through 11:15:00Z", "result": "30 of 30 TCP and TLS exchanges complete; 30 HTTP 503 responses; service log says backend unavailable"},
+            "acceptance": {"id": "RB4", "owner": "diagnostic service owner", "result": "route restoration accepted; service restoration rejected; application team owns backend investigation", "remaining_risk": "backend cause unknown; retain scoped permission and monitoring"},
+        },
+    })
+
+
 def build() -> None:
     build_foundations()
     build_mtu_failure()
     build_incident()
     build_text_fixtures()
     build_challenge_fixtures()
+    build_extension_fixtures()
     build_manifest()
 
 

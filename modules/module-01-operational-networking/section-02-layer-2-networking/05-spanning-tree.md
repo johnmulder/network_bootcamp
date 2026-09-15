@@ -42,58 +42,35 @@ links.
 
 ## Teaching Instructions
 
-1. From the repository root, verify the lab dataset and create the output
-   file:
+Use the [shared extended-study workflow](../../README.md#learning-workflow).
+This task defines the required observations for this guide. The reasoning
+checklist above is a general method: when device state is not supplied,
+record it as unknown or explain a stated hypothetical; do not invent it.
 
-   ```sh
-   python3 labs/build_fixtures.py --check
-   mkdir -p work/module-01-operational-networking/section-02-layer-2-networking
-   touch work/module-01-operational-networking/section-02-layer-2-networking/05-spanning-tree.md
-   ```
+**Predict and explain:** Predict which triangle edge cannot forward at both
+ends without a loop.
 
-2. Before examining the evidence, write one falsifiable prediction about
-   **Spanning Tree Protocol** in
-   `work/module-01-operational-networking/section-02-layer-2-networking/05-spanning-tree.md`.
-   State the exact fixture field, packet, or log record that would support or
-   contradict it.
+Run from the repository root:
 
-3. Run the evidence commands exactly as shown:
+```sh
+jq '.stp' labs/fixtures/network/l2-control.json
+```
 
-   ```sh
-   tshark -r labs/fixtures/pcaps/foundations.pcap -Y 'arp || vlan' -T fields -E header=y -E separator=, -e frame.number -e vlan.id -e eth.src -e eth.dst -e arp.opcode -e arp.src.proto_ipv4 -e arp.dst.proto_ipv4
-   jq '.stp, .lacp' labs/fixtures/network/l2-control.json
-   ```
+## Expected Evidence and Worked Reasoning
 
-4. In the output file, add a `## Analysis` section for **Spanning Tree
-   Protocol**. Apply the numbered Reasoning Process in order. For each step,
-   cite at least one exact command result and label the statement as an
-   observation or interpretation.
-
-5. Add an evidence table with the columns `source`, `observation`,
-   `interpretation`, and `uncertainty`. Cite exact frame numbers, prefixes,
-   JSON fields, or log records.
-
-6. Apply every step in the Reasoning Process, then answer all Check Your
-   Understanding questions in the same output file.
-
-## Expected Evidence
-
-* Every frame in `foundations.pcap` is tagged with VLAN 10 at the modeled trunk
-  capture point.
-
-* Frame 1 is a broadcast ARP request from `02:00:00:00:10:23` asking for
-  `10.0.10.1`; frame 2 is the unicast reply from `02:00:00:00:10:01`.
-
-* The STP root is `sw-dist-1`; the access-to-access link discards on
-  `sw-access-2`; LACP flow assignments show that one flow uses one member.
+The model names sw-dist-1 as root and the access-to-access edge as discarding
+on access-2. A root-port role can be inferred from costs, but edge-port
+configuration is not supplied.
 
 ## Completion Standard
 
-Submit
-`work/module-01-operational-networking/section-02-layer-2-networking/05-spanning-tree.md`.
-It is complete when it contains the prediction, exact commands used, at least
-three cited observations, a decision explanation tied to this subsection, all
-knowledge-check answers, and one explicitly labeled uncertainty.
+Separate recorded state, inferred role, and unknown edge property.
+
+Keep a prediction, the decisive citation or stated assumption, your revised
+explanation, and one unresolved question in your existing module notes.
+For optional separate notes, mirror this guide path under `work/`.
+Knowledge checks below extend the conceptual model; unavailable device
+state is a valid unknown, never a requirement to fabricate evidence.
 
 ## Check Your Understanding
 
@@ -106,6 +83,7 @@ knowledge-check answers, and one explicitly labeled uncertainty.
 
 ## Sources
 
-Reviewed September 14, 2026. Exercises remain usable offline.
+Reviewed September 14, 2026. The exercise is self-contained and offline.
+These references support the general model, not the fictional observations.
 
-[Cisco RSTP roles and states](https://www.cisco.com/c/en/us/support/docs/lan-switching/spanning-tree-protocol/24062-146.html).
+[Cisco — RSTP roles and states](https://www.cisco.com/c/en/us/support/docs/lan-switching/spanning-tree-protocol/24062-146.html)

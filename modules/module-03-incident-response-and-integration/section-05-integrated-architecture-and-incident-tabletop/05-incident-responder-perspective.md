@@ -37,66 +37,36 @@ evidence.
 
 ## Teaching Instructions
 
-1. From the repository root, verify the lab dataset and create the output
-   file:
+Use the [shared extended-study workflow](../../README.md#learning-workflow).
+This task defines the required observations for this guide. The reasoning
+checklist above is a general method: when device state is not supplied,
+record it as unknown or explain a stated hypothetical; do not invent it.
 
-   ```sh
-   python3 labs/build_fixtures.py --check
-   mkdir -p work/module-03-incident-response-and-integration/section-05-integrated-architecture-and-incident-tabletop
-   touch work/module-03-incident-response-and-integration/section-05-integrated-architecture-and-incident-tabletop/05-incident-responder-perspective.md
-   ```
+**Predict and explain:** Predict a proportionate containment decision without
+claiming unobserved credential theft.
 
-2. Before examining the evidence, write one falsifiable prediction about
-   **Incident Responder Perspective** in
-   `work/module-03-incident-response-and-integration/section-05-integrated-architecture-and-incident-tabletop/05-incident-responder-perspective.md`.
-   State the exact fixture field, packet, or log record that would support or
-   contradict it.
+Run from the repository root:
 
-3. Run the evidence commands exactly as shown:
+```sh
+jq '.' labs/fixtures/incident/auth.jsonl
+jq '.' labs/fixtures/incident/endpoint.jsonl
+```
 
-   ```sh
-   sed -n '1,160p' labs/fixtures/architecture/enterprise.md
-   column -s, -t labs/fixtures/architecture/traffic-flows.csv
-   jq '.' labs/fixtures/routing/vrfs.json
-   jq -c '.' labs/fixtures/incident/firewall.jsonl
-   jq -c '.' labs/fixtures/incident/auth.jsonl
-   jq -c '.' labs/fixtures/incident/endpoint.jsonl
-   ```
+## Expected Evidence and Worked Reasoning
 
-4. In the output file, add a `## Evidence Analysis` section for **Incident
-   Responder Perspective**. Apply the numbered Reasoning Process in order. Tie
-   every claim to a frame or log record and label it observed, inferred,
-   hypothesized, or unknown.
-
-5. Add an evidence-ledger table with the columns `evidence ID`, `source`,
-   `collection point`, `raw time`, `normalized time`, `entity`, `observation`,
-   `classification`, `limitation`, and `confidence`. Cite exact frames or
-   records.
-
-6. Apply every step in the Reasoning Process, answer all Check Your
-   Understanding questions, and keep at least one plausible alternative
-   hypothesis in the same output file.
-
-## Expected Evidence
-
-* The reference policy permits enterprise server `10.0.20.40` to reach the OT
-  historian but denies direct user-workstation access.
-
-* The observed SMB access crosses only the CORP user/server boundary, while the
-  later direct user-to-OT HTTPS attempt is denied.
-
-* The four disciplines should agree on the factual path and timestamps while
-  producing different but compatible decisions about design, control, scope,
-  and action.
+Recorded authentication and process evidence justify investigation but do not
+settle malicious intent. The OT process owner must approve actions affecting
+the stated monitoring dependency.
 
 ## Completion Standard
 
-Submit
-`work/module-03-incident-response-and-integration/section-05-integrated-architecture-and-incident-tabletop/05-incident-responder-perspective.md`.
-It is complete when it contains the prediction, exact commands used, at least
-three cited observations, a timeline or conclusion tied to this subsection,
-claim-level confidence, all knowledge-check answers, one alternative
-hypothesis, and one explicitly labeled visibility gap.
+Separate evidence collection, containment goal, and recovery criterion.
+
+Keep a prediction, the decisive citation or stated assumption, your revised
+explanation, and one unresolved question in your existing module notes.
+For optional separate notes, mirror this guide path under `work/`.
+Knowledge checks below extend the conceptual model; unavailable device
+state is a valid unknown, never a requirement to fabricate evidence.
 
 ## Check Your Understanding
 
@@ -105,3 +75,12 @@ hypothesis, and one explicitly labeled visibility gap.
 2. How was incident scope defined?
 
 3. What containment action could endanger operations or destroy evidence?
+
+## Sources
+
+Reviewed September 14, 2026. The exercise is self-contained and offline.
+These references support the general model, not the fictional observations.
+
+[NIST SP 800-61r3 §2 — response in risk management](https://csrc.nist.gov/pubs/sp/800/61/r3/final)
+
+[NIST SP 800-82r3 — OT topologies and security architecture](https://csrc.nist.gov/pubs/sp/800/82/r3/final)

@@ -22,6 +22,11 @@
       "sha256": "e51c103c18a2c3d59ac5b510fd48090e513697dbec6cb4780b408810d3efb7d5"
     },
     {
+      "bytes": 1515,
+      "path": "architecture/performance.json",
+      "sha256": "0bd734bd4f7b28527dc1e9d9ab9488f9db2d5bdca75984304f7cb6f0ada52767"
+    },
+    {
       "bytes": 327,
       "path": "architecture/traffic-flows.csv",
       "sha256": "8cd41815401acebc67672d09cb30a1bc518c89e93d3b3d917ee306df17d3a869"
@@ -60,6 +65,11 @@
       "bytes": 1707,
       "path": "challenges/incident-round-3.json",
       "sha256": "e46213791d6f029194ffbf31f5d97a003d4f219224353fa3aa69c743364cff95"
+    },
+    {
+      "bytes": 2242,
+      "path": "challenges/recovery.json",
+      "sha256": "46accac26378f80d0e1325d60325717abab73a8e99b3a68b34933a265d3b74c2"
     },
     {
       "bytes": 3292,
@@ -130,6 +140,11 @@
       "bytes": 1372,
       "path": "network/l2-control.json",
       "sha256": "bd3edea3ca28b8214a1a0b9d2d3171f4f1366b88fdbd0e0c833a8cbd19097f5b"
+    },
+    {
+      "bytes": 2523,
+      "path": "network/troubleshooting.json",
+      "sha256": "bed6c1cd2a30c5f455d8a333ce6f23b9b6bee1a50d9ceb06b020136e0d87c2ac"
     },
     {
       "bytes": 1008,

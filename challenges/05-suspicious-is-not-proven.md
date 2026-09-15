@@ -9,6 +9,11 @@ the outage drills. Keep your path sheet and boundary map nearby.
 
 Prerequisite: distinguish routes, policy, and observations. Use the
 [evidence vocabulary](reference.md#services-and-evidence) if needed.
+
+The security lead needs a defensible scope before containment. The OT
+process owner maintains supervisory alarm visibility during packaging;
+action that could interrupt that dependency needs that owner's decision.
+Do not assume the suspicious workstation controls the production line.
 <!-- delivery:end c05.brief -->
 
 <!-- delivery:start c05.predict -->

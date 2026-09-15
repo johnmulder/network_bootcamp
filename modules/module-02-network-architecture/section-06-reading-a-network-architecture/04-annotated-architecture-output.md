@@ -35,62 +35,36 @@ assumptions register into an artifact other disciplines can review.
 
 ## Teaching Instructions
 
-1. From the repository root, verify the lab dataset and create the output
-   file:
+Use the [shared extended-study workflow](../../README.md#learning-workflow).
+This task defines the required observations for this guide. The reasoning
+checklist above is a general method: when device state is not supplied,
+record it as unknown or explain a stated hypothetical; do not invent it.
 
-   ```sh
-   python3 labs/build_fixtures.py --check
-   mkdir -p work/module-02-network-architecture/section-06-reading-a-network-architecture
-   touch work/module-02-network-architecture/section-06-reading-a-network-architecture/04-annotated-architecture-output.md
-   ```
+**Predict and explain:** Predict which diagram annotations need a separate
+detailed flow row.
 
-2. Before examining the evidence, write one falsifiable prediction about
-   **Annotated Architecture Output** in
-   `work/module-02-network-architecture/section-06-reading-a-network-architecture/04-annotated-architecture-output.md`.
-   State the exact fixture field, packet, or log record that would support or
-   contradict it.
+Run from the repository root:
 
-3. Run the evidence commands exactly as shown:
+```sh
+cat labs/fixtures/architecture/enterprise.md
+column -s, -t labs/fixtures/architecture/traffic-flows.csv
+```
 
-   ```sh
-   sed -n '1,160p' labs/fixtures/architecture/enterprise.md
-   column -s, -t labs/fixtures/architecture/traffic-flows.csv
-   jq '.' labs/fixtures/architecture/components.json
-   jq '.' labs/fixtures/routing/vrfs.json
-   ```
+## Expected Evidence and Worked Reasoning
 
-4. In the output file, add a `## Architecture Analysis` section for **Annotated
-   Architecture Output**. Apply the numbered Reasoning Process in order. Tie
-   every design or failure claim to a named component, boundary, route, policy,
-   or fixture field.
-
-5. Add an architecture table with the columns `component or boundary`,
-   `intended role`, `dependency`, `failure effect`, `evidence`, and
-   `uncertainty`. Cite exact fixture fields.
-
-6. Apply every step in the Reasoning Process, then answer all Check Your
-   Understanding questions in the same output file.
-
-## Expected Evidence
-
-* The diagram establishes named zones and relationships but relies on the flow
-  table and VRF file for policy and route facts.
-
-* The policy table intends direct enterprise-to-OT application flow `F3` to be
-  allowed and `F4` to be denied. It does not establish live enforcement,
-  complete routing, or successful delivery.
-
-* The management path uses a distinct VRF and `jump-host-policy`, which must be
-  shown as a management and trust boundary.
+A logical zone edge cannot express source identity, port, intent, reverse
+route, and collection scope alone. F3 provides tuple and policy intention but
+not enforcement.
 
 ## Completion Standard
 
-Submit
-`work/module-02-network-architecture/section-06-reading-a-network-architecture/04-annotated-architecture-output.md`.
-It is complete when it contains the prediction, exact commands used, at least
-three cited architecture facts, a forward and return-path or failure
-explanation tied to this subsection, all knowledge-check answers, and one
-explicitly labeled uncertainty.
+Annotate one conduit and pair it with a sourced flow row.
+
+Keep a prediction, the decisive citation or stated assumption, your revised
+explanation, and one unresolved question in your existing module notes.
+For optional separate notes, mirror this guide path under `work/`.
+Knowledge checks below extend the conceptual model; unavailable device
+state is a valid unknown, never a requirement to fabricate evidence.
 
 ## Check Your Understanding
 
@@ -99,3 +73,12 @@ explicitly labeled uncertainty.
 2. Are return paths and encryption termination visible?
 
 3. Does the diagram remain usable after annotation?
+
+## Sources
+
+Reviewed September 14, 2026. The exercise is self-contained and offline.
+These references support the general model, not the fictional observations.
+
+[NIST SP 800-82r3 — OT topologies and security architecture](https://csrc.nist.gov/pubs/sp/800/82/r3/final)
+
+[NIST SP 800-41r1 §§2–4 — firewalls and policy](https://csrc.nist.gov/pubs/sp/800/41/r1/final)

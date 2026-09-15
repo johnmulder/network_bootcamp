@@ -39,58 +39,36 @@ trunks, and Layer 3 boundaries into one defensible packet-path explanation.
 
 ## Teaching Instructions
 
-1. From the repository root, verify the lab dataset and create the output
-   file:
+Use the [shared extended-study workflow](../../README.md#learning-workflow).
+This task defines the required observations for this guide. The reasoning
+checklist above is a general method: when device state is not supplied,
+record it as unknown or explain a stated hypothetical; do not invent it.
 
-   ```sh
-   python3 labs/build_fixtures.py --check
-   mkdir -p work/module-01-operational-networking/section-02-layer-2-networking
-   touch work/module-01-operational-networking/section-02-layer-2-networking/07-layer-2-packet-path-exercise.md
-   ```
+**Predict and explain:** Contrast local DNS delivery with the first routed
+application hop.
 
-2. Before examining the evidence, write one falsifiable prediction about **Layer
-   2 Packet-Path Exercise** in
-   `work/module-01-operational-networking/section-02-layer-2-networking/07-layer-2-packet-path-exercise.md`.
-   State the exact fixture field, packet, or log record that would support or
-   contradict it.
+Run from the repository root:
 
-3. Run the evidence commands exactly as shown:
+```sh
+tshark -n -r labs/fixtures/pcaps/foundations.pcap -Y 'frame.number == 3 || frame.number == 5 || frame.number == 6' -T fields -E header=y -e frame.number -e eth.src -e eth.dst -e ip.src -e ip.dst -e vlan.id -e tcp.flags
+tshark -n -r labs/fixtures/pcaps/foundations.pcap -Y 'arp' -T fields -E header=y -e frame.number -e eth.src -e eth.dst -e arp.opcode -e arp.src.proto_ipv4 -e arp.dst.proto_ipv4
+```
 
-   ```sh
-   tshark -r labs/fixtures/pcaps/foundations.pcap -Y 'arp || vlan' -T fields -E header=y -E separator=, -e frame.number -e vlan.id -e eth.src -e eth.dst -e arp.opcode -e arp.src.proto_ipv4 -e arp.dst.proto_ipv4
-   jq '.stp, .lacp' labs/fixtures/network/l2-control.json
-   ```
+## Expected Evidence and Worked Reasoning
 
-4. In the output file, add a `## Analysis` section for **Layer 2 Packet-Path
-   Exercise**. Apply the numbered Reasoning Process in order. For each step,
-   cite at least one exact command result and label the statement as an
-   observation or interpretation.
-
-5. Add an evidence table with the columns `source`, `observation`,
-   `interpretation`, and `uncertainty`. Cite exact frame numbers, prefixes,
-   JSON fields, or log records.
-
-6. Apply every step in the Reasoning Process, then answer all Check Your
-   Understanding questions in the same output file.
-
-## Expected Evidence
-
-* Every frame in `foundations.pcap` is tagged with VLAN 10 at the modeled trunk
-  capture point.
-
-* Frame 1 is a broadcast ARP request from `02:00:00:00:10:23` asking for
-  `10.0.10.1`; frame 2 is the unicast reply from `02:00:00:00:10:01`.
-
-* The STP root is `sw-dist-1`; the access-to-access link discards on
-  `sw-access-2`; LACP flow assignments show that one flow uses one member.
+Frames 3 and 5 have different Ethernet destinations for local and remote IPs.
+Only the gateway ARP exchange is present. Downstream ARP and full switch
+tables remain unknown.
 
 ## Completion Standard
 
-Submit
-`work/module-01-operational-networking/section-02-layer-2-networking/07-layer-2-packet-path-exercise.md`.
-It is complete when it contains the prediction, exact commands used, at least
-three cited observations, a decision explanation tied to this subsection, all
-knowledge-check answers, and one explicitly labeled uncertainty.
+Complete two header rows and distinguish observed return from a predicted hop.
+
+Keep a prediction, the decisive citation or stated assumption, your revised
+explanation, and one unresolved question in your existing module notes.
+For optional separate notes, mirror this guide path under `work/`.
+Knowledge checks below extend the conceptual model; unavailable device
+state is a valid unknown, never a requirement to fabricate evidence.
 
 ## Check Your Understanding
 
@@ -99,3 +77,12 @@ knowledge-check answers, and one explicitly labeled uncertainty.
 2. Did you identify every point at which the Ethernet header changes?
 
 3. Did you distinguish unknown-unicast flooding from broadcast behavior?
+
+## Sources
+
+Reviewed September 14, 2026. The exercise is self-contained and offline.
+These references support the general model, not the fictional observations.
+
+[RFC 826 — packet generation and reception](https://www.rfc-editor.org/rfc/rfc826.html)
+
+[RFC 1812 §5.2.4.3 — forwarding selection](https://www.rfc-editor.org/rfc/rfc1812.html#section-5.2.4.3)

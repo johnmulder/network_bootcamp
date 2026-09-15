@@ -1,0 +1,96 @@
+{
+  "attachment": [
+    {
+      "access_vlan": 10,
+      "gateway_neighbor": "INCOMPLETE",
+      "id": "L1",
+      "link": "down",
+      "rx_errors": 0,
+      "rx_frames": 0,
+      "switch_mac": null,
+      "test": "no reply"
+    },
+    {
+      "access_vlan": 20,
+      "gateway_neighbor": "INCOMPLETE",
+      "id": "L2",
+      "link": "up",
+      "rx_errors": 0,
+      "rx_frames": 15,
+      "switch_mac": "client learned in VLAN 20",
+      "test": "no ARP reply"
+    },
+    {
+      "access_vlan": 10,
+      "gateway_neighbor": "INCOMPLETE",
+      "id": "L3",
+      "link": "up",
+      "rx_errors": 0,
+      "rx_frames": 15,
+      "switch_mac": "client learned in VLAN 10",
+      "test": "ARP request seen; peer reply absent; peer state not supplied"
+    },
+    {
+      "access_vlan": 10,
+      "gateway_neighbor": "REACHABLE",
+      "id": "L4",
+      "link": "up",
+      "rx_errors": 0,
+      "rx_frames": 25,
+      "server_neighbor": "REACHABLE",
+      "switch_mac": "client learned in VLAN 10",
+      "test": "server receives SYN and emits RST; authorized host socket inventory shows no TCP/443 listener"
+    }
+  ],
+  "attachment_conditions": {
+    "address": "192.0.2.23/24",
+    "counter_interval_seconds": 10,
+    "counter_semantics": "deltas during this isolated authorized test",
+    "expected_access_vlan": 10,
+    "gateway": "192.0.2.1",
+    "interface": "en0",
+    "server": "192.0.2.40:443"
+  },
+  "dns": [
+    {
+      "answers": null,
+      "client_observation": "query sent; no response in 3 seconds",
+      "id": "D1",
+      "query": "missing.example.test",
+      "rcode": null,
+      "resolver": "192.0.2.53",
+      "type": "A"
+    },
+    {
+      "answers": [],
+      "client_observation": "response received",
+      "id": "D2",
+      "query": "missing.example.test",
+      "rcode": "NXDOMAIN",
+      "resolver": "192.0.2.53",
+      "type": "A"
+    },
+    {
+      "answers": [],
+      "authority": "SOA example.test; no referral",
+      "client_observation": "response received",
+      "id": "D3",
+      "query": "v4-only.example.test",
+      "rcode": "NOERROR",
+      "resolver": "192.0.2.53",
+      "type": "AAAA"
+    },
+    {
+      "answers": [
+        "192.0.2.40"
+      ],
+      "client_observation": "response received; TCP handshake complete; HTTP 503",
+      "id": "D4",
+      "query": "app.example.test",
+      "rcode": "NOERROR",
+      "resolver": "192.0.2.53",
+      "type": "A"
+    }
+  ],
+  "scope": "Independent saved teaching comparisons; not live measurements or factory incident events."
+}

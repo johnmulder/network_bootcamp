@@ -37,61 +37,35 @@ only when driven by a model.
 
 ## Teaching Instructions
 
-1. From the repository root, verify the lab dataset and create the output
-   file:
+Use the [shared extended-study workflow](../../README.md#learning-workflow).
+This task defines the required observations for this guide. The reasoning
+checklist above is a general method: when device state is not supplied,
+record it as unknown or explain a stated hypothetical; do not invent it.
 
-   ```sh
-   python3 labs/build_fixtures.py --check
-   mkdir -p work/module-01-operational-networking/section-07-network-troubleshooting
-   touch work/module-01-operational-networking/section-07-network-troubleshooting/01-hypothesis-driven-troubleshooting.md
-   ```
+**Predict and explain:** Predict a different next check for DNS timeout D1 and
+HTTP failure D4.
 
-2. Before examining the evidence, write one falsifiable prediction about
-   **Hypothesis-Driven Troubleshooting** in
-   `work/module-01-operational-networking/section-07-network-troubleshooting/01-hypothesis-driven-troubleshooting.md`.
-   State the exact fixture field, packet, or log record that would support or
-   contradict it.
+Run from the repository root:
 
-3. Run the evidence commands exactly as shown:
+```sh
+jq '.' labs/fixtures/network/troubleshooting.json
+```
 
-   ```sh
-   tcpdump -nn -r labs/fixtures/pcaps/foundations.pcap
-   tcpdump -nn -r labs/fixtures/pcaps/mtu-failure.pcap
-   sed -n '1,120p' labs/fixtures/routing/macos-routes.txt
-   jq -c '.' labs/fixtures/incident/firewall.jsonl
-   ```
+## Expected Evidence and Worked Reasoning
 
-4. In the output file, add a `## Analysis` section for **Hypothesis-Driven
-   Troubleshooting**. Apply the numbered Reasoning Process in order. For each
-   step, cite at least one exact command result and label the statement as an
-   observation or interpretation.
-
-5. Add an evidence table with the columns `source`, `observation`,
-   `interpretation`, and `uncertainty`. Cite exact frame numbers, prefixes,
-   JSON fields, or log records.
-
-6. Apply every step in the Reasoning Process, then answer all Check Your
-   Understanding questions in the same output file.
-
-## Expected Evidence
-
-* The healthy baseline shows ARP, DNS, a TCP handshake, and an HTTP response.
-  Frames 10–11 begin connection closure, but the final server ACK is absent;
-  the capture does not establish completed TCP closure.
-
-* The MTU case completes the handshake but fails after a 1400-byte payload and
-  ICMP MTU 1200 response.
-
-* The firewall evidence distinguishes an allowed translated egress session,
-  allowed user-to-server SMB, and denied user-to-OT HTTPS.
+D1 has no response within a bounded client window; D4 has an answer and HTTP
+503. Resolver-side receipt discriminates D1; application logs are more useful
+for D4.
 
 ## Completion Standard
 
-Submit
-`work/module-01-operational-networking/section-07-network-troubleshooting/01-hypothesis-driven-troubleshooting.md`.
-It is complete when it contains the prediction, exact commands used, at least
-three cited observations, a decision explanation tied to this subsection, all
-knowledge-check answers, and one explicitly labeled uncertainty.
+Give two checks and explain how opposite results change the diagnosis.
+
+Keep a prediction, the decisive citation or stated assumption, your revised
+explanation, and one unresolved question in your existing module notes.
+For optional separate notes, mirror this guide path under `work/`.
+Knowledge checks below extend the conceptual model; unavailable device
+state is a valid unknown, never a requirement to fabricate evidence.
 
 ## Check Your Understanding
 
@@ -100,3 +74,12 @@ knowledge-check answers, and one explicitly labeled uncertainty.
 2. What makes a test falsifiable?
 
 3. Why is restarting several components a weak diagnostic step?
+
+## Sources
+
+Reviewed September 14, 2026. The exercise is self-contained and offline.
+These references support the general model, not the fictional observations.
+
+[RFC 2308 §2 — negative DNS responses](https://www.rfc-editor.org/rfc/rfc2308.html#section-2)
+
+[RFC 9293 §3 — TCP operation](https://www.rfc-editor.org/rfc/rfc9293.html#section-3)

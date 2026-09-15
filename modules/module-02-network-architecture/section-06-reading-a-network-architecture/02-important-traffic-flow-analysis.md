@@ -34,62 +34,36 @@ flows are traced through it in both directions.
 
 ## Teaching Instructions
 
-1. From the repository root, verify the lab dataset and create the output
-   file:
+Use the [shared extended-study workflow](../../README.md#learning-workflow).
+This task defines the required observations for this guide. The reasoning
+checklist above is a general method: when device state is not supplied,
+record it as unknown or explain a stated hypothetical; do not invent it.
 
-   ```sh
-   python3 labs/build_fixtures.py --check
-   mkdir -p work/module-02-network-architecture/section-06-reading-a-network-architecture
-   touch work/module-02-network-architecture/section-06-reading-a-network-architecture/02-important-traffic-flow-analysis.md
-   ```
+**Predict and explain:** Predict how much of a cloud-to-server request and
+response can be traced with the tables.
 
-2. Before examining the evidence, write one falsifiable prediction about
-   **Important Traffic-Flow Analysis** in
-   `work/module-02-network-architecture/section-06-reading-a-network-architecture/02-important-traffic-flow-analysis.md`.
-   State the exact fixture field, packet, or log record that would support or
-   contradict it.
+Run from the repository root:
 
-3. Run the evidence commands exactly as shown:
+```sh
+column -s, -t labs/fixtures/architecture/traffic-flows.csv
+jq '.' labs/fixtures/architecture/cloud-routes.json
+```
 
-   ```sh
-   sed -n '1,160p' labs/fixtures/architecture/enterprise.md
-   column -s, -t labs/fixtures/architecture/traffic-flows.csv
-   jq '.' labs/fixtures/architecture/components.json
-   jq '.' labs/fixtures/routing/vrfs.json
-   ```
+## Expected Evidence and Worked Reasoning
 
-4. In the output file, add a `## Architecture Analysis` section for **Important
-   Traffic-Flow Analysis**. Apply the numbered Reasoning Process in order. Tie
-   every design or failure claim to a named component, boundary, route, policy,
-   or fixture field.
-
-5. Add an architecture table with the columns `component or boundary`,
-   `intended role`, `dependency`, `failure effect`, `evidence`, and
-   `uncertainty`. Cite exact fixture fields.
-
-6. Apply every step in the Reasoning Process, then answer all Check Your
-   Understanding questions in the same output file.
-
-## Expected Evidence
-
-* The diagram establishes named zones and relationships but relies on the flow
-  table and VRF file for policy and route facts.
-
-* The policy table intends direct enterprise-to-OT application flow `F3` to be
-  allowed and `F4` to be denied. It does not establish live enforcement,
-  complete routing, or successful delivery.
-
-* The management path uses a distinct VRF and `jump-host-policy`, which must be
-  shown as a management and trust boundary.
+rt-corp supplies the on-prem target and rt-hybrid supplies the cloud return
+prefix. Endpoint, security, translation, and service success require
+additional evidence.
 
 ## Completion Standard
 
-Submit
-`work/module-02-network-architecture/section-06-reading-a-network-architecture/02-important-traffic-flow-analysis.md`.
-It is complete when it contains the prediction, exact commands used, at least
-three cited architecture facts, a forward and return-path or failure
-explanation tied to this subsection, all knowledge-check answers, and one
-explicitly labeled uncertainty.
+Complete a bidirectional flow row with table citations and unknowns.
+
+Keep a prediction, the decisive citation or stated assumption, your revised
+explanation, and one unresolved question in your existing module notes.
+For optional separate notes, mirror this guide path under `work/`.
+Knowledge checks below extend the conceptual model; unavailable device
+state is a valid unknown, never a requirement to fabricate evidence.
 
 ## Check Your Understanding
 
@@ -98,3 +72,12 @@ explicitly labeled uncertainty.
 2. Where does the tuple or encryption state change?
 
 3. Which dependency can fail before the application sends traffic?
+
+## Sources
+
+Reviewed September 14, 2026. The exercise is self-contained and offline.
+These references support the general model, not the fictional observations.
+
+[AWS — transit route-table association and propagation](https://docs.aws.amazon.com/vpc/latest/tgw/tgw-route-tables.html)
+
+[NIST SP 800-41r1 §§2–4 — firewalls and policy](https://csrc.nist.gov/pubs/sp/800/41/r1/final)

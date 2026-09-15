@@ -36,64 +36,36 @@ and can be answered with a concrete artifact.
 
 ## Teaching Instructions
 
-1. From the repository root, verify the lab dataset and create the output
-   file:
+Use the [shared extended-study workflow](../../README.md#learning-workflow).
+This task defines the required observations for this guide. The reasoning
+checklist above is a general method: when device state is not supplied,
+record it as unknown or explain a stated hypothetical; do not invent it.
 
-   ```sh
-   python3 labs/build_fixtures.py --check
-   mkdir -p work/module-03-incident-response-and-integration/section-06-communication-exercise
-   touch work/module-03-incident-response-and-integration/section-06-communication-exercise/03-high-value-technical-questions.md
-   ```
+**Predict and explain:** Predict which question changes the decision more:
+more logs, or the target operation for this login.
 
-2. Before examining the evidence, write one falsifiable prediction about
-   **High-Value Technical Questions** in
-   `work/module-03-incident-response-and-integration/section-06-communication-exercise/03-high-value-technical-questions.md`.
-   State the exact fixture field, packet, or log record that would support or
-   contradict it.
+Run from the repository root:
 
-3. Run the evidence commands exactly as shown:
+```sh
+jq '.' labs/fixtures/incident/endpoint.jsonl
+jq '.' labs/fixtures/incident/auth.jsonl
+```
 
-   ```sh
-   jq -c 'select(.dst == "198.51.100.77")' labs/fixtures/incident/flows.jsonl
-   jq -c 'select(.dst == "198.51.100.77")' labs/fixtures/incident/firewall.jsonl
-   jq '.OT' labs/fixtures/routing/vrfs.json
-   jq -c '.' labs/fixtures/incident/proxy.jsonl
-   ```
+## Expected Evidence and Worked Reasoning
 
-4. In the output file, add a `## Evidence Analysis` section for **High-Value
-   Technical Questions**. Apply the numbered Reasoning Process in order. Tie
-   every claim to a frame or log record and label it observed, inferred,
-   hypothesized, or unknown.
-
-5. Add an evidence-ledger table with the columns `evidence ID`, `source`,
-   `collection point`, `raw time`, `normalized time`, `entity`, `observation`,
-   `classification`, `limitation`, and `confidence`. Cite exact frames or
-   records.
-
-6. Apply every step in the Reasoning Process, answer all Check Your
-   Understanding questions, and keep at least one plausible alternative
-   hypothesis in the same output file.
-
-## Expected Evidence
-
-* Flow data shows three connections from `10.0.10.23` to `198.51.100.77:443`;
-  the enterprise firewall records translation to `192.0.2.44` under temporary
-  egress rule `TEMP-EGRESS-17`.
-
-* The OT VRF has no default route, but the observed external traffic originates
-  in CORP, so the two statements are not actually contradictory.
-
-* The proxy log records a temporary bypass, providing a precise owner and
-  configuration question rather than a vague request to inspect the network.
+The target authentication is recorded but its operation is absent. A
+time-bounded target audit or process-to-socket record can distinguish
+important hypotheses.
 
 ## Completion Standard
 
-Submit
-`work/module-03-incident-response-and-integration/section-06-communication-exercise/03-high-value-technical-questions.md`.
-It is complete when it contains the prediction, exact commands used, at least
-three cited observations, a timeline or conclusion tied to this subsection,
-claim-level confidence, all knowledge-check answers, one alternative
-hypothesis, and one explicitly labeled visibility gap.
+Name object, interval, owner, alternative answers, and action consequence.
+
+Keep a prediction, the decisive citation or stated assumption, your revised
+explanation, and one unresolved question in your existing module notes.
+For optional separate notes, mirror this guide path under `work/`.
+Knowledge checks below extend the conceptual model; unavailable device
+state is a valid unknown, never a requirement to fabricate evidence.
 
 ## Check Your Understanding
 
@@ -102,3 +74,10 @@ hypothesis, and one explicitly labeled visibility gap.
 2. What should accompany a request for a routing table?
 
 3. Which question distinguishes containment from remediation?
+
+## Sources
+
+Reviewed September 14, 2026. The exercise is self-contained and offline.
+These references support the general model, not the fictional observations.
+
+[NIST SP 800-86 §§3, 6 — forensic process and network traffic](https://csrc.nist.gov/pubs/sp/800/86/final)

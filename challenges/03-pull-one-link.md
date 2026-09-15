@@ -9,6 +9,10 @@ table changes, and what still needs to happen for users to recover.
 
 Prerequisite: prefix matching and next hops from Challenge 1. The
 [reference card](reference.md) explains OSPF, BGP, ECMP, and VRFs.
+
+The operations lead needs to know whether a routing change restored the
+reporting service. Report measured forwarding progress separately from
+unmeasured application recovery.
 <!-- delivery:end c03.brief -->
 
 <!-- delivery:start c03.predict -->

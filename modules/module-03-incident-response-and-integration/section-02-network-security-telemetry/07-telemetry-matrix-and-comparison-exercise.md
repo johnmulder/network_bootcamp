@@ -37,67 +37,36 @@ strengths, limitations, retention, and evidentiary claim.
 
 ## Teaching Instructions
 
-1. From the repository root, verify the lab dataset and create the output
-   file:
+Use the [shared extended-study workflow](../../README.md#learning-workflow).
+This task defines the required observations for this guide. The reasoning
+checklist above is a general method: when device state is not supplied,
+record it as unknown or explain a stated hypothetical; do not invent it.
 
-   ```sh
-   python3 labs/build_fixtures.py --check
-   mkdir -p work/module-03-incident-response-and-integration/section-02-network-security-telemetry
-   touch work/module-03-incident-response-and-integration/section-02-network-security-telemetry/07-telemetry-matrix-and-comparison-exercise.md
-   ```
+**Predict and explain:** Predict which source best answers a packet-handshake
+question and which answers process ancestry.
 
-2. Before examining the evidence, write one falsifiable prediction about
-   **Telemetry Matrix and Comparison Exercise** in
-   `work/module-03-incident-response-and-integration/section-02-network-security-telemetry/07-telemetry-matrix-and-comparison-exercise.md`.
-   State the exact fixture field, packet, or log record that would support or
-   contradict it.
+Run from the repository root:
 
-3. Run the evidence commands exactly as shown:
+```sh
+tshark -n -r labs/fixtures/pcaps/incident.pcap -Y 'tcp || dns' -T fields -E header=y -e frame.number -e frame.time_relative -e ip.src -e ip.dst -e tcp.dstport -e tcp.flags -e tls.handshake.type -e dns.qry.name
+jq '.' labs/fixtures/incident/siem.jsonl
+```
 
-   ```sh
-   tshark -r labs/fixtures/pcaps/incident.pcap -T fields -E header=y -E separator=, -e frame.number -e frame.time_epoch -e ip.src -e tcp.srcport -e ip.dst -e tcp.dstport -e dns.qry.name -e dns.a -e tls.handshake.extensions_server_name
-   mkdir -p work/zeek-incident
-   (cd work/zeek-incident && zeek -r ../../labs/fixtures/pcaps/incident.pcap LogAscii::use_json=T)
-   jq -c '.' work/zeek-incident/conn.log | sed -n '1,12p'
-   jq -c '.' labs/fixtures/incident/flows.jsonl
-   jq -c '.' labs/fixtures/incident/endpoint.jsonl
-   ```
+## Expected Evidence and Worked Reasoning
 
-4. In the output file, add a `## Evidence Analysis` section for **Telemetry
-   Matrix and Comparison Exercise**. Apply the numbered Reasoning Process in
-   order. Tie every claim to a frame or log record and label it observed,
-   inferred, hypothesized, or unknown.
-
-5. Add an evidence-ledger table with the columns `evidence ID`, `source`,
-   `collection point`, `raw time`, `normalized time`, `entity`, `observation`,
-   `classification`, `limitation`, and `confidence`. Cite exact frames or
-   records.
-
-6. Apply every step in the Reasoning Process, answer all Check Your
-   Understanding questions, and keep at least one plausible alternative
-   hypothesis in the same output file.
-
-## Expected Evidence
-
-* The PCAP contains a DNS answer for `cdn-update.example.test`, three TLS
-  ClientHello connections exactly 60 seconds apart, one answered SMB SYN, and
-  two unanswered discovery SYNs.
-
-* Zeek derives connection and DNS records from the same PCAP, so those records
-  corroborate parsing but are not an independent observation source.
-
-* Endpoint data connects `update-agent` to the DNS query and shows `smb-client`
-  as its child; flow data summarizes four completed or observed conversations
-  without payload.
+Packets answer observed flags; endpoint source records answer recorded
+ancestry. The SIEM inherits inputs. Optional Zeek can be run separately but is
+not required to complete this comparison.
 
 ## Completion Standard
 
-Submit
-`work/module-03-incident-response-and-integration/section-02-network-security-telemetry/07-telemetry-matrix-and-comparison-exercise.md`.
-It is complete when it contains the prediction, exact commands used, at least
-three cited observations, a timeline or conclusion tied to this subsection,
-claim-level confidence, all knowledge-check answers, one alternative
-hypothesis, and one explicitly labeled visibility gap.
+Build three claim/source rows and distinguish independence from format.
+
+Keep a prediction, the decisive citation or stated assumption, your revised
+explanation, and one unresolved question in your existing module notes.
+For optional separate notes, mirror this guide path under `work/`.
+Knowledge checks below extend the conceptual model; unavailable device
+state is a valid unknown, never a requirement to fabricate evidence.
 
 ## Check Your Understanding
 
@@ -107,3 +76,12 @@ hypothesis, and one explicitly labeled visibility gap.
 2. Which source best connects a network tuple to a process?
 
 3. What additional source would resolve the most important conflict?
+
+## Sources
+
+Reviewed September 14, 2026. The exercise is self-contained and offline.
+These references support the general model, not the fictional observations.
+
+[Zeek — connection and protocol log reference](https://docs.zeek.org/en/current/reference/logs/index.html)
+
+[NIST SP 800-86 §§3, 6 — forensic process and network traffic](https://csrc.nist.gov/pubs/sp/800/86/final)

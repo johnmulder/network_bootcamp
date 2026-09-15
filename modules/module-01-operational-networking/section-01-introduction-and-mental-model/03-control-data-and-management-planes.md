@@ -40,59 +40,34 @@ essential for explaining partial failures.
 
 ## Teaching Instructions
 
-1. From the repository root, verify the lab dataset and create the output
-   file:
+Use the [shared extended-study workflow](../../README.md#learning-workflow).
+This task defines the required observations for this guide. The reasoning
+checklist above is a general method: when device state is not supplied,
+record it as unknown or explain a stated hypothetical; do not invent it.
 
-   ```sh
-   python3 labs/build_fixtures.py --check
-   mkdir -p work/module-01-operational-networking/section-01-introduction-and-mental-model
-   touch work/module-01-operational-networking/section-01-introduction-and-mental-model/03-control-data-and-management-planes.md
-   ```
+**Predict and explain:** Predict whether an LSA and a forwarding-table change
+happen at the same recorded instant.
 
-2. Before examining the evidence, write one falsifiable prediction about
-   **Control, Data, and Management Planes** in
-   `work/module-01-operational-networking/section-01-introduction-and-mental-model/03-control-data-and-management-planes.md`.
-   State the exact fixture field, packet, or log record that would support or
-   contradict it.
+Run from the repository root:
 
-3. Run the evidence commands exactly as shown:
+```sh
+jq '.' labs/fixtures/routing/route-events.jsonl
+```
 
-   ```sh
-   python3 labs/build_fixtures.py --check
-   sed -n '1,120p' labs/fixtures/architecture/enterprise.md
-   python3 -m json.tool labs/fixtures/manifest.json | sed -n '1,80p'
-   ```
+## Expected Evidence and Worked Reasoning
 
-4. In the output file, add a `## Analysis` section for **Control, Data, and
-   Management Planes**. Apply the numbered Reasoning Process in order. For each
-   step, cite at least one exact command result and label the statement as an
-   observation or interpretation.
-
-5. Add an evidence table with the columns `source`, `observation`,
-   `interpretation`, and `uncertainty`. Cite exact frame numbers, prefixes,
-   JSON fields, or log records.
-
-6. Apply every step in the Reasoning Process, then answer all Check Your
-   Understanding questions in the same output file.
-
-## Expected Evidence
-
-* The manifest reports the case name `network-bootcamp-reference` and 36
-  checksum-protected fixture files.
-
-* The architecture places `ws-23` at `10.0.10.23`, `file-01` at `10.0.20.40`,
-  and the OT networks behind two explicit firewall boundaries.
-
-* Your explanation identifies path, policy, state, and evidence as separate
-  questions rather than treating the diagram as proof of live behavior.
+The event log distinguishes ospf_lsa from fib_install and later flow_rehash.
+No management login or application recovery observation is supplied.
 
 ## Completion Standard
 
-Submit
-`work/module-01-operational-networking/section-01-introduction-and-mental-model/03-control-data-and-management-planes.md`.
-It is complete when it contains the prediction, exact commands used, at least
-three cited observations, a decision explanation tied to this subsection, all
-knowledge-check answers, and one explicitly labeled uncertainty.
+Classify three events by plane and name an unobserved plane.
+
+Keep a prediction, the decisive citation or stated assumption, your revised
+explanation, and one unresolved question in your existing module notes.
+For optional separate notes, mirror this guide path under `work/`.
+Knowledge checks below extend the conceptual model; unavailable device
+state is a valid unknown, never a requirement to fabricate evidence.
 
 ## Check Your Understanding
 
@@ -103,3 +78,12 @@ knowledge-check answers, and one explicitly labeled uncertainty.
 
 3. Which plane would explain a correct route that was never installed for
    forwarding?
+
+## Sources
+
+Reviewed September 14, 2026. The exercise is self-contained and offline.
+These references support the general model, not the fictional observations.
+
+[RFC 2328 §§10, 16 — adjacency and route calculation](https://www.rfc-editor.org/rfc/rfc2328.html)
+
+[RFC 1812 §5.2.4.3 — forwarding selection](https://www.rfc-editor.org/rfc/rfc1812.html#section-5.2.4.3)
