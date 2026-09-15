@@ -4,17 +4,18 @@
 
 ## Why It Matters
 
-Route choice is primarily a two-stage problem: choose the most-specific
-destination prefix, then choose among routes to that prefix using protocol
-preference and metric.
+Separate route installation from packet forwarding. The control plane selects
+paths for each prefix; the forwarding plane looks up a packet destination in
+the installed table. It does not rerun routing protocols for every packet.
 
 ## Core Model
 
 * Longest-prefix match compares prefix length among all destination matches,
   regardless of which protocol installed them.
 
-* Administrative preference or distance normally compares routes only after
-  destination-prefix specificity is equal.
+* Administrative preference or distance helps select which source installs
+  a route for the same prefix. A preferred default does not displace an
+  installed, matching host route during forwarding.
 
 * Metrics compare paths within a routing protocol and are not inherently
   comparable across protocols.
@@ -27,14 +28,17 @@ preference and metric.
 
 ## Reasoning Process
 
-1. List matching routes and eliminate every route with a shorter prefix than
-   the best match.
+1. Identify the routing context and whether the input is a candidate list
+   or an installed forwarding table.
 
-2. Among equal prefixes, apply route-source preference.
+2. For candidates, select paths for each identical prefix using the modeled
+   source preference, metric, and multipath rules. Protocols have their own
+   selection procedures; this CSV is a simplified model.
 
-3. Compare metrics or multipath eligibility within the preferred source.
+3. For a packet, select the longest matching prefix in the resulting table.
 
-4. Resolve the chosen next hop until an egress interface is known.
+4. Resolve the selected next hop and egress adjacency. An installed route
+   alone does not establish neighbor resolution or successful delivery.
 
 ## Teaching Instructions
 
@@ -101,3 +105,10 @@ knowledge-check answers, and one explicitly labeled uncertainty.
 2. When is administrative preference relevant?
 
 3. What new failure can recursive next-hop resolution introduce?
+
+## Sources
+
+Reviewed September 14, 2026. Exercises remain usable offline.
+
+[RFC 1812 §5.2.4.3](https://www.rfc-editor.org/rfc/rfc1812.html#section-5.2.4.3):
+route selection and forwarding.

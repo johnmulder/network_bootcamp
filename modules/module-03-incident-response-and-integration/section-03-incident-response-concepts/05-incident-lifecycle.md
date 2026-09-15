@@ -86,9 +86,10 @@ learning. Phases can overlap and repeat as evidence changes.
   authentication records a successful `svc-backup` network login to `file-01`
   from `10.0.10.23`.
 
-* The evidence supports external periodic TLS and successful access to one SMB
-  service, but it does not prove credential theft, remote execution,
-  persistence, or data exfiltration.
+* Frames 6, 10, and 14 show repeated TLS ClientHello messages. Frames 15–16
+  show a TCP SYN/SYN-ACK on port 445; the authentication log separately
+  records a successful network login. Completed TLS, file access, remote
+  execution, credential theft, persistence, and exfiltration remain unproven.
 
 ## Completion Standard
 

@@ -18,8 +18,11 @@
     }
   ],
   "router_advertisement": {
+    "autonomous": true,
     "managed": false,
+    "on_link": true,
     "prefix": "2001:db8:10::/64",
-    "router_lifetime": 1800
+    "router_lifetime": 1800,
+    "valid_lifetime": 3600
   }
 }

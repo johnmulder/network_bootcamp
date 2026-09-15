@@ -85,7 +85,7 @@ encountered controls, observable telemetry, and residual artifacts.
   required claim-classification and confidence fields.
 
 * The evidence orders process start, DNS, three periodic TLS connections, child
-  SMB client, successful SMB authentication, and the SIEM alert.
+  SMB client, recorded successful network authentication, and the SIEM alert.
 
 * Direct user-to-OT HTTPS is denied at `16:08:00Z`; no fixture proves
   successful OT access, credential theft, persistence, or exfiltration.

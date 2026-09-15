@@ -16,7 +16,8 @@ from causing blind spots.
 * Link-local addresses in `fe80::/10` support neighbor and router communication
   even without a global address.
 
-* Neighbor Discovery uses ICMPv6 multicast messages instead of ARP broadcasts.
+* Neighbor Discovery uses ICMPv6 instead of ARP. It includes multicast
+  address-resolution exchanges and unicast neighbor-reachability probes.
 
 * Router Advertisements can provide prefix and default-router information;
   DHCPv6 can supply additional configuration depending on design.
@@ -29,13 +30,26 @@ from causing blind spots.
 1. Classify each IPv6 address as loopback, link-local, unique-local, multicast,
    or global.
 
-2. Use the prefix to decide whether the destination is on-link.
+2. Consult explicit on-link information: the host prefix list, routes, or
+   a valid RA Prefix Information Option with L set. An assigned address
+   and matching address bits alone do not establish on-link status. The
+   independent A flag permits autonomous address configuration.
 
 3. Identify the Neighbor Solicitation, Neighbor Advertisement, and router
    information required.
 
 4. Trace the packet while preserving scope identifiers for link-local
    addresses.
+
+## Worked On-Link Decision
+
+An interface address `2001:db8:10::23/64` alone does not establish that
+`2001:db8:10::53` is on-link. With only that information, the result is
+unknown. In this saved model, the RA explicitly sets `on_link: true` (L),
+`autonomous: true` (A), and a positive `valid_lifetime` for the prefix;
+at the snapshot time the host may resolve that destination directly.
+The separate `router_lifetime` determines default-router validity. An
+expired prefix or L unset cannot be replaced by a guess from address bits.
 
 ## Teaching Instructions
 
@@ -102,3 +116,12 @@ knowledge-check answers, and one explicitly labeled uncertainty.
 2. Why does a link-local address sometimes require an interface scope?
 
 3. Which endpoint is responsible for IPv6 fragmentation?
+
+## Sources
+
+Reviewed September 14, 2026. Exercises remain usable offline.
+
+[RFC 5942 §3](https://www.rfc-editor.org/rfc/rfc5942.html#section-3):
+the IPv6 subnet model.
+[RFC 4861 §§4.6.2, 7.3](https://www.rfc-editor.org/rfc/rfc4861.html):
+RA flags and neighbor reachability.

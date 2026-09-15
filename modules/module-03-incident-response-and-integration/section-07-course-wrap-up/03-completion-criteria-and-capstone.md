@@ -83,9 +83,10 @@ analysis on one Mac—not memorizing every protocol or command.
   workstation TLS is intended to be denied but is allowed by a temporary
   firewall rule.
 
-* Evidence proves process-correlated DNS, periodic external TLS, one successful
-  SMB authentication, and a denied OT attempt; stronger attack claims remain
-  hypotheses.
+* Endpoint records associate a process with DNS; packets show repeated
+  ClientHello messages; authentication records a successful network login;
+  the firewall records an OT deny. Completed TLS and SMB file access remain
+  unknown, and stronger attack claims remain hypotheses.
 
 * A complete capstone cites fixture evidence, names the return-path and
   visibility assumptions, recommends removal or review of the temporary rule,

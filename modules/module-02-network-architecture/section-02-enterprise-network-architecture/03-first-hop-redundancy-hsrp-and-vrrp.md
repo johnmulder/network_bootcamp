@@ -24,6 +24,14 @@ multiple routers can provide forwarding.
 * Gateway redundancy does not guarantee upstream routing, policy, or
   stateful-service redundancy.
 
+## Worked Takeover
+
+Assume ordinary VRRP virtual-MAC operation: the host keeps the same gateway
+IP and virtual MAC when the backup takes over. Switch forwarding learns the
+virtual MAC on the new active router port. The host need not replace it
+with the new router's physical MAC. A mode using physical interface MACs
+needs its own explicit assumptions. No FHRP state capture is supplied here.
+
 ## Reasoning Process
 
 1. Identify the virtual gateway, physical peers, active owner, and tracked
@@ -100,4 +108,12 @@ explicitly labeled uncertainty.
 
 2. What does preemption change?
 
-3. Which endpoint cache may need to learn a new gateway MAC after failover?
+3. During ordinary virtual-gateway takeover, which identity stays stable
+   and which switch forwarding location changes?
+
+## Sources
+
+Reviewed September 14, 2026. Exercises remain usable offline.
+
+[RFC 9568 §8.1.2](https://www.rfc-editor.org/rfc/rfc9568.html#section-8.1.2):
+virtual-router MAC addressing.

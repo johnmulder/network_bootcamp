@@ -75,13 +75,16 @@ new ones begin.
 
 ## Expected Evidence
 
-* User-to-server HTTP is allowed at `core-acl`, direct user-to-OT HTTPS is
-  denied at `ot-firewall-a`, and management SSH requires `jump-host-policy`.
+* The flow matrix intends user-to-server HTTP to be permitted at `core-acl`,
+  user-to-OT HTTPS denied at `ot-firewall-a`, and management SSH controlled
+  by `jump-host-policy`. These intentions do not prove an installed rule,
+  an available route, or a successful session.
 
-* The enterprise firewall routes, modifies, enforces policy, maintains state,
+* In this component model, the enterprise firewall routes, modifies,
+  enforces policy, maintains state,
   and logs sessions, NAT, and denies, but does not terminate TLS.
 
-* The reverse proxy and load balancer terminate TLS and create server-side
+* The modeled reverse proxy and load balancer terminate TLS and create server-side
   behavior that a simple firewall or IDS does not.
 
 ## Completion Standard

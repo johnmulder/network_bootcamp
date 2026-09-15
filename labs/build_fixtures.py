@@ -388,7 +388,7 @@ def build_text_fixtures() -> None:
                 {"address": "fe80::1%en0", "mac": "02:00:00:00:10:01", "state": "REACHABLE"},
                 {"address": "2001:db8:10::53", "mac": "02:00:00:00:10:53", "state": "STALE"},
             ],
-            "router_advertisement": {"prefix": "2001:db8:10::/64", "router_lifetime": 1800, "managed": False},
+            "router_advertisement": {"prefix": "2001:db8:10::/64", "router_lifetime": 1800, "managed": False, "on_link": True, "autonomous": True, "valid_lifetime": 3600},
         },
     )
     write_jsonl(

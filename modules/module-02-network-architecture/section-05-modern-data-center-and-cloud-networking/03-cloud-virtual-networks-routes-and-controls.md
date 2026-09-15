@@ -79,8 +79,9 @@ distributed controls, and platform-owned dependencies.
 * `corp-vpc` associates with `rt-corp`, which sends its default route through
   `security-vpc` and on-premises prefixes toward `on-prem`.
 
-* `rt-security` returns `10.20.0.0/16` to `corp-vpc`, supporting a symmetric
-  centralized-inspection path for that prefix.
+* `rt-security` targets `corp-vpc` for `10.20.0.0/16`. This is a modeled
+  route, not proof of symmetric inspection or preserved state. The more
+  specific on-premises route in `rt-corp` bypasses its security default.
 
 * `rt-hybrid` has no default route, so attachment alone does not provide
   internet reachability.

@@ -122,9 +122,9 @@
       "sha256": "3d3db2d1527c49f748839c45b0e91af8805e9650db7d664e5de9bdd14534b758"
     },
     {
-      "bytes": 474,
+      "bytes": 547,
       "path": "network/ipv6.json",
-      "sha256": "1360cdd9eea3a5b26d5b96a310706135dbfc1abe1c11a0dc71c6645d77dda2b6"
+      "sha256": "30a63a8c307ce88bea8c57c7b0ba20155df633bb6bbffb0c744ef2bb80fc455f"
     },
     {
       "bytes": 1372,

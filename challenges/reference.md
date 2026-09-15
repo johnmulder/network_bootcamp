@@ -16,6 +16,10 @@ Use this during challenges. It is a vocabulary aid, not an answer key. The
 | VLAN / VRF | Layer 2 broadcast domain / separate routing table | Which context does this packet actually enter? |
 | Longest-prefix match | Choose the most-specific installed destination match | Why do less-specific matches lose? |
 
+Nested routes are expected: an installed `/32` can win over a covering
+`/24`, `/8`, and default. Route-source preference helps choose installed
+paths for the same prefix; forwarding then uses the longest installed match.
+
 A routed packet normally gets a new Ethernet header and a decremented TTL or
 Hop Limit. Its endpoint IP addresses normally remain the same unless something
 such as NAT changes them. A switch learns source MACs within a VLAN. A router

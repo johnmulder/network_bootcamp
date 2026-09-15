@@ -29,7 +29,10 @@ links.
 
 1. Identify the elected root and each switch's best path toward it.
 
-2. Assign root, designated, alternate, and edge roles where applicable.
+2. Separate RSTP roles (root, designated, alternate, backup), states
+   (discarding, learning, forwarding), and the edge property. A hypothetical
+   host-facing port can be designated, forwarding, and edge at once. The
+   saved switch-link model does not provide host-port edge configuration.
 
 3. Remove non-forwarding links and verify that the remaining topology is
    loop-free.
@@ -100,3 +103,9 @@ knowledge-check answers, and one explicitly labeled uncertainty.
 2. What traffic effect can occur while switches relearn MAC locations?
 
 3. How can the root bridge influence real traffic paths?
+
+## Sources
+
+Reviewed September 14, 2026. Exercises remain usable offline.
+
+[Cisco RSTP roles and states](https://www.cisco.com/c/en/us/support/docs/lan-switching/spanning-tree-protocol/24062-146.html).

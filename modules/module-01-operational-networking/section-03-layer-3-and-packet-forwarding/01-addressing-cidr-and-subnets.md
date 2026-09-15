@@ -18,8 +18,10 @@ which route can match it, and how designs divide broadcast and routing domains.
 * Network and broadcast addresses have special meaning in conventional IPv4
   subnets, while usable host ranges lie between them.
 
-* Overlapping prefixes are valid in separate routing contexts but ambiguous
-  within one routing table unless the design provides a clear selection.
+* Nested destination routes are normal: `10.0.20.40/32` overlaps its covering
+  `10.0.20.0/24` and `10.0.0.0/8`. Longest-prefix matching selects the most
+  specific installed match. Conflicting address assignments are a separate
+  design problem; overlapping routes do not make a table malformed.
 
 * Address membership is a binary prefix comparison, not a visual comparison of
   decimal octets.
@@ -99,3 +101,10 @@ knowledge-check answers, and one explicitly labeled uncertainty.
 2. How does route aggregation reduce routing-table size?
 
 3. What happens when a configured gateway is outside the host's on-link prefix?
+
+## Sources
+
+Reviewed September 14, 2026. Exercises remain usable offline.
+
+[RFC 1812 §5.2.4.3](https://www.rfc-editor.org/rfc/rfc1812.html#section-5.2.4.3):
+longest matching destination prefix.
