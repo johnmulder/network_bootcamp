@@ -88,6 +88,7 @@ class LearningContractTests(unittest.TestCase):
             self.assertEqual(set(actual["after-hops"].split(", ")), after_hops)
         for variant in problems["subnet"]:
             p = variant["parameters"]
+            self.assertEqual(ipaddress.ip_interface(p["interface"]).network.prefixlen, 24)
             local = ipaddress.ip_address(p["peer"]) in ipaddress.ip_interface(p["interface"]).network
             self.assertEqual(variant["questions"][0]["answer"], "yes" if local else "no")
         for variant in problems["diagnosis"]:

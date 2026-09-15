@@ -1,8 +1,12 @@
 # Optional Hints
 
 Open after a first attempt. Read one hint at a time, then return to the task.
-Hints carry no penalty. This page contains partial worked steps; full answers
-are in the separate [worked review](../facilitator/solutions.md).
+Help does not deduct rubric points. These hints contain partial worked steps:
+opening one can expose unfinished checks in that block. To demonstrate an
+exposed objective independently, use a fresh reassessment without help.
+Orientation explains controls or the method without giving the answer; worked
+help and [solutions](../facilitator/solutions.md) supply answer-bearing content.
+See the [learning journey](../delivery/assessment.md#worked-learner-journey).
 
 ## Challenge 1
 

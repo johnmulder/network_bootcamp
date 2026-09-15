@@ -26,6 +26,27 @@ which route can match it, and how designs divide broadcast and routing domains.
 * Address membership is a binary prefix comparison, not a visual comparison of
   decimal octets.
 
+## Worked Boundaries — Optional Beyond /24
+
+The required day assesses `/24` membership. For other prefixes, compare
+network bits using the mask. For `192.0.2.126/25`, 25 bits are fixed:
+
+| Last octet | Binary | With mask `10000000` |
+| --- | --- | --- |
+| 126 | `01111110` | `00000000` |
+| 129 | `10000001` | `10000000` |
+
+The addresses fall in different halves: `.0–.127` and `.128–.255`. Under
+conventional broadcast-subnet assumptions, the first half has network `.0`,
+broadcast `.127`, and host range `.1–.126`. `/31` point-to-point and `/32`
+host routes need separate conventions; do not apply that host-range rule
+universally.
+
+For `172.16.1.254/23`, the mask is `255.255.254.0`: the third octet
+`00000001 AND 11111110` becomes zero. Its range is `172.16.0.0` through
+`172.16.1.255`, so `172.16.0.8` belongs. Contrast practice: does
+`172.16.2.8` belong? No: its masked third octet is two.
+
 ## Reasoning Process
 
 1. Convert the prefix length into a mask or reason directly in binary.

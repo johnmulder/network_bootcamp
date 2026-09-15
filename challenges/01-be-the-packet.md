@@ -12,9 +12,31 @@ needs to be memorized; run the commands below from the repository root.
 <!-- delivery:start c01.model -->
 ## Model One Hop — 10 Minutes
 
-Assign the roles below to cards, worksheet rows, or participants. In pairs,
-one person chooses the next step and the other asks for its justification.
-Swap roles after the DNS exchange. Alone, write each choice before checking.
+Use the first six minutes for the worked progression below and the last four
+for a partner or solo prediction. This replaces the vocabulary-card tour.
+
+1. `10.0.10.23` is an interface address. `/24` says the first 24 of 32 bits
+   (three octets) identify its subnet: `10.0.10.0/24`.
+2. `10.0.10.53` shares those three octets: deliver directly on this subnet.
+   `10.0.20.40` differs: use the configured gateway for this example.
+3. For remote delivery, put the server IP inside a frame addressed to the
+   gateway MAC. ARP resolves that local neighbor; it does not change the
+   packet destination into the gateway IP.
+4. In an installed route table, a matching host route `/32` is more specific
+   than its covering `/24` and default `/0`. We inspect that separate
+   route-selection model later.
+
+Worked conceptual row: host `192.0.2.10/24`, peer `192.0.2.20`, gateway
+`192.0.2.1`; no unusual host routes or policy. The peer is local, so the
+Ethernet destination is the peer MAC and the IP destination is `192.0.2.20`.
+For a peer at `198.51.100.20`, use the gateway MAC with that remote peer IP.
+
+| Header at the sending host | Local peer | Remote peer |
+| --- | --- | --- |
+| Outer Ethernet destination | Peer MAC | Gateway MAC |
+| Inner IP destination | Peer IP | Remote peer IP |
+
+Now predict the factory exchanges before reading their packet fields.
 
 | Role | Address or function |
 | --- | --- |
@@ -39,6 +61,18 @@ jq '.' labs/fixtures/network/dhcp.jsonl
 tshark -n -r labs/fixtures/pcaps/foundations.pcap
 tshark -n -r labs/fixtures/pcaps/foundations.pcap -T fields -E header=y -e frame.number -e vlan.id -e eth.src -e eth.dst -e ip.src -e ip.dst -e tcp.flags -e dns.qry.name -e http.response.code
 ```
+
+Read a row left to right: `frame.number` is its citation, `eth.src/dst`
+are link addresses, and `ip.src/dst` are packet addresses. `tcp.flags`
+records bits such as SYN (`0x0002`), SYN+ACK (`0x0012`), and ACK (`0x0010`).
+A blank field means that decoder supplied no value there: an ARP frame
+has no `ip.src`, and a TCP row has no DNS name. Blank is not zero or proof
+that a protocol never occurred elsewhere.
+
+A JSON object has named fields: DHCP ACK `address` is a string, `prefix`
+is a number, and `dns` is a list. JSONL stores one object per line; the
+four lease lines are different messages in one transaction. Quote a field
+and record, such as `network/dhcp.jsonl#4 gateway`, rather than a screen.
 
 Use the packet sheet to record observations and cite frame numbers:
 

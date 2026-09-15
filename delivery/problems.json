@@ -13,7 +13,7 @@
           "small_payload": 128
         },
         "provenance": "Authored bounded IPv4/TCP model; not captured traffic.",
-        "prompt": "The path limit is 1400 bytes. Declared IPv4 header: 20 bytes; TCP header: 32 bytes. No other encapsulation. A small request carries 128 payload bytes. Calculate the largest payload, then decide whether the small request fits. Capacity alone does not establish ICMP delivery or application recovery.",
+        "prompt": "Prerequisite: Subtract all declared header bytes from the IP path limit and state units.\n\nThe path limit is 1400 bytes. Declared IPv4 header: 20 bytes; TCP header: 32 bytes. No other encapsulation. A small request carries 128 payload bytes. Calculate the largest payload, then decide whether the small request fits. Capacity alone does not establish ICMP delivery or application recovery.",
         "questions": [
           {
             "id": "payload",
@@ -46,7 +46,7 @@
           "small_payload": 256
         },
         "provenance": "Authored bounded IPv4/TCP model; not captured traffic.",
-        "prompt": "The path limit is 1280 bytes. Declared IPv4 header: 24 bytes; TCP header: 32 bytes. No other encapsulation. A small request carries 256 payload bytes. Calculate the largest payload, then decide whether the small request fits. Capacity alone does not establish ICMP delivery or application recovery.",
+        "prompt": "Prerequisite: Subtract all declared header bytes from the IP path limit and state units.\n\nThe path limit is 1280 bytes. Declared IPv4 header: 24 bytes; TCP header: 32 bytes. No other encapsulation. A small request carries 256 payload bytes. Calculate the largest payload, then decide whether the small request fits. Capacity alone does not establish ICMP delivery or application recovery.",
         "questions": [
           {
             "id": "payload",
@@ -79,7 +79,7 @@
           "small_payload": 400
         },
         "provenance": "Authored bounded IPv4/TCP model; not captured traffic.",
-        "prompt": "The path limit is 1500 bytes. Declared IPv4 header: 20 bytes; TCP header: 40 bytes. No other encapsulation. A small request carries 400 payload bytes. Calculate the largest payload, then decide whether the small request fits. Capacity alone does not establish ICMP delivery or application recovery.",
+        "prompt": "Prerequisite: Subtract all declared header bytes from the IP path limit and state units.\n\nThe path limit is 1500 bytes. Declared IPv4 header: 20 bytes; TCP header: 40 bytes. No other encapsulation. A small request carries 400 payload bytes. Calculate the largest payload, then decide whether the small request fits. Capacity alone does not establish ICMP delivery or application recovery.",
         "questions": [
           {
             "id": "payload",
@@ -112,14 +112,14 @@
           "peer": "10.1.2.240"
         },
         "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
-        "prompt": "Decide whether the peer is on this interface subnet before choosing a gateway.",
+        "prompt": "Prerequisite: Compare the first three octets of IPv4 /24 addresses.\n\nDecide whether the peer is on this interface subnet before choosing a gateway.",
         "questions": [
           {
             "id": "local",
             "prompt": "Is 10.1.2.240 local to 10.1.2.10/24? yes/no",
             "answer": "yes",
             "type": "text",
-            "explanation": "Compare the prefix bits, not the number of visibly matching decimal octets.",
+            "explanation": "For /24, compare the first three octets. Equal means on this interface subnet; different means a route is needed.",
             "misconceptions": []
           }
         ]
@@ -129,18 +129,18 @@
         "family": "subnet",
         "use": "reassessment",
         "parameters": {
-          "interface": "10.1.2.126/25",
-          "peer": "10.1.2.129"
+          "interface": "10.1.2.126/24",
+          "peer": "10.1.3.129"
         },
         "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
-        "prompt": "Decide whether the peer is on this interface subnet before choosing a gateway.",
+        "prompt": "Prerequisite: Compare the first three octets of IPv4 /24 addresses.\n\nDecide whether the peer is on this interface subnet before choosing a gateway.",
         "questions": [
           {
             "id": "local",
-            "prompt": "Is 10.1.2.129 local to 10.1.2.126/25? yes/no",
+            "prompt": "Is 10.1.3.129 local to 10.1.2.126/24? yes/no",
             "answer": "no",
             "type": "text",
-            "explanation": "Compare the prefix bits, not the number of visibly matching decimal octets.",
+            "explanation": "For /24, compare the first three octets. Equal means on this interface subnet; different means a route is needed.",
             "misconceptions": []
           }
         ]
@@ -150,18 +150,18 @@
         "family": "subnet",
         "use": "reassessment",
         "parameters": {
-          "interface": "172.16.1.254/23",
-          "peer": "172.16.0.8"
+          "interface": "172.16.1.254/24",
+          "peer": "172.16.1.8"
         },
         "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
-        "prompt": "Decide whether the peer is on this interface subnet before choosing a gateway.",
+        "prompt": "Prerequisite: Compare the first three octets of IPv4 /24 addresses.\n\nDecide whether the peer is on this interface subnet before choosing a gateway.",
         "questions": [
           {
             "id": "local",
-            "prompt": "Is 172.16.0.8 local to 172.16.1.254/23? yes/no",
+            "prompt": "Is 172.16.1.8 local to 172.16.1.254/24? yes/no",
             "answer": "yes",
             "type": "text",
-            "explanation": "Compare the prefix bits, not the number of visibly matching decimal octets.",
+            "explanation": "For /24, compare the first three octets. Equal means on this interface subnet; different means a route is needed.",
             "misconceptions": []
           }
         ]
@@ -179,7 +179,7 @@
           ]
         },
         "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
-        "prompt": "Keep separate evidence streams separate: DNS resolution, host reachability, and application success.",
+        "prompt": "Prerequisite: Distinguish naming, transport, and application evidence.\n\nKeep separate evidence streams separate: DNS resolution, host reachability, and application success.",
         "questions": [
           {
             "id": "dns",
@@ -211,7 +211,7 @@
           ]
         },
         "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
-        "prompt": "Keep separate evidence streams separate: DNS resolution, host reachability, and application success.",
+        "prompt": "Prerequisite: Distinguish naming, transport, and application evidence.\n\nKeep separate evidence streams separate: DNS resolution, host reachability, and application success.",
         "questions": [
           {
             "id": "dns",
@@ -242,7 +242,7 @@
           ]
         },
         "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
-        "prompt": "Keep separate evidence streams separate: DNS resolution, host reachability, and application success.",
+        "prompt": "Prerequisite: Distinguish naming, transport, and application evidence.\n\nKeep separate evidence streams separate: DNS resolution, host reachability, and application success.",
         "questions": [
           {
             "id": "dns",
@@ -295,7 +295,7 @@
           "remove_row": 4
         },
         "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
-        "prompt": "Tables are complete for this lookup. Prefer longest matching prefix, then lowest preference; equal winners are eligible ECMP hops. Remove only the indicated one-based row for the second lookup.",
+        "prompt": "Prerequisite: Compare destination membership and prefix length; then apply the stated candidate-selection rules.\n\nTables are complete for this lookup. Prefer longest matching prefix, then lowest preference; equal winners are eligible ECMP hops. Remove only the indicated one-based row for the second lookup.",
         "questions": [
           {
             "id": "prefix",
@@ -362,7 +362,7 @@
           "remove_row": 2
         },
         "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
-        "prompt": "Tables are complete for this lookup. Prefer longest matching prefix, then lowest preference; equal winners are eligible ECMP hops. Remove only the indicated one-based row for the second lookup.",
+        "prompt": "Prerequisite: Compare destination membership and prefix length; then apply the stated candidate-selection rules.\n\nTables are complete for this lookup. Prefer longest matching prefix, then lowest preference; equal winners are eligible ECMP hops. Remove only the indicated one-based row for the second lookup.\n\nMembership aid (route ranges include all addresses): 10.8.9.0/25 covers 10.8.9.0 through 10.8.9.127.",
         "questions": [
           {
             "id": "prefix",
@@ -419,7 +419,7 @@
           "remove_row": 2
         },
         "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
-        "prompt": "Tables are complete for this lookup. Prefer longest matching prefix, then lowest preference; equal winners are eligible ECMP hops. Remove only the indicated one-based row for the second lookup.",
+        "prompt": "Prerequisite: Compare destination membership and prefix length; then apply the stated candidate-selection rules.\n\nTables are complete for this lookup. Prefer longest matching prefix, then lowest preference; equal winners are eligible ECMP hops. Remove only the indicated one-based row for the second lookup.\n\nMembership aid (route ranges include all addresses): 192.0.2.128/26 covers 192.0.2.128 through 192.0.2.191.",
         "questions": [
           {
             "id": "prefix",
@@ -468,7 +468,7 @@
           "application_observation": "No application result supplied"
         },
         "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
-        "prompt": "All event times share a clock. Distinguish forwarding installation from observed service behavior.",
+        "prompt": "Prerequisite: Subtract timestamps and separate control, forwarding, and application events.\n\nAll event times share a clock. Distinguish forwarding installation from observed service behavior.",
         "questions": [
           {
             "id": "interval",
@@ -514,7 +514,7 @@
           "application_observation": "No application result supplied"
         },
         "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
-        "prompt": "All event times share a clock. Distinguish forwarding installation from observed service behavior.",
+        "prompt": "Prerequisite: Subtract timestamps and separate control, forwarding, and application events.\n\nAll event times share a clock. Distinguish forwarding installation from observed service behavior.",
         "questions": [
           {
             "id": "interval",
@@ -560,7 +560,7 @@
           "application_observation": "Expected HTTP 200 response at 400 ms"
         },
         "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
-        "prompt": "All event times share a clock. Distinguish forwarding installation from observed service behavior.",
+        "prompt": "Prerequisite: Subtract timestamps and separate control, forwarding, and application events.\n\nAll event times share a clock. Distinguish forwarding installation from observed service behavior.",
         "questions": [
           {
             "id": "interval",
@@ -611,7 +611,7 @@
           ]
         },
         "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
-        "prompt": "All entries cover the same destination prefix. Reject unaccepted routes, then prefer highest LOCAL_PREF, then shortest AS path; other attributes tie.",
+        "prompt": "Prerequisite: Compare the supplied attributes using the stated local policy.\n\nAll entries cover the same destination prefix. Reject unaccepted routes, then prefer highest LOCAL_PREF, then shortest AS path; other attributes tie.",
         "questions": [
           {
             "id": "peer",
@@ -644,7 +644,7 @@
           ]
         },
         "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
-        "prompt": "All entries cover the same destination prefix. Reject unaccepted routes, then prefer highest LOCAL_PREF, then shortest AS path; other attributes tie.",
+        "prompt": "Prerequisite: Compare the supplied attributes using the stated local policy.\n\nAll entries cover the same destination prefix. Reject unaccepted routes, then prefer highest LOCAL_PREF, then shortest AS path; other attributes tie.",
         "questions": [
           {
             "id": "peer",
@@ -677,7 +677,7 @@
           ]
         },
         "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
-        "prompt": "All entries cover the same destination prefix. Reject unaccepted routes, then prefer highest LOCAL_PREF, then shortest AS path; other attributes tie.",
+        "prompt": "Prerequisite: Compare the supplied attributes using the stated local policy.\n\nAll entries cover the same destination prefix. Reject unaccepted routes, then prefer highest LOCAL_PREF, then shortest AS path; other attributes tie.",
         "questions": [
           {
             "id": "peer",
@@ -705,7 +705,7 @@
           ]
         },
         "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
-        "prompt": "Tables are complete for this flow; there is no route leaking. Use only the named context.",
+        "prompt": "Prerequisite: Look up a destination only in its assigned routing table.\n\nTables are complete for this flow; there is no route leaking. Use only the named context.",
         "questions": [
           {
             "id": "corp",
@@ -740,7 +740,7 @@
           ]
         },
         "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
-        "prompt": "Tables are complete for this flow; there is no route leaking. Use only the named context.",
+        "prompt": "Prerequisite: Look up a destination only in its assigned routing table.\n\nTables are complete for this flow; there is no route leaking. Use only the named context.\n\nMembership aid (route ranges include all addresses): 198.51.100.0/25 covers 198.51.100.0 through 198.51.100.127.",
         "questions": [
           {
             "id": "corp",
@@ -774,7 +774,7 @@
           ]
         },
         "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
-        "prompt": "Tables are complete for this flow; there is no route leaking. Use only the named context.",
+        "prompt": "Prerequisite: Look up a destination only in its assigned routing table.\n\nTables are complete for this flow; there is no route leaking. Use only the named context.\n\nMembership aid (route ranges include all addresses): 203.0.113.0/28 covers 203.0.113.0 through 203.0.113.15.",
         "questions": [
           {
             "id": "corp",
@@ -819,7 +819,7 @@
           }
         },
         "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
-        "prompt": "Look up each direction independently using the supplied complete tables. Do not infer firewall or application success.",
+        "prompt": "Prerequisite: Read route-table association and longest matching target.\n\nLook up each direction independently using the supplied complete tables. Do not infer firewall or application success.",
         "questions": [
           {
             "id": "outbound",
@@ -862,7 +862,7 @@
           }
         },
         "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
-        "prompt": "Look up each direction independently using the supplied complete tables. Do not infer firewall or application success.",
+        "prompt": "Prerequisite: Read route-table association and longest matching target.\n\nLook up each direction independently using the supplied complete tables. Do not infer firewall or application success.",
         "questions": [
           {
             "id": "outbound",
@@ -909,7 +909,7 @@
           }
         },
         "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
-        "prompt": "Look up each direction independently using the supplied complete tables. Do not infer firewall or application success.",
+        "prompt": "Prerequisite: Read route-table association and longest matching target.\n\nLook up each direction independently using the supplied complete tables. Do not infer firewall or application success.",
         "questions": [
           {
             "id": "outbound",
@@ -943,7 +943,7 @@
           "observation": "No enforcement telemetry supplied."
         },
         "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
-        "prompt": "Report policy intent separately from observed behavior. A policy statement alone cannot establish enforcement.",
+        "prompt": "Prerequisite: Separate intended filtering from observed enforcement.\n\nReport policy intent separately from observed behavior. A policy statement alone cannot establish enforcement.",
         "questions": [
           {
             "id": "server",
@@ -991,7 +991,7 @@
           "observation": "A user SYN is seen at the source only."
         },
         "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
-        "prompt": "Report policy intent separately from observed behavior. A policy statement alone cannot establish enforcement.",
+        "prompt": "Prerequisite: Separate intended filtering from observed enforcement.\n\nReport policy intent separately from observed behavior. A policy statement alone cannot establish enforcement.",
         "questions": [
           {
             "id": "server",
@@ -1039,7 +1039,7 @@
           "observation": "A server packet is dropped; a user SYN is seen beyond the boundary. These observations do not change declared intent."
         },
         "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
-        "prompt": "Report policy intent separately from observed behavior. A policy statement alone cannot establish enforcement.",
+        "prompt": "Prerequisite: Separate intended filtering from observed enforcement.\n\nReport policy intent separately from observed behavior. A policy statement alone cannot establish enforcement.",
         "questions": [
           {
             "id": "server",
@@ -1085,7 +1085,7 @@
           "local_time": "2026-08-15T08:15:00-06:00"
         },
         "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
-        "prompt": "Normalize the clock offset explicitly; day boundaries and fractional-hour offsets matter.",
+        "prompt": "Prerequisite: Convert an offset timestamp to UTC while preserving the raw value.\n\nNormalize the clock offset explicitly; day boundaries and fractional-hour offsets matter.",
         "questions": [
           {
             "id": "utc",
@@ -1106,7 +1106,7 @@
           "local_time": "2026-08-15T23:50:00-02:00"
         },
         "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
-        "prompt": "Normalize the clock offset explicitly; day boundaries and fractional-hour offsets matter.",
+        "prompt": "Prerequisite: Convert an offset timestamp to UTC while preserving the raw value.\n\nNormalize the clock offset explicitly; day boundaries and fractional-hour offsets matter.",
         "questions": [
           {
             "id": "utc",
@@ -1127,7 +1127,7 @@
           "local_time": "2026-08-16T02:10:00+05:30"
         },
         "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
-        "prompt": "Normalize the clock offset explicitly; day boundaries and fractional-hour offsets matter.",
+        "prompt": "Prerequisite: Convert an offset timestamp to UTC while preserving the raw value.\n\nNormalize the clock offset explicitly; day boundaries and fractional-hour offsets matter.",
         "questions": [
           {
             "id": "utc",
@@ -1179,7 +1179,7 @@
           "conditions": "Tables complete for this flow. No NAT; policy permits both directions. No evidence of intent or post-repair success."
         },
         "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
-        "prompt": "An approved connection no longer reaches its expected service. Compare conditions and observations, and distinguish a lookup result from a claim about intent.",
+        "prompt": "Prerequisite: Trace request and response independently using the declared context and observations.\n\nAn approved connection no longer reaches its expected service. Compare conditions and observations, and distinguish a lookup result from a claim about intent.",
         "questions": [
           {
             "id": "change",
@@ -1244,7 +1244,7 @@
           "conditions": "Tables complete for this flow; no route leaking. Policy permits the diagnostic connection. Why the context changed and service recovery are unknown."
         },
         "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
-        "prompt": "An approved connection no longer reaches its expected service. Compare conditions and observations, and distinguish a lookup result from a claim about intent.",
+        "prompt": "Prerequisite: Trace request and response independently using the declared context and observations.\n\nAn approved connection no longer reaches its expected service. Compare conditions and observations, and distinguish a lookup result from a claim about intent.",
         "questions": [
           {
             "id": "change",
@@ -1318,7 +1318,7 @@
           "conditions": "Tables complete for this flow. No NAT; policy permits both directions. No evidence of intent or post-repair success."
         },
         "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
-        "prompt": "An approved connection no longer reaches its expected service. Compare conditions and observations, and distinguish a lookup result from a claim about intent.",
+        "prompt": "Prerequisite: Trace request and response independently using the declared context and observations.\n\nAn approved connection no longer reaches its expected service. Compare conditions and observations, and distinguish a lookup result from a claim about intent.",
         "questions": [
           {
             "id": "change",
@@ -1383,7 +1383,7 @@
           "conditions": "Tables complete for this flow; no route leaking. Policy permits the diagnostic connection. Why the context changed and service recovery are unknown."
         },
         "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
-        "prompt": "An approved connection no longer reaches its expected service. Compare conditions and observations, and distinguish a lookup result from a claim about intent.",
+        "prompt": "Prerequisite: Trace request and response independently using the declared context and observations.\n\nAn approved connection no longer reaches its expected service. Compare conditions and observations, and distinguish a lookup result from a claim about intent.",
         "questions": [
           {
             "id": "change",
@@ -1448,7 +1448,7 @@
           "conditions": "Tables complete for this flow. No NAT; policy permits both directions. No evidence of intent or post-repair success."
         },
         "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
-        "prompt": "An approved connection no longer reaches its expected service. Compare conditions and observations, and distinguish a lookup result from a claim about intent.",
+        "prompt": "Prerequisite: Trace request and response independently using the declared context and observations.\n\nAn approved connection no longer reaches its expected service. Compare conditions and observations, and distinguish a lookup result from a claim about intent.",
         "questions": [
           {
             "id": "change",
@@ -1518,7 +1518,7 @@
           "conditions": "Tables complete for this flow; no route leaking. Policy permits the diagnostic connection. Why the context changed and service recovery are unknown."
         },
         "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
-        "prompt": "An approved connection no longer reaches its expected service. Compare conditions and observations, and distinguish a lookup result from a claim about intent.",
+        "prompt": "Prerequisite: Trace request and response independently using the declared context and observations.\n\nAn approved connection no longer reaches its expected service. Compare conditions and observations, and distinguish a lookup result from a claim about intent.",
         "questions": [
           {
             "id": "change",
@@ -1592,7 +1592,7 @@
           "conditions": "Tables complete for this flow. No NAT; policy permits both directions. No evidence of intent or post-repair success."
         },
         "provenance": "Authored equivalent practice conditions, independent of the reserved A/B exit cases; not raw sensor observations.",
-        "prompt": "An approved connection no longer reaches its expected service. Compare conditions and observations, and distinguish a lookup result from a claim about intent.",
+        "prompt": "Prerequisite: Trace request and response independently using the declared context and observations.\n\nAn approved connection no longer reaches its expected service. Compare conditions and observations, and distinguish a lookup result from a claim about intent.",
         "questions": [
           {
             "id": "change",
