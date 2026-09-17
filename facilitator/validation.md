@@ -1,10 +1,61 @@
 # Implementation Validation
 
-The current course is version 3.0. It adds optional LLM support while retaining
-the learning contract's independent-attempt rules. Older sections retain
-historical delivery and documentation checks. Their counts describe those
-snapshots. No software check establishes learner attainment or an observed
-class duration.
+The current curriculum is version 3.1; the session protocol remains 3 and the
+learning contract remains 2. Older sections retain historical checks; their
+counts describe those snapshots. No software check establishes learner
+attainment or an observed class duration.
+
+## Curriculum 3.1 Readiness — September 16, 2026
+
+### Implemented Changes
+
+- Corrected nested-route selection, IPv6 on-link information, STP terminology,
+  virtual gateway takeover, and claims about policy, TLS, and authentication.
+- Taught the assessed `/24` method, aligned all required subnet variants, added
+  row/JSON reading examples, and mapped outcomes to exact review anchors.
+- Mapped all 104 guides to tasks, evidence, and completion criteria. Missing
+  device state is explicitly unknown or a stated conceptual exercise.
+- Added DNS/attachment comparisons, saved performance measurements, and a
+  separately hypothetical recovery epilogue. The required day still has 36
+  phases and 360 teaching minutes; fuller comparisons are optional.
+- Added 23 Mermaid figures, text equivalents, and 46 light/dark SVG exports.
+  The [diagram record](../diagrams/README.md#visual-review-record) describes
+  actual rendering QA. A scenario index distinguishes snapshots and aliases.
+- Added three pinned Wireshark packet exemplars, public test keys, source
+  notices, offline hashes, reproducible curl acquisition, and frame assertions.
+  These optional lessons do not add a learner runtime or contact trace hosts.
+
+New sessions are required: assessed content and generated fixture fingerprints
+changed. Retain matching 3.0 copies for old sessions; no migration or regrading
+is implied. The baseline used for this audit is commit `a138967`.
+
+### Human Validation and Revision Decision
+
+Observed learners: **0**. Independent human technical reviewers: **0** for
+this revision. Timing, active minutes, fresh attainment, delayed outcomes, and
+both engagement ratings are **unmeasured**, not zero-valued results. No model
+or automated rehearsal substitutes for a participant or second reviewer.
+
+| Remaining gate | Required evidence | Owner / next decision |
+| --- | --- | --- |
+| Beginner foundations and beginner/experienced transfer slices | Anonymous first attempts, support exposure, fresh equivalents, instruction/navigation/analysis/writing time | Facilitator: repair blocking instructions before full days |
+| Illustration comparison and evidence-choice trial | Prior experience, assigned version, observed interpretation, changed claim/action | Facilitator: retain or revise explanations from actual observations |
+| Beginner solo and paired days with individual exits | Individual counts, observed active minutes, rubric revisions, feedback, exit timing | Maintainer: revise allocations or narrow the six-hour novice claim if targets fail |
+| Independent technical and rubric review | Sources/records checked, independently scored sample, reconciled disagreements | Second reviewer: approve corrections or identify concrete revisions |
+| Optional delayed fresh follow-up | Interval, unseen variant, exposure, missing follow-ups | Facilitator: report retention separately from immediate transfer |
+
+Use the [updated pilot worksheet](pilot.md#curriculum-31-trials) with LLM
+support disabled. Keep private raw work in ignored `work/`. Commit aggregate
+counts and revision decisions after observation; use learners as denominators,
+not attempts or pair submissions. Existing targets remain first observation
+within 15 minutes, 360 teaching minutes, at least 210 active minutes, 80% at
+6/8 with no zero after revision, and median 4/5 on both feedback questions.
+
+**Decision:** ready for supervised curriculum trials after technical checks;
+not yet validated for novice timing, independent attainment, or engagement.
+Retain the published schedule until observed trials justify a change. The
+five-to-ten-minute exit alternative is a documented trial, not a new promise.
+Preparation of these worksheets does not complete the human validation gates.
 
 ## Expanded Local Evaluation and Learner Interface
 

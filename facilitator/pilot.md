@@ -51,6 +51,79 @@ ___
 Initial objective and variant / later equivalent variant / interval between:
 ___
 
+## Curriculum 3.1 Trials
+
+Keep optional LLM support disabled for these curriculum trials. Record the
+course version and diagram condition before the learner sees an answer.
+The optional model comparison below is a separate later study.
+
+### Beginner Foundations Slice
+
+Use the opening local/remote diagnostic, then Challenge 1's existing ten-minute
+model: six minutes of worked `/24` and IP/MAC reasoning, four of prediction.
+The illustration replaces vocabulary-tour time. Observe a fresh `subnet`
+reassessment in `opening.predict` after support, using the taught first-three-
+octets method. Ask for both the packet IP destination and next-hop MAC in an
+explanation; the yes/no check alone does not assess both headers. Keep `/25`
+and `/23` optional and separate. Record whether a prerequisite or boundary
+operation was unfamiliar. Stop and repair blocking instructions before a day.
+
+Compare the illustrated explanation with baseline commit `a138967` using
+separate, similarly experienced beginners. Preserve both course copies and
+never open one version's saved session in another. Keep task difficulty at
+`/24`, the same time allowance, and the same human rubric. Do not expose a
+learner to both answers and call the second result independent. Record group
+assignment, prior experience, help, navigation time, and diagram-reading errors.
+A tiny convenience sample supports editorial decisions, not a causal estimate.
+
+### Evidence Choice and Exit Timing
+
+During Challenge 5 Round 3, let the learner choose `incident.round3` (the
+firewall/NAT/proxy bundle) or `flows` (intended flow matrix) first. Both are
+released in
+that phase; earlier rounds have only one view. Record the predicted value,
+show the selected view, then show the other before advancing. Use `evidence`
+actions or the manual commands; do not preview a later phase or reserved case.
+Compare the initial claim with the revised claim and ask which observation
+changed the next action. Record all help exposure as usual.
+
+First observe the published five-minute `exit.answer`. If command navigation
+and writing crowd out reasoning, trial ten minutes by taking five from the
+capstone exchange: handoff becomes 50 minutes and exit 20, still 70 combined.
+Keep the peer handoff, separate individual answers, review, and feedback.
+Facilitate this as a documented timing trial; do not silently edit session
+budgets or claim the published schedule was achieved. Change the authoritative
+agenda and phase budgets together only after reviewing observations.
+
+| Learner / phase | Instruction min | Navigation min | Evidence analysis min | Writing min | Active min | Difficulty or unavailable evidence |
+| --- | --- | --- | --- | --- | --- | --- |
+| | | | | | | |
+
+Use non-overlapping timer categories for elapsed teaching time. Active minutes
+are a separate observation and may include analysis, explanation, and writing;
+do not double-count simultaneous partner activity. Record marker/CSV repair,
+exit navigation, and whether the learner understood hint consequences.
+
+### Delayed Follow-Up
+
+Reserve an unseen equivalent variant for an optional follow-up 3–7 days later.
+Choose the family before the first session and log which finite variant remains.
+Keep a route variant for the same-day comparison above; the remaining subnet
+variant is a candidate if unexposed. If all variants have been seen, mark a
+fresh follow-up unavailable instead of reusing an answer as retention evidence.
+Record the interval, independent first result, outside practice, help exposure,
+and missing follow-ups with individual denominators. Do not infer retention
+from the same-day comparison.
+
+### Second Human Review
+
+A second reviewer checks the corrected IPv4/IPv6, STP, FHRP, and evidence-limit
+claims against their nearby sources and saved observations. Independently score
+one packet, architecture, and incident explanation using the objective anchors
+in the [assessment contract](../delivery/assessment.md). Record disagreements
+and the cited passage, reconcile the rubric interpretation, and keep raw
+learner work private. Automated answer agreement does not complete this gate.
+
 ## Technique Observations
 
 | Learner / phase / objective | Trigger or error code | Support level and whether requested | Feedback resolved the misconception? | Fresh variant / help exposure / first outcome | Evidence for observer judgment |

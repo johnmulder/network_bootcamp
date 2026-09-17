@@ -12,7 +12,7 @@ enterprise hardware, or proprietary analyzers are required.
 
 | Curriculum element | Implemented material |
 | --- | --- |
-| Course / session protocol / learning contract | 3.0 / 3 / 2 |
+| Course / session protocol / learning contract | 3.1 / 3 / 2 |
 | Required one-day challenges | 6, plus opening and individual exit |
 | Required learner deliverables | 3 connected bundles |
 | Modules in the reference library | 3 |
@@ -22,6 +22,8 @@ enterprise hardware, or proprietary analyzers are required.
 | Workbench questions | 83 |
 | Saved delivery | 36 phases, with terminal and JSON interfaces |
 | Evidence fixtures | 39 manifest-tracked files plus the manifest |
+| Optional public captures | 3 pinned Wireshark exemplars, with test keys and notices |
+| Illustrations | 23 Mermaid figures with light/dark SVGs and text equivalents |
 | Incident timeline | 17 normalized events across 8 sources |
 | Automated tests | Standard-library tests plus complete delivery rehearsals |
 | Optional LLM support | Review, coaching, handoff practice, and maintainer drafts |
@@ -140,6 +142,11 @@ readable advice; `la` rereads it locally, and `--json` supports automation.
 | [2 — Network Architecture](modules/module-02-network-architecture/README.md) | 8 sections, 29 guides | [5 activities and 30 questions](modules/module-02-network-architecture/workbench/README.md) | Annotated architecture and failure assessment |
 | [3 — Incident Response and Integration](modules/module-03-incident-response-and-integration/README.md) | 7 sections, 32 guides | [5 activities and 28 questions](modules/module-03-incident-response-and-integration/workbench/README.md) | Evidence ledger, incident narrative, and cross-functional handoff |
 
+Use the [scenario index](labs/scenarios.md) to distinguish snapshots and
+observation points. The [diagram index](diagrams/README.md) links each figure
+to its lesson; [evidence coverage](modules/evidence-matrix.md) maps all 104
+guides to a task, source, and completion standard.
+
 The modules form one progression:
 
 1. Trace forwarding decisions and validate them with network evidence.
@@ -163,7 +170,8 @@ combining each guide, its saved evidence, and the interactive workbench.
 ├── llm_delivery.py    # Session context, advisory history, and help exposure
 ├── delivery/          # Course definition and automation contract
 ├── prerequisites/    # Mac setup, tool roles, and readiness checks
-├── labs/             # Fixture builder and reproducible saved evidence
+├── labs/             # Generated evidence, scenario index, and public exemplars
+├── diagrams/         # Saved light/dark exports and authoring index
 ├── challenges/       # One-day briefs, reference card, hints, and templates
 ├── facilitator/      # Teaching notes, solutions, and pilot worksheet
 ├── modules/          # Reference guides, section directories, and workbenches
@@ -241,7 +249,7 @@ from the learner pilot that remains to be conducted.
 - [Module index](modules/README.md): curriculum navigation and learning routine.
 - Module READMEs: section-by-section reading order and the relevant workbench.
 - Section guides: evidence exercises with commands and completion checks,
-  plus the explicitly conceptual VXLAN/EVPN reference.
+  with explicitly conceptual tasks where device evidence is unavailable.
 
 ## Maintainer Validation
 
@@ -249,6 +257,9 @@ Course participants do not need a Markdown linter. Maintainers who have
 `markdownlint-cli2` installed can validate all documentation with:
 
 ```bash
+python3 -B verification/check_curriculum.py --smoke
+python3 -B verification/render_diagrams.py
+python3 -B labs/exemplars/manage.py --decode
 markdownlint-cli2 "**/*.md"
 git diff --check
 ```

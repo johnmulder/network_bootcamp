@@ -4,7 +4,10 @@ The runner delivers all required phases across eight teaching blocks. Start or r
 with `./course learn --id my-session`, or use the JSON session commands below.
 The default `./course` menu opens saved delivery; manual browsing is also kept.
 
-Course/state/JSON protocol version 3 adds [optional LLM support](llm.md).
+Curriculum version 3.1 adds corrected foundations, failure comparisons,
+illustrations, and optional public captures. State/JSON protocol version 3
+and learning contract version 2 remain unchanged; version 3 introduced
+[optional LLM support](llm.md).
 All four LLM features are disabled by default. Enabled advice is requested
 explicitly, uses the configured OpenAI-compatible endpoint, and remains
 separate from rubric scores and independent completion.
@@ -354,7 +357,7 @@ python3 -B verification/check_delivery.py --smoke --journey
 ```
 
 The content check validates local links/anchors and matches each teaching
-command to its registered argument array. The smoke check executes all 31
+command to its registered argument array. The smoke check executes all 32
 read-only views. The journey check uses fresh CLI processes, real evidence,
 both case assignments, an incorrect answer, save/resume, retry, skipped-work
 revision, hints, a reveal, synthetic rubric reviews, and portable exports. Its
@@ -364,7 +367,8 @@ technical checks; their scores and timings are not learner-pilot results.
 To build a distributable archive, commit or stage any new source files first.
 Git determines which files are included, but packaging reads their current
 working-tree contents, including unstaged edits. The archive includes saved
-evidence and `RELEASE.json` with content/fixture fingerprints, and excludes
+evidence, diagram sources/exports, public exemplars and source notices, and
+`RELEASE.json` with content/fixture and exemplar fingerprints. It excludes
 `work/`, Git metadata, and implementation plans:
 
 ```sh
@@ -373,8 +377,10 @@ python3 -B verification/package_course.py --output work/course.tar.gz --journey
 
 Choose a new output filename for later builds; packaging never overwrites one.
 The check extracts into a path containing spaces and exercises the course without
-Git metadata. `--check` runs the portable checks without requiring the real Mac
-tools; `--journey` also runs doctor, evidence smoke, and both full journeys.
+Git metadata. `--check` verifies diagram hashes, reference coverage, and other
+portable checks without requiring the real Mac tools; `--journey` also runs
+doctor, exemplar decoding, documented reference commands, evidence smoke, and
+both full journeys. Neither mode fetches assets or renders diagrams.
 The archive preserves executable permissions. Recipients extract it and run
 `./prerequisites/setup.sh` before starting their own sessions.
 
