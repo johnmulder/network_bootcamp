@@ -29,6 +29,46 @@ New sessions are required: assessed content and generated fixture fingerprints
 changed. Retain matching 3.0 copies for old sessions; no migration or regrading
 is implied. The baseline used for this audit is commit `a138967`.
 
+### Completed Technical Checks
+
+Validated implementation: `d5ff2d5`, on macOS with Python 3.13.15,
+TShark 4.4.1, and jq 1.8.2. These are local checks, not a remote CI run.
+
+- All **123 standard-library tests passed**. The new acquisition tests reject
+  changed bytes, HTML, HTTP failures, and missing companions while preserving
+  existing assets. Provider tests use simulated responses.
+- Course verification passed: 39 generated fixtures, five upstream assets
+  comprising three captures, one test key log, and one license notice,
+  83 workbench questions, 17 timeline events, and 36 phases / 360 minutes.
+- All 32 real-tool evidence views and both complete A/B and B/A fresh-process
+  journeys passed. Responses and rubric scores are synthetic; they are not
+  learner outcomes. One earlier rehearsal correctly rejected a session after
+  the course version changed during the run; both fresh 3.1 journeys passed.
+- All 104 reference guides have evidence-matrix coverage; all 36 distinct
+  documented evidence commands ran successfully. Public-capture protocol and
+  exact-frame assertions passed with the pinned bytes and public test keys.
+- All 23 Mermaid sources match their 46 rendered exports. Every export was
+  visually inspected in light/dark contact sheets; automated browser checks
+  found titles, descriptions, and no text outside the SVG canvas.
+- All 24 Python files parse with Python 3.10 syntax rules. Markdown lint,
+  local links/anchors, offline LLM inventories, and Git whitespace checks
+  passed. Optional Zeek and iperf3 were unavailable and were not exercised.
+
+The local archive `work/implementation/network-bootcamp-3.1.tar.gz` contains
+267 tracked files plus `RELEASE.json`. It passed verification, reference and
+packet decoding checks, doctor, all views, and both full journeys after
+extraction to a path containing spaces, without Git metadata. LLM settings
+and credentials were removed from its child environment; no asset fetch or
+diagram rendering occurred. Separate portable checks passed with TShark, jq,
+Git, and Node absent from PATH. Learner work and this implementation plan are
+excluded. This result summary was added after the archive was built.
+
+Archive SHA-256:
+
+```text
+344fd30529fcdf1ebbf50243da8e3191f620f55148466aed8d43592a07fcf2fb
+```
+
 ### Human Validation and Revision Decision
 
 Observed learners: **0**. Independent human technical reviewers: **0** for
