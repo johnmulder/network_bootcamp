@@ -33,6 +33,39 @@ Compare the firewall, proxy, load balancer, and IDS: which routes, maintains
 state, modifies traffic, enforces policy, or terminates TLS in this model?
 Label routing, trust, management, failure, and visibility boundaries on your
 diagram. A component's product category alone does not settle its behavior.
+
+### Separate Zones from the Service Path
+
+Logical reference scope: zone membership and service endpoints. Dashed edges
+are relationships to investigate, not observed wires or sessions.
+
+![Separate Zones from the Service Path](../diagrams/zones-predict.svg)
+
+<!-- diagram: zones-predict -->
+<details>
+<summary>Editable Mermaid source</summary>
+
+```mermaid
+flowchart TD
+ accTitle: Predict routing and policy at an OT boundary
+ accDescr: Enterprise users and servers have separate service intentions toward an OT historian.
+ subgraph Corp ["CORP context"]
+ W["Users VLAN 10"]
+ S["Server VLAN 20"]
+ end
+ W -. "F4: path and policy?" .-> F["OT firewall A boundary"]
+ S -. "F3: path and policy?" .-> F
+ F -. "conduit to examine" .-> H["Historian - OT DMZ 30"]
+ H -. "separate boundary, not historian forwarding" .-> O["Supervisory zone 40"]
+```
+
+</details>
+
+Text equivalent: Users and the server have different intended relationships to
+the historian. Identify forward routing, policy, and return routing
+separately. The server and historian are service endpoints, not assumed
+transit routers.
+
 <!-- delivery:end c04.requirements -->
 
 <!-- delivery:start c04.flows -->
@@ -109,6 +142,33 @@ one assumption. Do not rewrite the original fixture to hide the difference.
 Run a second bounded prediction and comparison with `twist: true`. Keep or
 revise the two options, and explain the remaining shared dependency. The
 original choice and prediction stay in history.
+
+### A Shared Failure Dependency
+
+Declared Challenge 4 twist only. Arrows mean depends on; they are not packet-
+forwarding paths.
+
+![A Shared Failure Dependency](../diagrams/shared-power.svg)
+
+<!-- diagram: shared-power -->
+<details>
+<summary>Editable Mermaid source</summary>
+
+```mermaid
+flowchart TD
+ accTitle: Redundant transport can share one power feed
+ accDescr: Both transport paths depend on the same power source and management uses the preferred path.
+ P["Preferred transport"] -->|"depends on"| E["One building power feed"]
+ B["Backup transport"] -->|"depends on"| E
+ M["Current management access"] -->|"uses"| P
+```
+
+</details>
+
+Text equivalent: Both transports depend on the same feed, and management uses
+the preferred circuit. Two paths do not establish power diversity or an
+independent recovery path.
+
 <!-- delivery:end c04.twist -->
 
 <!-- delivery:start c04.review -->

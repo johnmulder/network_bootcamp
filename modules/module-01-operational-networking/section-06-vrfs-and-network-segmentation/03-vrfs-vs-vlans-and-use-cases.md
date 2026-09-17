@@ -80,6 +80,6 @@ state is a valid unknown, never a requirement to fabricate evidence.
 Reviewed September 14, 2026. The exercise is self-contained and offline.
 These references support the general model, not the fictional observations.
 
-[IEEE 802.1Q — bridges and bridged networks](https://1.ieee802.org/tsn/802-1q-rev/)
+[IEEE 802.1Q — bridges and bridged networks](https://1.ieee802.org/maintenance/p802-1q-rev/)
 
 [RFC 4364 §3 — separate VRF forwarding tables](https://www.rfc-editor.org/rfc/rfc4364.html#section-3)

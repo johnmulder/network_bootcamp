@@ -44,6 +44,36 @@ needs its own explicit assumptions. No FHRP state capture is supplied here.
 
 4. Check for state, policy, or asymmetric-path effects after takeover.
 
+### Stable Gateway, New Forwarding Location
+
+Conceptual ordinary virtual-MAC takeover; no FHRP capture or timer measurement
+is supplied. Both panels represent the same host and virtual identity.
+
+![Stable Gateway, New Forwarding Location](../../../diagrams/fhrp.svg)
+
+<!-- diagram: fhrp -->
+<details>
+<summary>Editable Mermaid source</summary>
+
+```mermaid
+flowchart LR
+ accTitle: Virtual gateway identity survives ordinary takeover
+ accDescr: The host keeps the gateway IP and MAC while the switch learns a new active port.
+ subgraph Before ["Before"]
+ H["Host gateway IP and virtual MAC"] --> S["Switch: virtual MAC at R1 port"] --> R1["R1 active"]
+ end
+ subgraph After ["After R1 failure, R2 healthy"]
+ H2["Same gateway IP and virtual MAC"] --> S2["Switch: virtual MAC at R2 port"] --> R2["R2 active"]
+ end
+ Before -->|"R1 fails; takeover"| After
+```
+
+</details>
+
+Text equivalent: The gateway IP and virtual MAC stay stable. The switch
+forwarding location moves to R2. This says nothing by itself about upstream
+routes, firewall state, takeover duration, or application recovery.
+
 ## Teaching Instructions
 
 Use the [shared extended-study workflow](../../README.md#learning-workflow).

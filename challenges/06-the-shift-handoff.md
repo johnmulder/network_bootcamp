@@ -28,6 +28,35 @@ Case packets are small independent drills dated the following day, not extra
 events in the original incident. Their explicit conditions replace relevant
 reference assumptions for that drill only. Route snapshots are complete for
 the specified flow; that does not assert global knowledge of the network.
+
+### Trace the Changed Condition
+
+Generic method for the assigned case, with no A/B solution values. Arrows
+connect reasoning stages, not observed packet paths.
+
+![Trace the Changed Condition](../diagrams/handoff-predict.svg)
+
+<!-- diagram: handoff-predict -->
+<details>
+<summary>Editable Mermaid source</summary>
+
+```mermaid
+flowchart LR
+ accTitle: Predict the consequence before inspecting the case
+ accDescr: Compare the prior service state with one declared change and separate request and response checks.
+ B["Before: declared service baseline"] --> C["One changed condition"]
+ C --> F["Request: context and lookup?"]
+ C --> R["Response: context and state?"]
+ F --> V["What would validate service now?"]
+ R --> V
+```
+
+</details>
+
+Text equivalent: Name the prior baseline, the changed condition, independent
+request and response decisions, and the service observation needed afterward.
+Fill from the assigned case only.
+
 <!-- delivery:end c06.receive -->
 
 <!-- delivery:start c06.analyze -->

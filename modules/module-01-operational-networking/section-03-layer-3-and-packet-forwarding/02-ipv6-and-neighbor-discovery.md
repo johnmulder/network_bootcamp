@@ -51,6 +51,39 @@ at the snapshot time the host may resolve that destination directly.
 The separate `router_lifetime` determines default-router validity. An
 expired prefix or L unset cannot be replaced by a guess from address bits.
 
+### Three Different IPv6 Questions
+
+Decision model using network/ipv6.json RA fields. L means on-link; A means
+autonomous address configuration. No ND packets are supplied.
+
+![Three Different IPv6 Questions](../../../diagrams/ipv6.svg)
+
+<!-- diagram: ipv6 -->
+<details>
+<summary>Editable Mermaid source</summary>
+
+```mermaid
+flowchart TD
+ accTitle: IPv6 address, on-link state, and neighbor reachability
+ accDescr: An assigned address does not alone establish on-link status.
+ A["Assigned IPv6 address"] --> B["Address configuration known"]
+ P["RA prefix: L set and valid lifetime positive"] --> O["On-link information for that prefix"]
+ X["RA A flag"] --> Y["Autonomous configuration permission"]
+ O --> D["Destination matches explicit on-link prefix?"]
+ D -->|yes| N["Resolve destination neighbor"]
+ D -->|no| R["Use an applicable route or default router"]
+ N --> U["Reachability can need multicast resolution or unicast probes"]
+ R --> U
+ B -. "does not replace" .-> O
+```
+
+</details>
+
+Text equivalent: Address configuration, explicit on-link state, and neighbor
+reachability are separate. The saved RA has L/A true and a positive prefix
+lifetime; the default router has its own lifetime. Matching bits in an
+assigned address alone are insufficient.
+
 ## Teaching Instructions
 
 Use the [shared extended-study workflow](../../README.md#learning-workflow).

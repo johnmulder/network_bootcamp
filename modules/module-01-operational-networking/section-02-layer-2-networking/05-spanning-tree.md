@@ -40,6 +40,34 @@ links.
 4. Fail one active link and predict the new port roles, transient flooding, and
    affected flows.
 
+### Roles, States, and Edge Property
+
+network/l2-control.json provides the three-switch model. Labels distinguish
+recorded state from a role inferred using the equal costs.
+
+![Roles, States, and Edge Property](../../../diagrams/stp.svg)
+
+<!-- diagram: stp -->
+<details>
+<summary>Editable Mermaid source</summary>
+
+```mermaid
+flowchart TD
+ accTitle: A loop-free triangle with distinct port descriptions
+ accDescr: One access port discards; edge is an independent property on a conceptual host port.
+ D["sw-dist-1 - recorded root"] ---|"forwarding, cost 4"| A["sw-access-1"]
+ D ---|"forwarding, cost 4"| B["sw-access-2"]
+ A -. "access-2 port discarding; alternate role inferred" .-> B
+ A ---|"hypothetical host port"| H["Designated role / forwarding state / edge property"]
+```
+
+</details>
+
+Text equivalent: Both access switches reach the root directly. The inter-
+access port on access-2 discards. Its alternate role is inferred; the separate
+host port illustrates designated, forwarding, and edge together and is not
+supplied device configuration.
+
 ## Teaching Instructions
 
 Use the [shared extended-study workflow](../../README.md#learning-workflow).

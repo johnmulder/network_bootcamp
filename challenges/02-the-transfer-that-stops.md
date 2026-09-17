@@ -24,6 +24,36 @@ Write three hypotheses, such as name resolution, path/policy, and packet size
 or endpoint behavior. For each, predict an observation that would help rule
 it out. You already know packets 1–3 form a TCP handshake. What does that
 change, and what does it leave unresolved?
+
+### Which Bytes Must Fit?
+
+Conceptual packet-size model for the transfer prediction. These boxes are byte
+components, not devices.
+
+![Which Bytes Must Fit?](../diagrams/mtu-predict.svg)
+
+<!-- diagram: mtu-predict -->
+<details>
+<summary>Editable Mermaid source</summary>
+
+```mermaid
+flowchart LR
+ accTitle: Predict the IP packet size
+ accDescr: The IP packet includes both headers and the TCP payload.
+ subgraph Packet ["Whole IP packet - compare with path limit"]
+ I["IPv4 header"] --- T["TCP header and options"] --- P["TCP payload"]
+ end
+ Packet --> Q["Fits the smallest path MTU?"]
+ Q --> U["What feedback or endpoint evidence is needed?"]
+```
+
+</details>
+
+Text equivalent: Add IP header, TCP header/options, and payload. Compare that
+total to the path MTU. The outer Ethernet header is outside this IP MTU
+calculation. Predict what could happen when only a large packet exceeds the
+limit.
+
 <!-- delivery:end c02.predict -->
 
 <!-- delivery:start c02.inspect -->

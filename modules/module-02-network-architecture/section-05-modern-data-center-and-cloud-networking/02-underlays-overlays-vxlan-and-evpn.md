@@ -19,6 +19,38 @@ is required.
 * A healthy underlay does not establish correct overlay mappings, tenant
   policy, or sufficient MTU after encapsulation.
 
+### Inner Identity, Outer Delivery
+
+Conceptual VXLAN encapsulation between VTEPs; no encapsulated packet is
+supplied. The boxes show nesting, not a measured byte budget.
+
+![Inner Identity, Outer Delivery](../../../diagrams/vxlan.svg)
+
+<!-- diagram: vxlan -->
+<details>
+<summary>Editable Mermaid source</summary>
+
+```mermaid
+flowchart TD
+ accTitle: VXLAN has inner and outer forwarding identities
+ accDescr: Outer Ethernet, IP, UDP, and VXLAN headers carry an inner Ethernet frame.
+ subgraph Outer ["Outer delivery between VTEPs"]
+ direction TB
+ E["Outer Ethernet"] --- I["Outer IP: VTEP A to VTEP B"] --- U["UDP"] --- V["VXLAN: VNI 100"]
+ subgraph Inner ["Original tenant Ethernet frame"]
+ direction TB
+ M["Inner source and destination MAC"] --- P["Inner IP and transport, when carried"]
+ end
+ V --- M
+ end
+```
+
+</details>
+
+Text equivalent: VXLAN carries the original Ethernet frame inside UDP/IP and
+an outer Ethernet frame. Underlay routing reaches VTEP B; overlay mappings
+locate the inner destination. Added bytes need a separate MTU budget.
+
 ## Conceptual Exercise
 
 Use this explicitly hypothetical diagram, not the cloud route fixture:

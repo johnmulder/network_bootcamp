@@ -37,6 +37,43 @@ TLS, a healthy application, or successful large transfers.
 Common misconception: copying the CSV's next hop into the PCAP explanation.
 These are deliberately different instructional snapshots; require source
 labels, not a fabricated combined topology.
+
+### Local DNS and the First Routed Hop
+
+Foundations PCAP, selected VLAN 10 trunk frames. Solid arrows identify
+observed frames; dashed arrows are downstream predictions.
+
+![Local DNS and the First Routed Hop](../diagrams/packet-worked.svg)
+
+<!-- diagram: packet-worked -->
+<details>
+<summary>Editable Mermaid source</summary>
+
+```mermaid
+sequenceDiagram
+ accTitle: Local DNS and the first routed hop
+ accDescr: Observed trunk frames and unobserved downstream predictions are different.
+ participant W as Workstation .10.23
+ participant D as Resolver .10.53
+ participant G as Gateway .10.1
+ participant A as Application .20.40
+ W->>D: Frame 3 - resolver MAC, resolver IP
+ D->>W: Frame 4 - DNS answer
+ W->>G: Frame 5 - gateway MAC, application IP
+ G-->>A: Predicted new Ethernet header
+ A-->>G: Predicted return
+ G->>W: Frame 6 - application SYN-ACK at trunk
+ W->>G: Frame 7 - TCP ACK
+ Note over G,A: Downstream links are not captured
+```
+
+</details>
+
+Text equivalent: The local DNS query uses the resolver MAC. The remote SYN
+keeps destination IP 10.0.20.40 inside a frame to gateway MAC
+02:00:00:00:10:01. The return SYN-ACK is observed at the trunk; downstream
+routing is predicted.
+
 <!-- delivery:end c01.solution -->
 
 <!-- delivery:start c02.solution -->
@@ -62,6 +99,38 @@ PMTU/transport state could distinguish those possibilities.
 A good action asks the endpoint/network owner to check feedback delivery and
 handling, then test appropriately sized data and application success. A
 specific permanent configuration fix is not established by this fixture.
+
+### Observed Feedback Is Not Endpoint Receipt
+
+Transfer PCAP frames 4–6, modeled VLAN 10 trunk. Solid arrows mark observed
+packets; the dashed step is an unresolved endpoint question.
+
+![Observed Feedback Is Not Endpoint Receipt](../diagrams/mtu-worked.svg)
+
+<!-- diagram: mtu-worked -->
+<details>
+<summary>Editable Mermaid source</summary>
+
+```mermaid
+sequenceDiagram
+ accTitle: Oversized segment and observed ICMP
+ accDescr: The trunk observes repeated data and ICMP but cannot establish sender handling.
+ participant S as Sender
+ participant T as Trunk observation
+ participant R as Router feedback source
+ S->>T: Frame 4 - 20 IP + 20 TCP + 1400 data = 1440
+ R->>T: Frame 5 - ICMP type 3 code 4, MTU 1200
+ T-->>S: Was this delivered and acted on? Unknown
+ S->>T: Frame 6 - same sequence and length, 1 second later
+ Note over S,R: 1200 - 20 - 20 = 1160 payload bytes under these assumptions
+```
+
+</details>
+
+Text equivalent: The trunk sees a 1440-byte IP packet, ICMP reporting MTU
+1200, and repeated data. A 1160-byte payload fits the stated headers. Neither
+ICMP delivery to the host nor endpoint PMTU handling is observed.
+
 <!-- delivery:end c02.solution -->
 
 <!-- delivery:start c03.solution -->
@@ -78,12 +147,41 @@ despite its longer AS path in this example. The rejected advertisement does
 not establish installed reachability. CORP has a default for the external
 destination; OT does not. A route in one table does not become a route in the
 other. Neither result alone settles policy and return-state questions.
+
+### Four Recorded Stages
+
+routing/route-events.jsonl records 1–4; times are relative to the first log.
+Arrows show event order, not measured service delivery.
+
+![Four Recorded Stages](../diagrams/routing-worked.svg)
+
+<!-- diagram: routing-worked -->
+<details>
+<summary>Editable Mermaid source</summary>
+
+```mermaid
+flowchart TD
+ accTitle: Routing stages and an unmeasured service outcome
+ accDescr: Link down, LSA, FIB installation, and flow rehash have separate recorded times.
+ A["0 ms - link_down"] --> B["50 ms - ospf_lsa"]
+ B --> C["80 ms - fib_install via 10.255.0.3"]
+ C --> D["120 ms - flow_rehash"]
+ D -. "needs new observation" .-> E["Application recovery time unknown"]
+```
+
+</details>
+
+Text equivalent: FIB installation occurs 80 ms after link_down, and flow
+rehash at 120 ms. Detection before the first log, packet loss, session
+continuity, and application recovery remain unmeasured.
+
 <!-- delivery:end c03.solution -->
 
 <!-- delivery:start c04.solution -->
 ## Challenge 4
 
-F3 permits `10.0.20.40` to the historian over TCP/443; F4 denies the workstation
+F3 intends to permit `10.0.20.40` to the historian over TCP/443; F4 intends
+to deny the workstation
 to that same service at `ot-firewall-a`. The diagram and route model do not
 fully establish the inter-context forwarding implementation or live rules.
 Mark those gaps. The cloud example selects `rt-corp`'s `10.0.0.0/8` toward
@@ -107,6 +205,35 @@ loss measurement. “VPN up means zero loss” is unsupported. The shared-power
 twist is an additional hypothetical condition, not an original recorded event.
 Require dependency checks, a named owner, validation, rollback, and residual
 risk. No token combination warrants a blanket availability guarantee.
+
+### Forward Permission and Return Reachability
+
+architecture/traffic-flows.csv F3 and routing/vrfs.json are separate intention
+and route models. Arrows explicitly name what each source supports.
+
+![Forward Permission and Return Reachability](../diagrams/zones-worked.svg)
+
+<!-- diagram: zones-worked -->
+<details>
+<summary>Editable Mermaid source</summary>
+
+```mermaid
+flowchart TD
+ accTitle: Intended F3 permit does not supply a return route
+ accDescr: Forward policy intention and a missing modeled OT return route remain separate.
+ S["Server 10.0.20.40"] -. "F3 intended TCP/443 permit" .-> F["OT firewall A"]
+ F -. "forward route/leak implementation unknown" .-> H["Historian 10.0.30.50"]
+ H -->|"return lookup in supplied OT table"| Q["Server prefix absent"]
+ Q -. "needs an authorized design and test" .-> S
+```
+
+</details>
+
+Text equivalent: F3 intends to permit server-to-historian TCP/443. It does not
+prove the forward inter-context implementation. The supplied OT table lacks
+the server prefix for return. An intended permit is not an end-to-end success
+observation.
+
 <!-- delivery:end c04.solution -->
 
 <!-- delivery:start c05.solution -->
@@ -153,6 +280,66 @@ An example initial action is evidence preservation plus an owned review or
 restriction of the workstation's external/SMB access, with service impact,
 validation, and rollback documented. Do not infer a need to isolate OT systems
 or disable a shared account from this evidence alone.
+
+### Derived Views Share Their Sources
+
+Incident provenance model: PCAP-derived TShark/Zeek views and siem.jsonl
+source_events. Arrows mean derived from. Separate files are not proof of
+independent sensors.
+
+![Derived Views Share Their Sources](../diagrams/evidence-worked.svg)
+
+<!-- diagram: evidence-worked -->
+<details>
+<summary>Editable Mermaid source</summary>
+
+```mermaid
+flowchart LR
+ accTitle: Evidence derivation and dependent claims
+ accDescr: TShark and Zeek share the PCAP; the SIEM alert names flow and endpoint inputs.
+ P["Incident PCAP"] -->|"decode"| T["TShark view"]
+ P -->|"optional processing"| Z["Zeek logs"]
+ F["Flow records"] -->|"input"| S["SIEM alert"]
+ E["Endpoint records"] -->|"input"| S
+ T --> C["Review claim and provenance"]
+ Z --> C
+ S --> C
+```
+
+</details>
+
+Text equivalent: TShark and optional Zeek processing use the same packets. The
+supplied SIEM alert names flow and endpoint dependencies. Trace conclusions to
+original sources and leave unknown pipeline independence explicit.
+
+### Order Is Not Causation
+
+Selected original incident records; arrows mean recorded time order. Sensor
+clock precision and causal process-to-socket links are unspecified.
+
+![Order Is Not Causation](../diagrams/incident-order.svg)
+
+<!-- diagram: incident-order -->
+<details>
+<summary>Editable Mermaid source</summary>
+
+```mermaid
+flowchart TD
+ accTitle: Incident record order without an invented attack chain
+ accDescr: Process, DNS, flow, login, and alert records can be ordered without proving causality.
+ A["15:59:58 endpoint 1: agent starts"] --> B["16:00 endpoint 2: DNS query"]
+ B --> C["16:03:59 endpoint 3: child starts"]
+ C --> D["16:04:01 auth 2: network login success"]
+ D --> E["16:04:10 SIEM 1: alert"]
+ E -. "not established by time order" .-> Q["Credential theft or remote execution?"]
+```
+
+</details>
+
+Text equivalent: The logs place agent start, process-linked DNS, child start,
+authentication, and alert in that order. Ordering and shared addresses do not
+establish how credentials were obtained or what remote operation occurred.
+
 <!-- delivery:end c05.solution -->
 
 ## Challenge 6
@@ -194,7 +381,7 @@ into an isolation context just to make the probe work.
 ## Provenance and Evidence Boundaries
 
 `labs/fixtures/challenges/evidence-map.json` maps the neutral capture and three
-round files to their sources. The parent manifest covers all 36 evidence
+round files to their sources. The parent manifest covers all 39 evidence
 files; verify it before using derived selections. Round files are exact copies
 of source records, not new sensor observations. Capstones A-v1 and B-v1 are
 authored independent drills with explicit conditions and bounded clock

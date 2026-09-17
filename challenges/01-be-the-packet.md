@@ -54,6 +54,37 @@ Example: a host sending to a remote subnet first needs local delivery to an
 appropriate router. The packet's IP destination remains the remote server.
 Predict the destination MAC for the local DNS query and the remote application
 request. Identify which missing neighbor information would require ARP.
+
+### Predict the Two Destinations
+
+Foundations model, VLAN 10 trunk. Dashed arrows are predictions, not observed
+packets. Fill MAC/IP labels before inspecting.
+
+![Predict the Two Destinations](../diagrams/packet-predict.svg)
+
+<!-- diagram: packet-predict -->
+<details>
+<summary>Editable Mermaid source</summary>
+
+```mermaid
+sequenceDiagram
+ accTitle: Predict local and remote addressing
+ accDescr: The learner supplies the IP and Ethernet destinations for two exchanges.
+ participant W as Workstation
+ participant D as Local resolver
+ participant G as Gateway
+ W-->>D: Predict IP destination and MAC destination
+ D-->>W: Predict the reply
+ W-->>G: Remote application - which IP stays inside?
+ Note over W,G: Downstream routing is outside this view
+```
+
+</details>
+
+Text equivalent: Predict a local resolver exchange and a remote application
+frame delivered through the gateway. Name both headers and the independent
+return decision; downstream links are unobserved.
+
 <!-- delivery:end c01.model -->
 
 <!-- delivery:start c01.inspect -->

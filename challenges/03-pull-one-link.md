@@ -26,6 +26,40 @@ Draw the next-hop choices for `10.0.20.0/24`. The link to `10.255.0.2` now
 fails. Before opening the event log, predict what information must change and
 whether existing sessions necessarily survive. These are modeled router
 snapshots, not the forwarding table used to build the foundations capture.
+
+### One Failed Adjacency
+
+Modeled R1 next-hop relationships from ospf.json, not physical cable
+inventory. The failure condition is declared; the resulting table is a
+prediction.
+
+![One Failed Adjacency](../diagrams/routing-predict.svg)
+
+<!-- diagram: routing-predict -->
+<details>
+<summary>Editable Mermaid source</summary>
+
+```mermaid
+flowchart LR
+ accTitle: Predict the remaining forwarding choice
+ accDescr: Two normal equal-cost next hops become a question after one link fails.
+ subgraph Before ["Before - configured model"]
+ R1["R1"] --> N2["10.255.0.2 - cost 20 to subnet"]
+ R1 --> N3["10.255.0.3 - cost 20 to subnet"]
+ end
+ subgraph Change ["After declared failure"]
+ R["R1"] -. "failed adjacency" .-> F["10.255.0.2"]
+ R --> Q["Installed next hop and time? Predict"]
+ end
+ Before -->|"Link fails"| Change
+```
+
+</details>
+
+Text equivalent: The normal model has two cost-20 choices for 10.0.20.0/24.
+The adjacency to 10.255.0.2 fails. Predict what installs next and what still
+needs an application observation.
+
 <!-- delivery:end c03.predict -->
 
 <!-- delivery:start c03.reconstruct -->

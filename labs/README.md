@@ -5,6 +5,9 @@ Its generated addresses are private or reserved for documentation. The
 [public exemplars](exemplars/README.md) are independent historical captures
 and may contain real addresses. All exercises read local files offline.
 
+Use the [scenario, observation, and alias index](scenarios.md) first. It
+identifies each snapshot's gateway, collection point, and correlation limits.
+
 The checked-in dataset contains 39 manifest-tracked evidence files plus
 `labs/fixtures/manifest.json`. The builder creates those files deterministically
 using only the Python standard library. Public captures have their own source
@@ -42,12 +45,12 @@ fixtures does not modify that learner directory.
 
 | Group | Files | Evidence represented |
 | --- | ---: | --- |
-| `architecture/` | 7 | Reference topology, component behavior, approved flows, cloud routes, WAN state, and failure events |
+| `architecture/` | 7 | Logical topology, components, intended flows, cloud/WAN models, failure events, and performance comparisons |
 | `incident/` | 10 | Assets, DNS, flow, firewall, authentication, endpoint, proxy, VPN, SIEM, and the ledger template |
-| `network/` | 4 | DHCP, IPv6, and Layer 2 control-plane state |
+| `network/` | 4 | DHCP, IPv6, Layer 2 state, and troubleshooting comparisons |
 | `pcaps/` | 3 | Foundations, MTU failure, and incident packet captures |
 | `routing/` | 7 | macOS routes, route candidates and events, traceroute, VRFs, OSPF, and BGP |
-| `challenges/` | 8 | Neutral transfer capture, three staged incident rounds, two independent capstones, and provenance map |
+| `challenges/` | 8 | Neutral transfer capture, three incident rounds, two capstones, provenance map, and separate recovery epilogues |
 | **Total evidence files** | **39** | All manifest-tracked fixtures, excluding the manifest itself |
 
 The manifest is generated alongside those files and records each relative
@@ -80,9 +83,9 @@ python3 modules/module-03-incident-response-and-integration/workbench/module3_wo
 | `supervisory-01` | `10.0.40.10` | Supervisory host |
 | `external-77` | `198.51.100.77` | External documentation host |
 
-These stable identities allow the same path to be examined as forwarding
-state in Module 1, architecture intent in Module 2, and correlated evidence in
-Module 3.
+`app-01` and `file-01` are two service roles at the same address. See the
+[inventory](scenarios.md#endpoint-inventory-and-aliases) for alias and gateway
+scope. Stable names help comparisons; they do not merge independent snapshots.
 
 ## Incident Evidence Ledger
 

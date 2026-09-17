@@ -35,6 +35,35 @@ or border leaves.
 
 4. Locate routing, policy, service insertion, and observation points.
 
+### Two Conceptual Cross-Leaf Paths
+
+Hypothetical equal-cost fabric with two leaves and two spines. This is the
+declared example, not topology inferred from cloud route tables.
+
+![Two Conceptual Cross-Leaf Paths](../../../diagrams/leaf-spine.svg)
+
+<!-- diagram: leaf-spine -->
+<details>
+<summary>Editable Mermaid source</summary>
+
+```mermaid
+flowchart LR
+ accTitle: Cross-leaf paths in a simple two-spine fabric
+ accDescr: Hosts attach to leaves and either spine can carry traffic between leaves.
+ A["Host A"] --- L1["Leaf L1"]
+ L1 --- S1["Spine S1"]
+ L1 --- S2["Spine S2"]
+ S1 --- L2["Leaf L2"]
+ S2 --- L2
+ L2 --- B["Host B"]
+```
+
+</details>
+
+Text equivalent: A cross-leaf path can use L1-S1-L2 or L1-S2-L2 under equal-
+cost routing assumptions. Losing S1 leaves the S2 path but does not establish
+remaining capacity, flow continuity, or service recovery.
+
 ## Teaching Instructions
 
 Use the [shared extended-study workflow](../../README.md#learning-workflow).

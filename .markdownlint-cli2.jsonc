@@ -1,6 +1,9 @@
 {
   "ignores": ["work/**"],
   "config": {
+    "MD033": {
+      "allowed_elements": ["details", "summary"]
+    },
     "MD013": {
       "line_length": 80,
       "code_blocks": false,

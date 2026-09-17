@@ -27,6 +27,34 @@ Read each round only after recording the preceding decision. Everyone receives
 all three rounds. In pairs, rotate the evidence reader and skeptical reviewer;
 alone, write the competing explanation before proceeding. All commands run
 from the repository root.
+
+### Which Source Can Test the Claim?
+
+Conceptual evidence-choice map before the investigation reveal. Arrows mean a
+question to ask, not independent corroboration.
+
+![Which Source Can Test the Claim?](../diagrams/evidence-predict.svg)
+
+<!-- diagram: evidence-predict -->
+<details>
+<summary>Editable Mermaid source</summary>
+
+```mermaid
+flowchart TD
+ accTitle: Choose evidence for the claim being tested
+ accDescr: Packet behavior, process attribution, policy, and alert derivation need different questions.
+ C["Claim to test"] --> P["Packets: which bytes and where?"]
+ C --> E["Endpoint: which process and socket?"]
+ C --> F["Firewall: which tuple and rule?"]
+ C --> S["SIEM: which original inputs?"]
+```
+
+</details>
+
+Text equivalent: Select the source for the claim: packet fields, process
+attribution, rule decision, or alert inputs. Predict the evidence that would
+change your confidence before opening it.
+
 <!-- delivery:end c05.predict -->
 
 <!-- delivery:start c05.round1 -->

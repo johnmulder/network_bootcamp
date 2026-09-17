@@ -62,6 +62,41 @@ Observation point: upstream describes a BoringSSL-generated test; precise
 tap placement is unspecified. It uses test endpoints and short test requests.
 All 13 original frames and the original companion key log are preserved.
 
+### What the Public Test Keys Reveal
+
+tls13-rfc8446.pcap, selected original frames. Arrows represent captured
+exchanges; Finished and HTTP labels require the supplied public test keys.
+Initial TCP establishment is outside this capture.
+
+![What the Public Test Keys Reveal](../../diagrams/public-tls.svg)
+
+<!-- diagram: public-tls -->
+<details>
+<summary>Editable Mermaid source</summary>
+
+```mermaid
+sequenceDiagram
+ accTitle: TLS offers, negotiated handshake, and application response
+ accDescr: Test secrets allow decoding Finished messages and HTTP after the clear ClientHello and ServerHello.
+ participant C as Test client
+ participant S as Test server
+ C->>S: Frame 1 - ClientHello offers
+ S->>C: Frame 2 - ServerHello selection
+ Note over C,S: Remaining handshake labels below require test keys
+ S->>C: Frame 2 - certificate and Finished
+ C->>S: Frame 3 - Finished
+ C->>S: Frame 5 - HTTP request
+ S->>C: Frame 6 - HTTP 200
+ Note over C,S: A ClientHello alone could not establish this outcome
+```
+
+</details>
+
+Text equivalent: Without the key log, distinguish offers and the visible
+ServerHello from encrypted records. With the matching keys, frame 2 includes
+the server Finished, frame 3 the client Finished, and frames 5–6 the HTTP
+exchange. This is stronger than a ClientHello-only claim.
+
 ## QUIC and HTTP/3 — 15 Minutes
 
 Prerequisites: TLS visibility and transport versus application protocols.

@@ -28,6 +28,31 @@ removes a demonstrated malicious mechanism; prevention reduces recurrence.
 A and B's repairs demonstrate neither compromise nor eradication. A short
 healthy window also does not prove lasting availability of every service.
 
+## A Repair Is Followed by a Service Test
+
+Hypothetical recovery continuations RA1–RA4 and RB1–RB4, separate from
+assessed pre-repair evidence. Arrows show change-to-validation sequence.
+
+![A Repair Is Followed by a Service Test](../diagrams/recovery.svg)
+
+<!-- diagram: recovery -->
+<details>
+<summary>Editable Mermaid source</summary>
+
+```mermaid
+flowchart LR
+ accTitle: Two repairs with different closure outcomes
+ accDescr: A completes health checks; B restores routing but retains an application failure.
+ A["A: restore approved return route"] --> AT["30/30 TLS and HTTP 200"] --> AC["Owner accepts scoped restoration"]
+ B["B: restore approved CORP assignment"] --> BT["TLS works; 30/30 HTTP 503"] --> BC["Application action remains open"]
+```
+
+</details>
+
+Text equivalent: A has a matching successful health-check window and owner
+acceptance. B has transport and TLS progress but HTTP 503 responses, so
+service recovery remains open. Both retain stated residual risks.
+
 ## Preserve the Evidence Before Changing the System
 
 Example: an analyst receives a source capture and records its collection
@@ -43,6 +68,35 @@ The course fixture and exemplar manifests check distribution integrity.
 Collection provenance and real-world authenticity require separate evidence.
 See [NIST SP 800-86 §3](https://csrc.nist.gov/pubs/sp/800/86/final),
 reviewed September 14, 2026.
+
+### Response Can Revisit Earlier Decisions
+
+Conceptual teaching loop mapped to NIST SP 800-61r3. This is not an official
+fixed sequence or a claim about actions already taken.
+
+![Response Can Revisit Earlier Decisions](../diagrams/response-loop.svg)
+
+<!-- diagram: response-loop -->
+<details>
+<summary>Editable Mermaid source</summary>
+
+```mermaid
+flowchart TD
+ accTitle: Preparation and continuous response improvement
+ accDescr: Investigation and containment can overlap, and recovery feeds future preparation.
+ P["Prepare owners, evidence, approved actions"] --> D["Detect and triage"]
+ D --> I["Investigate and scope"]
+ I <--> C["Contain as justified"]
+ C --> R["Restore and validate; remove proven mechanisms"]
+ R --> L["Lessons and remaining risks"] --> P
+ R -. "new evidence" .-> I
+```
+
+</details>
+
+Text equivalent: Prepare before detection. Investigation and containment can
+overlap. Validate restoration, remove demonstrated malicious mechanisms when
+applicable, and feed lessons into readiness; new evidence can reopen scope.
 
 ## Preparation and Feedback
 

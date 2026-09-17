@@ -37,6 +37,34 @@ distributed controls, and platform-owned dependencies.
 
 4. Identify telemetry sources and facts the customer cannot directly observe.
 
+### Attachment and Route Targets
+
+architecture/cloud-routes.json is a logical route model. These arrows are
+selected route targets, not physical fabric links or proof of inspection.
+
+![Attachment and Route Targets](../../../diagrams/cloud.svg)
+
+<!-- diagram: cloud -->
+<details>
+<summary>Editable Mermaid source</summary>
+
+```mermaid
+flowchart LR
+ accTitle: Cloud attachment tables choose different targets
+ accDescr: The on-premises prefix bypasses the security default; return routing has its own table.
+ C["corp-vpc uses rt-corp"] -->|"10.0.0.0/8"| O["on-prem uses rt-hybrid"]
+ C -->|"0.0.0.0/0"| S["security-vpc uses rt-security"]
+ O -->|"10.20.0.0/16 return"| C
+ S -->|"10.20.0.0/16 return"| C
+ S -->|"default"| I["internet"]
+```
+
+</details>
+
+Text equivalent: rt-corp sends the on-premises /8 directly to on-prem and its
+default toward security-vpc. rt-hybrid returns the cloud /16. The graph cannot
+establish symmetric stateful inspection or a physical leaf/spine path.
+
 ## Teaching Instructions
 
 Use the [shared extended-study workflow](../../README.md#learning-workflow).

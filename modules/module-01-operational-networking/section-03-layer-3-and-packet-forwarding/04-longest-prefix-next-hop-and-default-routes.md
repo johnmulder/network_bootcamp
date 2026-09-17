@@ -40,6 +40,38 @@ the installed table. It does not rerun routing protocols for every packet.
 4. Resolve the selected next hop and egress adjacency. An installed route
    alone does not establish neighbor resolution or successful delivery.
 
+### Installation Then Forwarding
+
+Conceptual route process; the nested prefixes use route-candidates.csv.
+Containment arrows are not packet paths.
+
+![Installation Then Forwarding](../../../diagrams/route-selection.svg)
+
+<!-- diagram: route-selection -->
+<details>
+<summary>Editable Mermaid source</summary>
+
+```mermaid
+flowchart TD
+ accTitle: Route installation and nested destination lookup
+ accDescr: Candidate selection is separate from per-packet longest-prefix lookup.
+ A["Candidates for one identical prefix"] --> B["Select eligible paths using source policy"]
+ B --> C["Installed forwarding table"]
+ P["Packet destination and routing context"] --> D["Longest installed destination match"]
+ C --> D
+ D --> E["Resolve next hop and neighbor"]
+ subgraph Nested ["Prefix containment - not forwarding"]
+ N8["10.0.0.0/8"] -->|contains| N24["10.0.20.0/24"]
+ N24 -->|contains| N32["10.0.20.40/32"]
+ end
+```
+
+</details>
+
+Text equivalent: Select eligible installed paths for each prefix first. A
+packet then chooses the longest match in its context, resolves a next hop, and
+still needs a neighbor and valid policy. The /32 is inside /24 and /8.
+
 ## Teaching Instructions
 
 Use the [shared extended-study workflow](../../README.md#learning-workflow).

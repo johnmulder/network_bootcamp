@@ -67,12 +67,15 @@ def check_archive(output: Path, journey: bool = False) -> None:
         if (root / ".git").exists() or (root / "work").exists() or (root / "PLAN.md").exists():
             raise d.DeliveryError("Archive contains development or learner data")
         commands = [[str(root / "course"), "verify"],
-                    [sys.executable, "-B", str(root / "labs/exemplars/manage.py"), "--decode"],
+                    [sys.executable, "-B", str(root / "verification/render_diagrams.py")],
+                    [sys.executable, "-B", str(root / "verification/check_curriculum.py")],
                     [str(root / "course"), "llm", "check", "--json"],
                     [sys.executable, "-B", str(root / "verification/check_llm.py"), "--check"],
                     [sys.executable, "-B", str(root / "verification/check_delivery.py")]]
         if journey:
             commands += [[str(root / "course"), "doctor", "--json"],
+                         [sys.executable, "-B", str(root / "labs/exemplars/manage.py"), "--decode"],
+                         [sys.executable, "-B", str(root / "verification/check_curriculum.py"), "--smoke"],
                          [sys.executable, "-B", str(root / "verification/check_delivery.py"), "--smoke", "--journey"]]
         environment = {key: value for key, value in os.environ.items()
                        if not key.startswith("BOOTCAMP_LLM_") and key != "OPENAI_API_KEY"}

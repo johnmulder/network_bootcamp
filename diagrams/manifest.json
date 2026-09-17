@@ -1,0 +1,189 @@
+{
+  "renderer": "@mermaid-js/mermaid-cli 11.12.0",
+  "diagrams": {
+    "cloud": {
+      "source": "modules/module-02-network-architecture/section-05-modern-data-center-and-cloud-networking/03-cloud-virtual-networks-routes-and-controls.md",
+      "source_sha256": "48326beb45f79c7026cabd6bf3c83570b1d097f664cdc19c602499c0a544198b",
+      "exports": {
+        "cloud.svg": "51a7698f38dbe7d48e1f644bdbd975c6bb6de04c9595f263885e2f3282f99a09",
+        "cloud.dark.svg": "e9d634a9fd91879a222e8d8d7240837aeaf0839fb247d49eeab2e556a9bc86dd"
+      }
+    },
+    "evidence-predict": {
+      "source": "challenges/05-suspicious-is-not-proven.md",
+      "source_sha256": "a249fa3686a9490ddc8002fd74d9a85eb8ca277b5e6646791ca051c23f10756b",
+      "exports": {
+        "evidence-predict.svg": "ca95c8d0a27f8a56ba26d89784064eaebc49bdddc8ceb12027795b700db2f60d",
+        "evidence-predict.dark.svg": "94adbb1cd546ef290e9dc43d9aefb93539de29f1d6f8b3b5ed1e617795a714a0"
+      }
+    },
+    "evidence-worked": {
+      "source": "facilitator/solutions.md",
+      "source_sha256": "5546f1251208bd2c1c999efd5ed456963855f01399b87f88966dcf4a29cb2592",
+      "exports": {
+        "evidence-worked.svg": "c6080e2fe48f600002a198e0dbed820bdcd6a76974a656bbb130a461b4a9cf3e",
+        "evidence-worked.dark.svg": "0484077ee6ece09300ed0ffb81f63d054c201a3da9082334403a49d60f699e8b"
+      }
+    },
+    "fhrp": {
+      "source": "modules/module-02-network-architecture/section-02-enterprise-network-architecture/03-first-hop-redundancy-hsrp-and-vrrp.md",
+      "source_sha256": "f1c46056d1f9969d9cd9cee082ba7e4db0879a9d5c3f6c572a3f9efd12ab045d",
+      "exports": {
+        "fhrp.svg": "b845c9c21bf6bf2e9a69e2373122144dc14117d0d8de4a3cc334d5917cb487ec",
+        "fhrp.dark.svg": "17f557a89fda883810a610e6ab6cf4be919207a6cb085ef86cb3df8152bb914c"
+      }
+    },
+    "handoff-predict": {
+      "source": "challenges/06-the-shift-handoff.md",
+      "source_sha256": "3f61b4fa0a385ba077ca545519ae3746d0d20f10c37f45a1369e08d7ee5692b4",
+      "exports": {
+        "handoff-predict.svg": "8b736c8d9300bc628e1ae5fba6477e3f23fcec9c7b1878019d88dcc4302dd08d",
+        "handoff-predict.dark.svg": "62402fb13b4251852acc7b0bb1b0488fdda978bbd6c0f2e5e5af273bad3cf797"
+      }
+    },
+    "incident-order": {
+      "source": "facilitator/solutions.md",
+      "source_sha256": "5e2362495600160becd69b1a94638ae0af798a64b54d93de0714b8f05de5fa12",
+      "exports": {
+        "incident-order.svg": "7d1415c5a4cf98faf81de6b27c589029e877603b4843212d874955487574293f",
+        "incident-order.dark.svg": "f80f8eee1a040125fa86b7c09627d186c82019442a37377abbb5ed09b8c014b4"
+      }
+    },
+    "ipv6": {
+      "source": "modules/module-01-operational-networking/section-03-layer-3-and-packet-forwarding/02-ipv6-and-neighbor-discovery.md",
+      "source_sha256": "cea900372c48f30b58beb76ff9d1c5d876a2787939c0be2694519e38bbd2536b",
+      "exports": {
+        "ipv6.svg": "9cacecceaf70a134cc38abdcb7e7ed864766994082ffa9721c1809db62e2d289",
+        "ipv6.dark.svg": "f8d105cf65f14815a61a92206a8c06abc0207f944bfcdda9e5c87b145b5d70a5"
+      }
+    },
+    "leaf-spine": {
+      "source": "modules/module-02-network-architecture/section-05-modern-data-center-and-cloud-networking/01-leaf-spine-and-traffic-directions.md",
+      "source_sha256": "e8f5a1ba35417ed3ff68ae5008179b19bc12749a76f49dc97e2f03c1791aad65",
+      "exports": {
+        "leaf-spine.svg": "1338b39ca72882033bcc9300fd695dd552d0c3f6258834f5eaae16131926af74",
+        "leaf-spine.dark.svg": "730d125b36836fdc10a664f39becc3ca00d25f15e7328ec9d2147e31c3979df0"
+      }
+    },
+    "mtu-predict": {
+      "source": "challenges/02-the-transfer-that-stops.md",
+      "source_sha256": "5771c48ac956d608635baec85915cebec8a863d207a03dcb366bce21323f33f3",
+      "exports": {
+        "mtu-predict.svg": "c93d5dac99c6bc80a988469dd575d4141895124a30df35e5f5e623fa3ee6e414",
+        "mtu-predict.dark.svg": "aab2d56083140436d269c128474ad9c53d550f60aca25b09c711be95eedbe723"
+      }
+    },
+    "mtu-worked": {
+      "source": "facilitator/solutions.md",
+      "source_sha256": "deffdb2400d2da0a8ed99ac4dd2af3d18012a2aefa0003b733a8e42d36cf841b",
+      "exports": {
+        "mtu-worked.svg": "e9edb3e16d2a2d26949c977c0bf2774ff5fffaab2d43165fc53892b080e3fc37",
+        "mtu-worked.dark.svg": "00d0920884d10a7008d3dc7453a91abe1f9c0598fd015ef58b8d77821be9b3cd"
+      }
+    },
+    "packet-predict": {
+      "source": "challenges/01-be-the-packet.md",
+      "source_sha256": "eba28e88384ea06a980ffbad2f1de499fd67044bd40e381d5743378caa338108",
+      "exports": {
+        "packet-predict.svg": "a9746b8d8d5025d0b3ddda54ac32a5b4cea9acc512c891dcf9ab8d83915e3362",
+        "packet-predict.dark.svg": "f3bfe509f9b1911292060de5dee59d7a008d8c54243e6715398e5f3ba9b4d5c6"
+      }
+    },
+    "packet-worked": {
+      "source": "facilitator/solutions.md",
+      "source_sha256": "ea0bc016c030990804f45d9f8f08dddaaec84cbaf9ab94d286dd3ed5460d1a8f",
+      "exports": {
+        "packet-worked.svg": "ca75d94b9ffacd1374b2526fec699334a598d4804a1ac9f77c470f60f1563a21",
+        "packet-worked.dark.svg": "ae27d46cd255f7221a3763e8e5cdebbb27c5f5cf75e932f229388a5b2b024572"
+      }
+    },
+    "public-tls": {
+      "source": "labs/exemplars/README.md",
+      "source_sha256": "e288af4b37fda0edac6d2aaa15db5f004cf0b2a0aa411751df5f50af47cdf1c5",
+      "exports": {
+        "public-tls.svg": "76a0bc189d3818e28c2274f33cd8c6a95c09327b63ca854003022e56b7288a1e",
+        "public-tls.dark.svg": "08b81a4235b5ad6fc4a05d66475f6967e36263a2bb4d4b45c19528807bae15bd"
+      }
+    },
+    "recovery": {
+      "source": "challenges/recovery.md",
+      "source_sha256": "58880af1eef1e2db93606c6d0b8f3b1588a839f8abf6e39c3134bbfb2b121f75",
+      "exports": {
+        "recovery.svg": "cbc3cb64f4b6e824a255c1f0bb1fcb8cce35627b81894d6c4afa9ac3bfe0e553",
+        "recovery.dark.svg": "255291b953dcc0b0f7ce03441c8dffd5855267cd8f4cf434d889cfaf67907388"
+      }
+    },
+    "response-loop": {
+      "source": "challenges/recovery.md",
+      "source_sha256": "fa58b5de037a517aaaea052aaa0747e3d4ca802fa4f7fadcf68e11d209854d54",
+      "exports": {
+        "response-loop.svg": "f890a1a3e1ae1890c9f4787358798f93f6ce06e8a0650eeadf2fb84a5e520c64",
+        "response-loop.dark.svg": "d9d1f6e87ad3e40f815ae1b73e1169d25226ba42eff4c882da76dd4262e618af"
+      }
+    },
+    "route-selection": {
+      "source": "modules/module-01-operational-networking/section-03-layer-3-and-packet-forwarding/04-longest-prefix-next-hop-and-default-routes.md",
+      "source_sha256": "2acf94ca75830af2d9a34ee0812f534e890907a6c73067a6f13637b01a1d1f26",
+      "exports": {
+        "route-selection.svg": "d3f3611bd0069d1b624d887b3c20555770d2fc7839a0ab88c75bb68e1ec9425e",
+        "route-selection.dark.svg": "372fda06caabe20db3c0ac3cc8015e6044eac47edc890ceef38361d8613367ba"
+      }
+    },
+    "routing-predict": {
+      "source": "challenges/03-pull-one-link.md",
+      "source_sha256": "5f37f117264171bd2da67c604578a2e3649588aea90a7dd043a107ecb7686d60",
+      "exports": {
+        "routing-predict.svg": "085004885f9897fc114e5de9ca479c5b04989639fac4b9db86c54fa3c97b5aff",
+        "routing-predict.dark.svg": "5ea15801723febcb456a82e3ca52235ebc4392082cc3c4f7ec682a7da730d9c4"
+      }
+    },
+    "routing-worked": {
+      "source": "facilitator/solutions.md",
+      "source_sha256": "a826984fc2d3b8ed683556aad82861bed8722d1f9a868b77190a7fe0210af8c8",
+      "exports": {
+        "routing-worked.svg": "050917a2b387a835cf0691eaf5e9d0bcdae2a891bf58a4bed28c27405980b609",
+        "routing-worked.dark.svg": "08e02618842cee5da8e1b2f5a6e94eb6ff2869fd44a79560a8be0b1c9f9bd14d"
+      }
+    },
+    "shared-power": {
+      "source": "challenges/04-resilience-budget.md",
+      "source_sha256": "837daca71433ea93604f39f3fc8c9a4f9095f5122b8959bb85d6b9df319a6598",
+      "exports": {
+        "shared-power.svg": "6853fcb4ebea8c4b2e696cd3cf3f7ea2e67cecb5ed75de8343935286cc1c21db",
+        "shared-power.dark.svg": "622b9b01dbdcc28e5e95c2b69b8dc81c5108bda89af6ba7051d5ce8a6374aaf8"
+      }
+    },
+    "stp": {
+      "source": "modules/module-01-operational-networking/section-02-layer-2-networking/05-spanning-tree.md",
+      "source_sha256": "82f57fb097b85fef3da44395fade14e098b4c8d2e69eb97a330a42c13e33e52c",
+      "exports": {
+        "stp.svg": "5ea91f2282fd3cb87d88302aabd93ba5847882e3eccebeb2b726ea06430074b0",
+        "stp.dark.svg": "dc3497ccabb6a7ca0610d4956dd9a947dbc248790b06669448d1de7000ac139a"
+      }
+    },
+    "vxlan": {
+      "source": "modules/module-02-network-architecture/section-05-modern-data-center-and-cloud-networking/02-underlays-overlays-vxlan-and-evpn.md",
+      "source_sha256": "5e5b7ab13d9bd3e623335794b7b3674f34f266d2dd7d5e4a6a8f066923090ab4",
+      "exports": {
+        "vxlan.svg": "33a58233dee35dead560463635fbec912c5bbdb16c4d7935fd5d0e76e4f4fa41",
+        "vxlan.dark.svg": "474568a6ef6c447e95100692ef1c1a59f7db160d718aff41545f34d4261163cc"
+      }
+    },
+    "zones-predict": {
+      "source": "challenges/04-resilience-budget.md",
+      "source_sha256": "a1d4bedef40558f4f1b99264c43194243d90e58680f2579fd2af84dcde195f58",
+      "exports": {
+        "zones-predict.svg": "e202625e435100d38b224bc1c38775ab903fa75e05bf818fa856bdc4012b7a97",
+        "zones-predict.dark.svg": "e8f26427fba2dfe65614d96ddb81a4d4a0356156f3ed525ec13335b9e85a1872"
+      }
+    },
+    "zones-worked": {
+      "source": "facilitator/solutions.md",
+      "source_sha256": "59d3a700047ac5f342e570d21a9a5e4d801a629ab8a6d1ec9410f0eed63aad29",
+      "exports": {
+        "zones-worked.svg": "e37bba4f1d95070c66921a44de3516342a84d1cc1b2d59e99f6bdf1ba6e56477",
+        "zones-worked.dark.svg": "c16546e017ebcced282af622deac7036420b1bb8e59046e0bd13a78fe63c1a29"
+      }
+    }
+  }
+}
