@@ -44,7 +44,7 @@ class Game:
         if not isinstance(s["progress"], dict) or not set(s["progress"]) <= ids:
             raise ValueError("Invalid mission history.")
         for ident, p in s["progress"].items():
-            if not isinstance(p, dict) or set(p) != {"index", "stage", "attempts", "help", "opened", "reflection"}:
+            if not isinstance(p, dict) or set(p) != {"index", "stage", "attempts", "help", "opened", "reflection", "draft"}:
                 raise ValueError("Invalid mission save.")
             steps = content.mission(ident)["steps"]
             if type(p["index"]) is not int or not 0 <= p["index"] < len(steps) or p["stage"] not in STAGES:
@@ -67,6 +67,11 @@ class Game:
                     raise ValueError("Invalid evidence history.")
             if any(type(v) is not bool for v in p["help"].values()) or not isinstance(p["reflection"], dict):
                 raise ValueError("Invalid support or reflection history.")
+            draft = p["draft"]
+            if not isinstance(draft, dict) or set(draft) != {"values", "reason"} or not isinstance(draft["values"], dict) or not isinstance(draft["reason"], str):
+                raise ValueError("Invalid unfinished notes.")
+            if len(json.dumps(draft)) > 16000:
+                raise ValueError("Unfinished notes are too large.")
             if p["stage"] == "feedback" and not p["attempts"].get(steps[p["index"]]):
                 raise ValueError("Feedback has no committed attempt.")
         settings = s["settings"]
@@ -87,7 +92,10 @@ class Game:
     def start(self, ident):
         content.mission(ident)
         self.state["current"] = ident
-        self.state["progress"].setdefault(ident, dict(index=0, stage="brief", attempts={}, help={}, opened={}, reflection={}))
+        self.state["progress"].setdefault(ident, dict(index=0, stage="brief", attempts={}, help={}, opened={}, reflection={}, draft=dict(values={}, reason="")))
+
+    def draft(self, values, reason):
+        self.progress["draft"] = dict(values=copy.deepcopy(values), reason=reason)
 
     def begin(self):
         if self.progress["stage"] != "brief":
@@ -133,12 +141,14 @@ class Game:
         attempts.append(dict(at=now(), values=copy.deepcopy(values), reason=reason.strip(),
                              supported=bool(attempts) or self.progress["help"].get(self.scene.id, False), result=result))
         self.progress["stage"] = "feedback"
+        self.draft({}, "")
 
     def retry(self):
         if self.progress["stage"] != "feedback":
             raise ValueError("Commit a prediction before retrying.")
         self.progress["help"][self.scene.id] = True
         self.progress["stage"] = "decision"
+        self.draft({}, "")
 
     def advance(self):
         if self.progress["stage"] != "feedback" or not self.progress["attempts"][self.scene.id][-1]["result"]["correct"]:
@@ -148,6 +158,7 @@ class Game:
         else:
             self.progress["index"] += 1
             self.progress["stage"] = "decision"
+        self.draft({}, "")
 
     def reflect(self, fields):
         if self.progress["stage"] != "debrief" or set(fields) != {"mechanism", "evidence", "uncertainty", "action"}:
