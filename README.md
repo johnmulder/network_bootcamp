@@ -116,6 +116,24 @@ reviews, and recovery. A successful command is not a passing assessment.
 The [completion policy](agenda.md#completion-and-feedback) distinguishes
 finished delivery, passing rubric reviews, and independent completion.
 
+## Optional Packet Post Game
+
+[Packet Post: The Night Shift](packet_post/README.md) reinforces the lessons
+in a keyboard-driven python-tcod desktop window. Its six missions, recovery
+epilogue, and optional foundations use saved evidence and the existing
+bounded models. It runs offline after optional dependency installation.
+
+```sh
+python3 -m venv work/game-venv
+work/game-venv/bin/python -m pip install -r requirements-game.txt
+work/game-venv/bin/python -m packet_post
+```
+
+Game progress is separate from course assessment. Original incident and
+recovery practice require current reviews from a supplied course session.
+The game is a software preview; observed learner benefit and independent
+human review remain [pending](packet_post/VALIDATION.md).
+
 ## Optional LLM Support
 
 [LLM support](delivery/llm.md) is disabled by default and independently enables

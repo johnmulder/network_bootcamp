@@ -67,6 +67,7 @@ def check_archive(output: Path, journey: bool = False) -> None:
         if (root / ".git").exists() or (root / "work").exists() or (root / "PLAN.md").exists():
             raise d.DeliveryError("Archive contains development or learner data")
         commands = [[str(root / "course"), "verify"],
+                    [sys.executable, "-B", str(root / "verification/check_packet_post.py"), "--content"],
                     [sys.executable, "-B", str(root / "verification/render_diagrams.py")],
                     [sys.executable, "-B", str(root / "verification/check_curriculum.py")],
                     [str(root / "course"), "llm", "check", "--json"],

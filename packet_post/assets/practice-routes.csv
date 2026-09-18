@@ -1,0 +1,5 @@
+prefix,source,preference,metric,next_hop,interface
+0.0.0.0/0,static,1,0,198.51.100.1,practice0
+192.0.2.0/24,ospf,110,20,198.51.100.2,practice0
+192.0.2.0/24,ospf,110,20,198.51.100.3,practice0
+192.0.2.41/32,static,1,0,198.51.100.4,practice0

@@ -33,6 +33,26 @@ def draw_text(console, x, y, text, width, height, color=INK):
         console.print(x=x, y=y + offset, text=line, fg=color)
 
 
+def feedback_text(view):
+    last = view["last"]
+    result = last["result"]
+    summary = "Factual match" if result["correct"] else "A useful revision awaits"
+    support = "supported practice" if last["supported"] else "first unassisted practice attempt"
+    text = f"{summary} | {support}\n\nYOUR PREDICTION\n"
+    text += "\n".join(f"{k}: {v}" for k, v in last["values"].items())
+    text += "\n\nCOMPARE WITH THE BOUNDED RESULT\n"
+    text += "\n".join(f"{k}: {v}" for k, v in result["expected"].items())
+    text += "\n\n" + result["explanation"]
+    model = result.get("model", {})
+    if "packet_bytes" in model:
+        text += f"\n\nMODEL: {model['ipv4_header']} + {model['tcp_header']} + {last['values']['payload']} "
+        text += f"= {model['packet_bytes']} IP bytes; MTU {model['mtu']}; fits: {model['fits']}."
+    if "addressed_dependencies" in model:
+        text += "\n\nTARGETED: " + (" ".join(model["addressed_dependencies"]) or "No selected dependency targets this failure.")
+        text += "\nRESIDUAL: " + " ".join(model["residual_risk"])
+    return text + "\n\nUNKNOWN: " + "; ".join(result["unknowns"])
+
+
 class UI:
     def __init__(self, game, save):
         self.game, self.save = game, save
@@ -124,6 +144,17 @@ class UI:
         if self.editing is not None:
             self.edit_buffer = (self.edit_buffer + "".join(c for c in value if c.isprintable()))[:1600]
 
+    def close(self):
+        if self.editing is not None:
+            if self.editing == "reason":
+                self.reason = self.edit_buffer
+            else:
+                self.values[self.editing] = self.edit_buffer
+            ok, _ = self.perform(self.game.draft, self.values, self.reason)
+            if not ok:
+                return
+        self.quit = True
+
     def key(self, key):
         if self.editing is not None:
             if key == "ESCAPE":
@@ -198,7 +229,7 @@ class UI:
                     self.menu = False
                     self.reset_form()
             if key in {"Q", "ESCAPE"}:
-                self.quit = True
+                self.close()
             return
         if key == "ESCAPE":
             self.menu = True
@@ -218,7 +249,7 @@ class UI:
             self.perform(self.game.begin)
         elif stage == "feedback":
             if key == "V":
-                self.show("Prediction and bounded result", getattr(self, "feedback_text", "Result is loading."))
+                self.show("Prediction and bounded result", feedback_text(view))
             elif key == "R":
                 ok, _ = self.perform(self.game.retry)
                 if ok:
@@ -318,28 +349,17 @@ class UI:
         if stage == "feedback":
             last = view["last"]
             result = last["result"]
-            summary = "Factual match" if result["correct"] else "A useful revision awaits"
-            support = "supported practice" if last["supported"] else "first unassisted practice attempt"
-            text = f"{summary} | {support}\n\n"
-            text += "\n".join(f"{k}: {v}" for k, v in result["expected"].items())
-            text += "\n\n" + result["explanation"]
-            model = result.get("model", {})
-            if "packet_bytes" in model:
-                text += f"\n\nMODEL: {model['ipv4_header']} + {model['tcp_header']} + {last['values']['payload']} "
-                text += f"= {model['packet_bytes']} IP bytes; MTU {model['mtu']}; fits: {model['fits']}."
-            if "addressed_dependencies" in model:
-                text += "\n\nTARGETED: " + " ".join(model["addressed_dependencies"])
-                text += "\nRESIDUAL: " + " ".join(model["residual_risk"])
-            text += "\n\nUNKNOWN: " + "; ".join(result["unknowns"])
-            self.feedback_text = text
-            draw_text(console, 3, 13, text, w - 6, h - 20)
+            draw_text(console, 3, 13, feedback_text(view), w - 6, h - 20)
             draw_text(console, 3, h - 6, "V: full result   Enter: next   R: retry" if result["correct"] else "V: full result   R: revise   E: evidence", w - 6, 2, MINT)
             return
         wide = w >= 85 and stage != "debrief"
         x = 36 if wide else 3
         width = w - x - 3
         if wide:
-            draw_text(console, 2, 14, "\n".join(view["scene"]["board"]), 32, h - 22, GOLD)
+            board = "\n".join(view["scene"]["board"])
+            if self.values:
+                board += "\n\nYOUR DRAFT (not an outcome)\n" + "\n".join(f"{k}: {v}" for k, v in self.values.items())
+            draw_text(console, 2, 14, board, 32, h - 22, GOLD)
             draw_text(console, 2, h - 7, "B: full board\nE: evidence  H: hint", 32, 2, MUTED)
         rows = self.rows()
         self.focus %= len(rows)
@@ -384,7 +404,7 @@ def run(game, save, *, frames=None, screenshot=None):
                 return
             for event in tcod.event.wait(timeout=0.05 if frames is not None else None):
                 if isinstance(event, tcod.event.Quit):
-                    ui.quit = True
+                    ui.close()
                 elif isinstance(event, tcod.event.TextInput):
                     ui.text(event.text)
                 elif isinstance(event, tcod.event.KeyDown) and not event.repeat:

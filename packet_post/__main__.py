@@ -50,6 +50,9 @@ def main(argv=None):
                 from .view import run
                 run(game, save)
         return 0
+    except KeyboardInterrupt:
+        print("Packet Post closed; committed actions and saved drafts are retained.")
+        return 0
     except (ValueError, OSError, RuntimeError) as error:
         print(f"Packet Post: {error}", file=sys.stderr)
         print("Use --list / --check without a display, or launch from a local desktop. Existing saves are preserved.", file=sys.stderr)

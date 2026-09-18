@@ -9,9 +9,55 @@ from unittest.mock import patch
 
 from packet_post import content
 from packet_post.game import Game, Save
+from packet_post.view import UI, feedback_text
 
 
 class PacketPostTests(unittest.TestCase):
+    def test_keyboard_controller_keeps_text_and_focus_then_resumes(self):
+        with tempfile.TemporaryDirectory() as temp:
+            with Save("keyboard", Path(temp)) as save:
+                game = Game()
+                ui = UI(game, save)
+                ui.key("ENTER")
+                ui.key("ENTER")
+                for _ in range(3):
+                    ui.key("DOWN")
+                ui.key("ENTER")
+                for _ in range(2):
+                    ui.key("DOWN")
+                ui.key("SPACE")
+                for _ in range(3):
+                    ui.key("DOWN")
+                ui.key("ENTER")
+                ui.text("The /32 is the most specific matching prefix.")
+                ui.key("E")  # A command key while typing must not open evidence.
+                self.assertIsNone(ui.modal)
+                ui.key("ENTER")
+                ui.key("DOWN")
+                ui.key("ENTER")
+                self.assertEqual(game.progress["stage"], "feedback")
+                self.assertTrue(game.visible()["last"]["result"]["correct"])
+                ui.key("V")
+                self.assertIn("YOUR PREDICTION", ui.modal)
+                self.assertIn("10.0.20.40/32", feedback_text(game.visible()))
+                resumed = save.load()
+                self.assertEqual(resumed.state, game.state)
+                ui.key("ESCAPE")
+                ui.key("ENTER")
+                ui.focus = len(ui.rows()) - 2
+                ui.key("ENTER")
+                ui.text("Unfinished prediction survives window close.")
+                ui.close()
+                self.assertTrue(ui.quit)
+                self.assertEqual(save.load().progress["draft"]["reason"], "Unfinished prediction survives window close.")
+
+    def test_saved_progress_cannot_skip_decisions(self):
+        game = Game()
+        game.start("sorting")
+        game.progress["index"] = 2
+        with self.assertRaisesRegex(ValueError, "unfinished decision"):
+            game.validate()
+
     def test_post_lesson_gates_read_reviews_without_mutation(self):
         game = Game()
         with self.assertRaisesRegex(ValueError, "post-lesson"):

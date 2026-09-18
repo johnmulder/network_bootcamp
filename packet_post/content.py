@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import csv
 import json
 from dataclasses import dataclass, field
 from functools import lru_cache
@@ -88,7 +89,7 @@ def scenes() -> dict[str, Scene]:
             dict(prefix=answer["prefix"], hops=", ".join(answer["next_hops"])),
             "Choose the longest matching prefix first. Among equal prefixes compare preference and metric; "
             "retain every equal candidate. An eligible set does not identify the actual ECMP member used.",
-            [ROUTES], ROUTE_BOARD,
+            [ROUTES], [line.replace("[ /32 ]", "[ /32 X]") for line in ROUTE_BOARD] if condition != "baseline" else ROUTE_BOARD,
             "A longer matching prefix outranks a less-specific one. Check all rows tied at the winning prefix.",
             "routing", parameters)
     corp = experiment("routing", dict(condition="CORP", destination="198.51.100.77"))
@@ -111,6 +112,20 @@ def scenes() -> dict[str, Scene]:
         "successful application response separately. The receipt has not arrived yet.",
         [ROUTES, VRFS], [" [ lookup ] -> [? policy ] -> [? return ]", "                          -> [? service ]"],
         "Which observations are absent from a route table?")
+    with (Path(__file__).with_name("assets") / "practice-routes.csv").open(newline="") as handle:
+        rows = list(csv.DictReader(handle))
+    selected = delivery.workbench(1).select_routes("192.0.2.42", rows)
+    result["route.transfer"] = Scene("route.transfer", "A fresh sorting tray",
+        "New game-only authored table, separate from all factory snapshots: choose forwarding for 192.0.2.42. "
+        "Apply the same rule; a nearby host route need not match this destination.",
+        [choice("prefix", "Winning prefix", ["0.0.0.0/0", "192.0.2.0/24", "192.0.2.41/32"]),
+         choice("hops", "All eligible next hops", ["198.51.100.1", "198.51.100.2", "198.51.100.3", "198.51.100.4"], multiple=True)],
+        dict(prefix=selected[0]["prefix"], hops=", ".join(sorted(r["next_hop"] for r in selected))),
+        "The /32 describes .41, not destination .42. The matching /24 beats default and retains .2 and .3 "
+        "as equal candidates. The static default's smaller preference does not outrank specificity.",
+        [card("fresh-routes", "packet_post/assets/practice-routes.csv", "Game-only transfer exercise, rows 1-4")],
+        [" [new destination] -> [which rows match?]", "", "Apply the rule before comparing preference."],
+        "First discard nonmatching routes. Then choose the longest match and retain equal next-hop choices.")
     result.update(parcel_scenes())
     result.update(resilience_scenes())
     result.update(bridge_scenes())
@@ -386,7 +401,7 @@ def missions() -> list[dict]:
         intro="In a separate worked example, destination 192.0.2.8 matches both 192.0.2.0/24 and "
               "192.0.2.8/32. The /32 is more specific. Our office chooses forwarding; it cannot promise "
               "a complete service path. Open evidence with E, then make your prediction.",
-        steps=["route.host", "route.remove", "route.vrf", "route.limits"], stamp="Return Address Included"),
+        steps=["route.host", "route.remove", "route.vrf", "route.transfer", "route.limits"], stamp="Return Address Included"),
         dict(id="parcel", title="The Parcel That Wouldn't Fit", character="The extremely polite MTU mail slot",
              flavor="The slot regrets that politeness cannot increase its aperture.", duration="8-12 minutes",
              lesson="challenges/02-the-transfer-that-stops.md",
@@ -440,7 +455,7 @@ def evaluate(scene: Scene, values: dict) -> dict:
     for spec in scene.fields:
         key, response = spec["key"], values[spec["key"]]
         if spec.get("multiple"):
-            if not isinstance(response, list) or not response or len(set(response)) != len(response):
+            if not isinstance(response, list) or not response or any(not isinstance(v, str) for v in response) or len(set(response)) != len(response):
                 raise ValueError("Choose each eligible option once.")
             if any(v not in spec["options"] for v in response):
                 raise ValueError("Choose displayed options.")
@@ -467,9 +482,12 @@ def evaluate(scene: Scene, values: dict) -> dict:
         checks[key] = learning.evaluate(item, response)
         if not checks[key]["format_valid"]:
             raise ValueError(checks[key]["feedback"])
+    limits = ["Policy enforcement", "Return path and application response"] if scene.id.startswith("route.") else [
+        "Claims beyond the declared scenario and supplied observation points",
+        "Intent, unobserved paths and post-change service outcomes unless explicitly supplied"]
     result = dict(correct=all(c["correct"] for c in checks.values()), checks=checks,
                   explanation=scene.explanation, expected=expected,
-                  unknowns=["Policy enforcement", "Return path and application response"])
+                  unknowns=limits)
     if scene.model:
         result["model"] = model or experiment(scene.model, parameters)
         result["unknowns"] = result["model"]["unknowns"]
@@ -478,7 +496,7 @@ def evaluate(scene: Scene, values: dict) -> dict:
 
 def fingerprint() -> str:
     digest = hashlib.sha256()
-    paths = [Path(__file__), Path(__file__).with_name("game.py"), ROOT / "learning.py"]
+    paths = [Path(__file__), Path(__file__).with_name("game.py"), ROOT / "learning.py", ROOT / "delivery.py"]
     paths += sorted(Path(__file__).with_name("assets").glob("*.json"))
     paths += sorted((ROOT / "modules").glob("*/workbench/*.py"))
     paths += sorted({source_path(c) for scene in scenes().values() for c in scene.cards})

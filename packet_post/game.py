@@ -85,14 +85,36 @@ class Game:
                 raise ValueError("Invalid unfinished notes.")
             if len(json.dumps(draft)) > 16000:
                 raise ValueError("Unfinished notes are too large.")
+            field_specs = ({name: {} for name in ("mechanism", "evidence", "uncertainty", "action")}
+                           if p["stage"] in {"debrief", "complete"} else
+                           {f["key"]: f for f in content.scenes()[steps[p["index"]]].fields})
+            if not set(draft["values"]) <= set(field_specs):
+                raise ValueError("Draft belongs to an unexpected decision.")
+            for key, value in draft["values"].items():
+                spec = field_specs[key]
+                if spec.get("multiple"):
+                    if not isinstance(value, list) or any(not isinstance(v, str) or v not in spec["options"] for v in value):
+                        raise ValueError("Invalid draft selection.")
+                elif not isinstance(value, str) or len(value) > 1600:
+                    raise ValueError("Invalid draft text.")
             if p["stage"] == "feedback" and not p["attempts"].get(steps[p["index"]]):
                 raise ValueError("Feedback has no committed attempt.")
+            completed = steps if p["stage"] in {"debrief", "complete"} else steps[:p["index"]]
+            if any(not p["attempts"].get(step) or not p["attempts"][step][-1]["result"]["correct"] for step in completed):
+                raise ValueError("Mission position skips an unfinished decision.")
+            if any(not isinstance(v, str) or not v.strip() or len(v) > 1600 for v in p["reflection"].values()):
+                raise ValueError("Invalid reflection text.")
+            if p["stage"] == "complete" and set(p["reflection"]) != {"mechanism", "evidence", "uncertainty", "action"}:
+                raise ValueError("Completed practice is missing its reflection.")
         settings = s["settings"]
         if not isinstance(settings, dict) or set(settings) != {"plain", "contrast", "scale"} or any(
                 type(settings[k]) is not bool for k in ("plain", "contrast")) or type(settings["scale"]) is not int or not 1 <= settings["scale"] <= 3:
             raise ValueError("Invalid display settings.")
         if s["seed"] != 1 or not isinstance(s["stamps"], list) or any(not isinstance(v, str) for v in s["stamps"]):
             raise ValueError("Invalid game metadata.")
+        earned = {content.mission(ident)["stamp"] for ident, p in s["progress"].items() if p["stage"] == "complete"}
+        if len(s["stamps"]) != len(set(s["stamps"])) or set(s["stamps"]) != earned:
+            raise ValueError("Stamps do not match completed practice.")
 
     @property
     def progress(self):
@@ -203,7 +225,10 @@ class Game:
                               "", "Prediction: " + json.dumps(a["values"]), "", "Reason: " + a["reason"],
                               "", "Feedback: " + a["result"]["explanation"], "",
                               "Unknowns: " + "; ".join(a["result"]["unknowns"]), ""]
-                lines += ["Sources: " + ", ".join(content.source_name(c) for c in content.scenes()[step].cards), ""]
+                    if "model" in a["result"]:
+                        lines += ["Bounded model result:", "", "```json", json.dumps(a["result"]["model"], indent=2), "```", ""]
+                lines += ["Available sources: " + ", ".join(content.source_name(c) for c in content.scenes()[step].cards),
+                          "", "Opened cards: " + ", ".join(p["opened"].get(step, [])), ""]
             for name, value in p["reflection"].items():
                 lines += [f"{name.title()}: {value}", ""]
         return "\n".join(lines)
