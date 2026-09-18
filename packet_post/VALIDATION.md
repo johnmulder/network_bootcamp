@@ -7,6 +7,8 @@ decisions. The requested software implementation is complete; observed
 learner trials and independent human review remain pending by the project
 owner's explicit decision. No learning-effectiveness claim, curriculum
 replacement, or independent attainment follows from these technical checks.
+The implementation plan has been retired; this record retains the pending
+human work and the technical release evidence.
 
 The game remains optional, outside the required 360-minute course. It never
 awards course credit or changes course answers or reviews. Original incident
@@ -30,8 +32,10 @@ public-domain 8-by-10-cell atlas; its source and digests are in the
 | Same renderer check with `--window --screenshot work/packet-post-final.png` | Real desktop window passed with Metal; routing screenshot visually inspected |
 | Fresh virtual environment installed with `--no-index --find-links work/game-wheels` | Installation and desktop rendering passed using only downloaded wheels |
 | System Python without tcod | Help, list, and content checks passed; normal launch returned actionable dependency instructions |
+| Unavailable SDL display driver and launch from an unrelated directory | Display failure produced recovery guidance without a traceback; module content check passed with an explicit repository import path |
 | Course version and fingerprint comparison against planning baseline `e239183` | Course 3.1 content and fixture hashes unchanged |
-| Extracted source archive verification and real-tool course journeys | Pending final packaging run |
+| `python3 -B verification/package_course.py --output work/packet-post-course.tar.gz --journey` | 283 tracked files plus metadata packaged; course, game content, diagrams, curriculum, LLM fixtures, local links, doctor, exemplars, real-tool views, and both 36-phase course journeys passed |
+| Extracted game renderer with the offline-installed environment | All eight missions rendered from an unrelated directory containing spaces, without Git metadata |
 
 The game tests drive the same keyboard controller used by the SDL event
 loop, including text entry, commit, cancel, hints, evidence, save/resume,
