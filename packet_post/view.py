@@ -129,7 +129,9 @@ class UI:
                     selected.append(row["value"])
             else:
                 self.values[row["key"]] = row["value"]
-            self.perform(self.game.draft, self.values, self.reason)
+            ok, _ = self.perform(self.game.draft, self.values, self.reason)
+            if not ok:
+                self.reset_form()
         elif row["kind"] in {"text", "reason"}:
             self.editing = row["key"]
             self.edit_buffer = self.reason if row["kind"] == "reason" else self.values.get(row["key"], "")
@@ -141,34 +143,25 @@ class UI:
                 self.reset_form()
 
     def text(self, value):
-        if self.editing is not None:
+        if self.editing is not None and self.modal is None:
             self.edit_buffer = (self.edit_buffer + "".join(c for c in value if c.isprintable()))[:1600]
 
+    def keep_edit(self):
+        values, reason = copy.deepcopy(self.values), self.reason
+        if self.editing == "reason":
+            reason = self.edit_buffer
+        else:
+            values[self.editing] = self.edit_buffer
+        ok, _ = self.perform(self.game.draft, values, reason)
+        if ok:
+            self.values, self.reason, self.editing = values, reason, None
+        return ok
+
     def close(self):
-        if self.editing is not None:
-            if self.editing == "reason":
-                self.reason = self.edit_buffer
-            else:
-                self.values[self.editing] = self.edit_buffer
-            ok, _ = self.perform(self.game.draft, self.values, self.reason)
-            if not ok:
-                return
-        self.quit = True
+        if self.editing is None or self.keep_edit():
+            self.quit = True
 
     def key(self, key):
-        if self.editing is not None:
-            if key == "ESCAPE":
-                self.editing = None
-            elif key == "BACKSPACE":
-                self.edit_buffer = self.edit_buffer[:-1]
-            elif key == "ENTER":
-                if self.editing == "reason":
-                    self.reason = self.edit_buffer
-                else:
-                    self.values[self.editing] = self.edit_buffer
-                self.editing = None
-                self.perform(self.game.draft, self.values, self.reason)
-            return
         if self.modal is not None:
             if key == "ESCAPE":
                 self.modal = None
@@ -186,6 +179,14 @@ class UI:
             elif key in {"DOWN", "PAGEDOWN", "UP", "PAGEUP", "HOME", "END"}:
                 self.scroll = max(0, self.scroll + {"DOWN": 1, "PAGEDOWN": 12, "UP": -1, "PAGEUP": -12,
                                                    "HOME": -100000, "END": 100000}[key])
+            return
+        if self.editing is not None:
+            if key == "ESCAPE":
+                self.editing = None
+            elif key == "BACKSPACE":
+                self.edit_buffer = self.edit_buffer[:-1]
+            elif key == "ENTER":
+                self.keep_edit()
             return
         if key in {"F2", "F3", "F4"}:
             settings = self.game.state["settings"]
@@ -283,9 +284,10 @@ class UI:
         if self.modal is not None or self.editing is not None:
             x, y, width, height = 2, 4, w - 4, h - 8
             console.draw_rect(x, y, width, height, ch=32, bg=PANEL)
-            title = "Write: " + self.editing if self.editing is not None else self.modal_title
+            editor_visible = self.editing is not None and self.modal is None
+            title = "Write: " + self.editing if editor_visible else self.modal_title
             draw_text(console, x + 2, y + 1, title, width - 4, 2, GOLD)
-            if self.editing is not None:
+            if editor_visible:
                 lines = wrapped(self.edit_buffer + "_", width - 4)
                 lines = lines[-(height - 7):]
                 instructions = "Enter: keep text  Esc: cancel  Backspace: erase (1600 chars max)"
@@ -345,7 +347,7 @@ class UI:
             return
         draw_text(console, 2, 6, view["scene"]["title"] if stage != "debrief" else "A note for the next shift", w - 4, 1, MINT)
         prompt = view["scene"]["prompt"] if stage != "debrief" else "Explain, cite, qualify, then choose a next check. These four notes are not automatically graded."
-        draw_text(console, 2, 8, prompt, w - 4, 4)
+        draw_text(console, 2, 8, prompt, w - 4, 5)
         if stage == "feedback":
             last = view["last"]
             result = last["result"]

@@ -9,12 +9,13 @@ import subprocess
 import tempfile
 import sys
 from pathlib import Path
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from packet_post.game import Game, Save
-from packet_post.view import UI, run, tileset
+from packet_post.view import UI, run, tileset, wrapped
 from packet_post import content
 
 
@@ -27,9 +28,13 @@ def check(window=False, output=None):
     def draw(ui, expected=None):
         for console in layouts:
             ui.draw(console)
+            rendered = "\n".join("".join(chr(c) for c in row) for row in console.ch)
             if expected:
-                rendered = "\n".join("".join(chr(c) for c in row) for row in console.ch)
                 assert expected in rendered, (console.width, console.height, expected)
+            view = ui.game.visible()
+            if not ui.menu and ui.modal is None and ui.editing is None and view["stage"] == "decision":
+                for line in wrapped(view["scene"]["prompt"], console.width - 4):
+                    assert line in rendered, (view["scene"]["id"], console.width, line)
 
     with tempfile.TemporaryDirectory(prefix="packet post ") as temp:
         with Save("check", Path(temp)) as save:
@@ -50,6 +55,15 @@ def check(window=False, output=None):
             assert game.progress["help"]["route.host"]
             ui.key("ESCAPE")
             draw(ui)
+            ui.focus = len(ui.rows()) - 2
+            ui.key("ENTER")
+            ui.text("Reason kept while storage is unavailable")
+            with patch.object(save, "write", side_effect=OSError("disk full")):
+                ui.key("ENTER")
+            draw(ui, "disk full")
+            ui.key("ESCAPE")
+            draw(ui, "Write: reason")
+            ui.key("ESCAPE")
             if window:
                 run(game, save, frames=3, screenshot=output)
         with Save("campaign", Path(temp)) as save:

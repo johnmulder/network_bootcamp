@@ -13,6 +13,38 @@ from packet_post.view import UI, feedback_text
 
 
 class PacketPostTests(unittest.TestCase):
+    def test_failed_ui_save_keeps_editor_and_reverts_unsaved_selection(self):
+        with tempfile.TemporaryDirectory() as temp:
+            with Save("failure", Path(temp)) as save:
+                game = Game()
+                game.start("sorting")
+                game.begin()
+                save.write(game)
+                ui = UI(game, save)
+                with patch.object(save, "write", side_effect=OSError("disk full")):
+                    ui.key("ENTER")  # Select first option; failed selection rolls back.
+                    self.assertEqual(ui.values, {})
+                    ui.key("ESCAPE")
+                    ui.focus = len(ui.rows()) - 2
+                    ui.key("ENTER")
+                    ui.text("Preserve this reasoning")
+                    ui.key("ENTER")
+                    self.assertEqual(ui.editing, "reason")
+                    self.assertIn("disk full", ui.modal)
+                    ui.text("hidden input")
+                    self.assertEqual(ui.edit_buffer, "Preserve this reasoning")
+                    ui.key("ESCAPE")  # Dismiss error, not the unfinished edit.
+                    self.assertEqual(ui.editing, "reason")
+                    ui.close()
+                    self.assertFalse(ui.quit)
+                    self.assertEqual(save.load().progress["draft"]["reason"], "")
+                ui.key("ESCAPE")
+                ui.key("ENTER")  # Retry now that storage works.
+                self.assertIsNone(ui.editing)
+                self.assertEqual(save.load().progress["draft"]["reason"], "Preserve this reasoning")
+                ui.close()
+                self.assertTrue(ui.quit)
+
     def test_keyboard_controller_keeps_text_and_focus_then_resumes(self):
         with tempfile.TemporaryDirectory() as temp:
             with Save("keyboard", Path(temp)) as save:
