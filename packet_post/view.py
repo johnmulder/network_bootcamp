@@ -36,7 +36,7 @@ def draw_text(console, x, y, text, width, height, color=INK):
 class UI:
     def __init__(self, game, save):
         self.game, self.save = game, save
-        self.menu = game.state["current"] is None
+        self.menu = game.state["current"] is None or not game.available(game.state["current"])
         self.selection = 0
         self.focus = 0
         self.values = {}
@@ -209,7 +209,7 @@ class UI:
             self.show("Logical decision board", "\n".join(view["scene"]["board"]))
         elif key == "E" and stage in {"decision", "feedback"}:
             self.show("Choose evidence - press its number", "\n\n".join(
-                f"{i}. {c['label']}\n{c['category']} | labs/fixtures/{c['source']}"
+                f"{i}. {c['label']}\n{c['category']} | {content.source_name(c)}"
                 for i, c in enumerate(view["scene"]["cards"], 1)), "evidence")
         elif key == "H" and stage == "decision":
             self.show("Open learning help?", "This hint will be recorded as support for this decision. "
@@ -276,11 +276,16 @@ class UI:
         draw_text(console, 3, 5, "WELCOME TO BRAMBLEWORKS", w - 6, 1, MINT)
         draw_text(console, 3, 7, "     ___       .----.\n @  /___\\  ->  |POST|    Keep the mail moving. Keep your claims grounded.\n/|\\ |___|      '----'", w - 6, 3, GOLD)
         draw_text(console, 3, 11, "Select a mission. Existing progress resumes; nothing rerolls.", w - 6, 2)
-        for i, mission in enumerate(content.missions()):
+        capacity = max(1, (h - 24) // 2)
+        start = max(0, self.selection - capacity + 1)
+        for i in range(start, min(len(content.missions()), start + capacity)):
+            mission = content.missions()[i]
             p = self.game.state["progress"].get(mission["id"])
             status = "NEW" if not p else "STAMPED" if p["stage"] == "complete" else "RESUME"
+            if not self.game.available(mission["id"]):
+                status = "AFTER COURSE REVIEW"
             line = f"{'>' if self.selection == i else ' '} {i + 1}. {mission['title']}  [{status}]"
-            draw_text(console, 3, 14 + i * 2, line, w - 6, 1, GOLD if self.selection == i else INK)
+            draw_text(console, 3, 13 + (i - start) * 2, line, w - 6, 1, GOLD if self.selection == i else INK)
         mission = content.missions()[self.selection]
         y = min(h - 9, 15 + len(content.missions()) * 2)
         draw_text(console, 3, y, mission["intro"], w - 6, 3, MUTED)

@@ -1,0 +1,20 @@
+{
+  "scope": "Game-only authored practice drills P1/P2. Independent of course A/B, the original incident, and each other. No real measurements or claims about intent.",
+  "P1": {
+    "conditions": "192.0.2.23/24 expects access VLAN 10 and gateway 192.0.2.1. The supplied gateway is reachable by other correctly attached VLAN 10 clients. No unusual host routes are declared. The approved test uses a literal IP.",
+    "records": [
+      {"id": "P1-1", "source": "switch configuration snapshot", "before_access_vlan": 10, "after_access_vlan": 20, "port": "client-23", "observation": "link stays up; client MAC learned in VLAN 20"},
+      {"id": "P1-2", "source": "client neighbor table and capture", "observation": "gateway neighbor INCOMPLETE; ARP requests sent; no gateway reply seen at the client"},
+      {"id": "P1-3", "source": "service-owner report", "observation": "the authorized health check from this client times out"}
+    ],
+    "limits": "Why membership changed, successful restoration, and the effect on other services are unknown. This does not establish malicious intent. Network operations owns the attachment check; the service owner approves disruptive changes."
+  },
+  "P2": {
+    "conditions": "Independent test: 198.51.100.23 connects to 198.51.100.40:443. These are game-only documentation addresses; do not probe them.",
+    "records": [
+      {"id": "P2-1", "source": "client application log", "observation": "TCP and TLS complete; 10 of 10 requests receive HTTP 503 during the declared one-minute test"},
+      {"id": "P2-2", "source": "server application log", "observation": "matching request IDs report backend unavailable"}
+    ],
+    "limits": "The backend's cause is unknown. The application owner investigates; an IP route change alone is not a demonstrated repair. The successful transport/TLS exchanges do not establish successful service responses."
+  }
+}

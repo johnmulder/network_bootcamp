@@ -29,8 +29,21 @@ def fresh():
 
 class Game:
     def __init__(self, state=None):
+        self.reviewed = set()
         self.state = fresh() if state is None else state
         self.validate()
+
+    def authorize(self, session_id):
+        """Read existing reviews only; never mutate or award course attainment."""
+        try:
+            status = content.delivery.session_status(session_id)
+        except (content.delivery.DeliveryError, OSError, ValueError) as error:
+            raise ValueError(f"Cannot read course reviews: {error}") from None
+        self.reviewed = {phase for phase, reviews in status["reviews"].items()
+                         if any(r.get("valid_pass") is True for r in reviews.values())}
+
+    def available(self, ident):
+        return set(content.mission(ident).get("requires", [])) <= self.reviewed
 
     def validate(self):
         s = self.state
@@ -90,7 +103,10 @@ class Game:
         return content.scenes()[content.mission(self.state["current"])["steps"][self.progress["index"]]]
 
     def start(self, ident):
-        content.mission(ident)
+        mission = content.mission(ident)
+        if not self.available(ident):
+            raise ValueError("This post-lesson mission needs current passing reviews for " +
+                             ", ".join(mission["requires"]) + ". Launch with --course-session YOUR-ID after those reviews.")
         self.state["current"] = ident
         self.state["progress"].setdefault(ident, dict(index=0, stage="brief", attempts={}, help={}, opened={}, reflection={}, draft=dict(values={}, reason="")))
 
@@ -103,7 +119,7 @@ class Game:
         self.progress["stage"] = "decision"
 
     def visible(self):
-        if self.state["current"] is None:
+        if self.state["current"] is None or not self.available(self.state["current"]):
             return None
         p, scene = self.progress, self.scene
         view = dict(mission=content.mission(self.state["current"]), stage=p["stage"],
@@ -115,6 +131,8 @@ class Game:
         return copy.deepcopy(view)
 
     def inspect(self, ident):
+        if not self.available(self.state["current"]):
+            raise ValueError("These post-lesson records are not released for this game launch.")
         if self.progress["stage"] not in {"decision", "feedback"}:
             raise ValueError("Open evidence during a decision.")
         item = next((c for c in self.scene.cards if c["id"] == ident), None)
@@ -165,6 +183,8 @@ class Game:
             raise ValueError("Complete the four debrief fields.")
         if any(not isinstance(v, str) or not v.strip() or len(v) > 1600 for v in fields.values()):
             raise ValueError("Write a short response in each field.")
+        if self.state["current"] == "handoff" and sum(len(v.split()) for v in fields.values()) > 150:
+            raise ValueError("Keep the handoff within 150 words across the four fields.")
         self.progress["reflection"] = dict(fields)
         self.progress["stage"] = "complete"
         stamp = content.mission(self.state["current"])["stamp"]
@@ -183,7 +203,7 @@ class Game:
                               "", "Prediction: " + json.dumps(a["values"]), "", "Reason: " + a["reason"],
                               "", "Feedback: " + a["result"]["explanation"], "",
                               "Unknowns: " + "; ".join(a["result"]["unknowns"]), ""]
-                lines += ["Sources: " + ", ".join("labs/fixtures/" + c["source"] for c in content.scenes()[step].cards), ""]
+                lines += ["Sources: " + ", ".join(content.source_name(c) for c in content.scenes()[step].cards), ""]
             for name, value in p["reflection"].items():
                 lines += [f"{name.title()}: {value}", ""]
         return "\n".join(lines)

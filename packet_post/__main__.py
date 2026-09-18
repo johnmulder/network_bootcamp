@@ -15,11 +15,13 @@ def main(argv=None):
     parser.add_argument("--list", action="store_true", help="list missions without opening a window")
     parser.add_argument("--check", action="store_true", help="check practice content without tcod or a display")
     parser.add_argument("--export", action="store_true", help="export this save's journal without a display")
+    parser.add_argument("--course-session", help="read current course reviews to unlock post-lesson incident/recovery practice")
     args = parser.parse_args(argv)
     try:
         if args.list:
             for mission in content.missions():
-                print(f"{mission['id']}: {mission['title']} ({mission['duration']})")
+                suffix = " [after course review]" if mission.get("requires") else ""
+                print(f"{mission['id']}: {mission['title']} ({mission['duration']}){suffix}")
             return 0
         if args.check:
             for scene in content.scenes().values():
@@ -40,6 +42,8 @@ def main(argv=None):
                                  "work/game-venv/bin/python -m packet_post") from None
         with Save(args.id) as save:
             game = save.load()
+            if args.course_session:
+                game.authorize(args.course_session)
             if args.export:
                 print(save.export(game))
             else:

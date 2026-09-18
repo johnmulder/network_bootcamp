@@ -12,6 +12,58 @@ from packet_post.game import Game, Save
 
 
 class PacketPostTests(unittest.TestCase):
+    def test_post_lesson_gates_read_reviews_without_mutation(self):
+        game = Game()
+        with self.assertRaisesRegex(ValueError, "post-lesson"):
+            game.start("crumbs")
+        self.assertIsNone(game.visible())
+        with patch("packet_post.content.delivery.session_status", return_value={"reviews": {
+            "c05.review": {"self": {"valid_pass": True}},
+            "c06.review": {"self": {"valid_pass": True}},
+            "exit.review": {"self": {"valid_pass": False}},
+        }}), patch("packet_post.content.delivery.act") as mutate:
+            game.authorize("completed")
+            game.start("crumbs")
+            game.begin()
+            with self.assertRaises(ValueError):
+                game.inspect("endpoint")
+            with self.assertRaises(ValueError):
+                game.start("recovery")
+            mutate.assert_not_called()
+        self.assertNotIn("endpoint", game.progress["opened"])
+
+    def test_handoff_hides_case_before_prediction_and_uses_new_ids(self):
+        game = Game()
+        game.start("handoff")
+        game.begin()
+        self.assertEqual(game.visible()["scene"]["cards"], [])
+        with self.assertRaises(ValueError):
+            game.inspect("practice-cases")
+        game.commit(dict(hypotheses=["routing or policy changed", "application unavailable"]), "request state to distinguish")
+        game.advance()
+        case = game.inspect("practice-cases")
+        self.assertIn("P1-1", case)
+        self.assertNotIn("case-a.json", case)
+
+    def test_all_missions_can_complete_without_awarding_course_credit(self):
+        game = Game()
+        game.reviewed = {"c05.review", "c06.review", "exit.review"}
+        for mission in content.missions():
+            game.start(mission["id"])
+            game.begin()
+            for step in mission["steps"]:
+                scene = content.scenes()[step]
+                values = {f["key"]: scene.expected[f["key"]].split(", ") if f.get("multiple") else scene.expected[f["key"]]
+                          for f in scene.fields}
+                game.commit(values, "Authored verification journey, not learner evidence.")
+                self.assertTrue(game.visible()["last"]["result"]["correct"], step)
+                game.advance()
+            game.reflect(dict(mechanism="Rule explained", evidence="Named source", uncertainty="Scope unproved", action="Owner validates service"))
+            self.assertEqual(game.progress["stage"], "complete")
+        game.validate()
+        self.assertEqual(len(game.state["stamps"]), len(content.missions()))
+        self.assertNotIn("completion", game.state)
+
     def test_parcel_controls_change_real_bounded_result(self):
         scene = content.scenes()["parcel.plain"]
         fits = content.evaluate(scene, dict(payload="1160", fits="yes", maximum="1160 bytes"))

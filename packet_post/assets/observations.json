@@ -95,6 +95,141 @@
         "icmp.mtu": ""
       }
     ],
-    "limits": "Constructed transfer drill; observation point unknown. Port 443/dummy payload does not establish TLS. ICMP fields may include the quoted original IP packet. Captured ICMP does not prove sender receipt."
+    "limits": "Constructed transfer drill; modeled VLAN 10 trunk. Port 443/dummy payload does not establish TLS. ICMP fields may include the quoted original IP packet. Captured ICMP does not prove sender receipt."
+  },
+  "foundations": {
+    "source": "labs/fixtures/pcaps/foundations.pcap",
+    "sha256": "e892f077a3a64315202c665cd49fe36365eab1491aa9368a0847742f0e8d5812",
+    "decoder": "TShark (Wireshark) 4.4.1 (v4.4.1-0-g575b2bf4746e).",
+    "command": [
+      "tshark",
+      "-n",
+      "-r",
+      "labs/fixtures/pcaps/foundations.pcap",
+      "-T",
+      "fields",
+      "-E",
+      "header=y",
+      "-E",
+      "separator=,",
+      "-E",
+      "quote=d",
+      "-e",
+      "frame.number",
+      "-e",
+      "eth.src",
+      "-e",
+      "eth.dst",
+      "-e",
+      "ip.src",
+      "-e",
+      "ip.dst",
+      "-e",
+      "dns.qry.name",
+      "-e",
+      "http.response.code"
+    ],
+    "records": [
+      {
+        "frame.number": "1",
+        "eth.src": "02:00:00:00:10:23",
+        "eth.dst": "ff:ff:ff:ff:ff:ff",
+        "ip.src": "",
+        "ip.dst": "",
+        "dns.qry.name": "",
+        "http.response.code": ""
+      },
+      {
+        "frame.number": "2",
+        "eth.src": "02:00:00:00:10:01",
+        "eth.dst": "02:00:00:00:10:23",
+        "ip.src": "",
+        "ip.dst": "",
+        "dns.qry.name": "",
+        "http.response.code": ""
+      },
+      {
+        "frame.number": "3",
+        "eth.src": "02:00:00:00:10:23",
+        "eth.dst": "02:00:00:00:10:53",
+        "ip.src": "10.0.10.23",
+        "ip.dst": "10.0.10.53",
+        "dns.qry.name": "app.example.test",
+        "http.response.code": ""
+      },
+      {
+        "frame.number": "4",
+        "eth.src": "02:00:00:00:10:53",
+        "eth.dst": "02:00:00:00:10:23",
+        "ip.src": "10.0.10.53",
+        "ip.dst": "10.0.10.23",
+        "dns.qry.name": "app.example.test",
+        "http.response.code": ""
+      },
+      {
+        "frame.number": "5",
+        "eth.src": "02:00:00:00:10:23",
+        "eth.dst": "02:00:00:00:10:01",
+        "ip.src": "10.0.10.23",
+        "ip.dst": "10.0.20.40",
+        "dns.qry.name": "",
+        "http.response.code": ""
+      },
+      {
+        "frame.number": "6",
+        "eth.src": "02:00:00:00:10:01",
+        "eth.dst": "02:00:00:00:10:23",
+        "ip.src": "10.0.20.40",
+        "ip.dst": "10.0.10.23",
+        "dns.qry.name": "",
+        "http.response.code": ""
+      },
+      {
+        "frame.number": "7",
+        "eth.src": "02:00:00:00:10:23",
+        "eth.dst": "02:00:00:00:10:01",
+        "ip.src": "10.0.10.23",
+        "ip.dst": "10.0.20.40",
+        "dns.qry.name": "",
+        "http.response.code": ""
+      },
+      {
+        "frame.number": "8",
+        "eth.src": "02:00:00:00:10:23",
+        "eth.dst": "02:00:00:00:10:01",
+        "ip.src": "10.0.10.23",
+        "ip.dst": "10.0.20.40",
+        "dns.qry.name": "",
+        "http.response.code": ""
+      },
+      {
+        "frame.number": "9",
+        "eth.src": "02:00:00:00:10:01",
+        "eth.dst": "02:00:00:00:10:23",
+        "ip.src": "10.0.20.40",
+        "ip.dst": "10.0.10.23",
+        "dns.qry.name": "",
+        "http.response.code": "200"
+      },
+      {
+        "frame.number": "10",
+        "eth.src": "02:00:00:00:10:01",
+        "eth.dst": "02:00:00:00:10:23",
+        "ip.src": "10.0.20.40",
+        "ip.dst": "10.0.10.23",
+        "dns.qry.name": "",
+        "http.response.code": ""
+      },
+      {
+        "frame.number": "11",
+        "eth.src": "02:00:00:00:10:23",
+        "eth.dst": "02:00:00:00:10:01",
+        "ip.src": "10.0.10.23",
+        "ip.dst": "10.0.20.40",
+        "dns.qry.name": "",
+        "http.response.code": ""
+      }
+    ],
+    "limits": "Constructed foundations exchange at a modeled VLAN 10 trunk. Blank decoder fields are absent values, not zero. This is not a complete routed-path observation."
   }
 }
