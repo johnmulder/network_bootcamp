@@ -8,7 +8,8 @@
     },
     "overhead_and_other_load_mbps": null
   },
-  "jitter_definition": "Mean absolute difference between successive RTT samples from the same 60 one-per-second probes; RTT variation, not one-way RTP jitter.",
+  "interval_seconds": 60,
+  "jitter_definition": "Mean absolute RTT difference for adjacent sent probes only when both received a reply; exclude pairs containing a lost probe. RTT variation, not one-way RTP jitter.",
   "limits": "Probe loss need not equal TCP loss. Congestion window, receiver CPU, disk, and competing load are unmeasured. A correlation suggests a check, not a unique cause.",
   "measurements": [
     {
@@ -16,6 +17,7 @@
       "goodput_mbps": 150,
       "id": "P1",
       "probe_loss_percent": 0,
+      "probe_lost": 0,
       "received_bytes": 1125000000,
       "receiver_window_bytes": 2000000,
       "rtt_jitter_ms": 1,
@@ -25,7 +27,8 @@
       "capacity_mbps": 200,
       "goodput_mbps": 35,
       "id": "P2",
-      "probe_loss_percent": 2,
+      "probe_loss_percent": 1.67,
+      "probe_lost": 1,
       "received_bytes": 262500000,
       "receiver_window_bytes": 2000000,
       "rtt_jitter_ms": 12,
@@ -36,6 +39,7 @@
       "goodput_mbps": 40,
       "id": "P3",
       "probe_loss_percent": 0,
+      "probe_lost": 0,
       "received_bytes": 300000000,
       "receiver_window_bytes": 400000,
       "rtt_jitter_ms": 1,
@@ -43,5 +47,7 @@
     }
   ],
   "method": "One TCP stream, same endpoints and payload, 60-second receive interval after warmup; no TLS; all rates decimal Mbps.",
+  "probe_count": 60,
+  "probe_method": "One probe per second. Loss percentages rounded to two decimal places; rtt_ms is the median of received replies.",
   "scope": "Independent synthetic saved measurements for comparison; not wan.json observations."
 }

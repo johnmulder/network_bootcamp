@@ -173,6 +173,26 @@ class FixtureBuilderTests(unittest.TestCase):
         )
         self.assertTrue(all(len(entry["sha256"]) == 64 for entry in entries))
 
+    def test_performance_measurements_have_consistent_rates_and_counts(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            fixtures = Path(temporary) / "fixtures"
+            with mock.patch.object(BUILDER, "FIXTURES", fixtures):
+                BUILDER.build_extension_fixtures()
+            data = json.loads((fixtures / "architecture/performance.json").read_text())
+        for row in data["measurements"]:
+            with self.subTest(measurement=row["id"]):
+                self.assertIsInstance(row["probe_lost"], int)
+                self.assertTrue(0 <= row["probe_lost"] <= data["probe_count"])
+                self.assertEqual(row["probe_loss_percent"],
+                                 round(100 * row["probe_lost"] / data["probe_count"], 2))
+                self.assertEqual(row["goodput_mbps"],
+                                 row["received_bytes"] * 8 / data["interval_seconds"] / 1_000_000)
+        backup = data["backup"]
+        demand = sum(backup["demands_mbps"].values())
+        self.assertGreater(demand, backup["capacity_mbps"])
+        self.assertLess(demand - backup["demands_mbps"]["bulk_replication"],
+                        backup["capacity_mbps"])
+
     def test_check_reports_every_fixture_failure_class(self):
         with tempfile.TemporaryDirectory() as temporary:
             fixtures = Path(temporary) / "fixtures"

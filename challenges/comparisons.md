@@ -68,9 +68,12 @@ mean these values need not be equal.
 | P1 → P2 | Same capacity and median RTT; less goodput, more probe loss and RTT variation | Inspect TCP retransmissions and congestion behavior versus receiver/competing-load limits; probe loss is not automatically TCP loss |
 | P1 → P3 | Longer RTT and smaller receive window | `400,000 bytes × 8 / 0.080 seconds = 40 Mbps` is a receive-window/RTT bound for this simplified stream; inspect congestion window, window scaling, CPU and disk before assigning a unique cause |
 
-Here “jitter” is explicitly the mean absolute successive RTT difference
-from the same 60 probes. It is RTT variation, not a measured one-way media
-jitter value. Compare like methods, directions, payloads, intervals, and
+The probe run sends 60 probes, one per second. P2 loses one: `1 / 60 × 100`
+is 1.67% rounded to two decimal places. RTT is the median of received replies.
+Here “jitter” is the mean absolute RTT difference between adjacent sent
+probes only when both receive replies; pairs containing a loss are excluded.
+It is RTT variation, not a measured one-way media jitter value.
+Compare like methods, directions, payloads, intervals, and
 warmup conditions. One measurement is not a service-level guarantee.
 
 Backup exercise: 120 Mbps process reporting + 40 Mbps operations + 60 Mbps

@@ -832,11 +832,14 @@ def build_extension_fixtures() -> None:
     write_json("architecture/performance.json", {
         "scope": "Independent synthetic saved measurements for comparison; not wan.json observations.",
         "method": "One TCP stream, same endpoints and payload, 60-second receive interval after warmup; no TLS; all rates decimal Mbps.",
-        "jitter_definition": "Mean absolute difference between successive RTT samples from the same 60 one-per-second probes; RTT variation, not one-way RTP jitter.",
+        "interval_seconds": 60,
+        "probe_count": 60,
+        "probe_method": "One probe per second. Loss percentages rounded to two decimal places; rtt_ms is the median of received replies.",
+        "jitter_definition": "Mean absolute RTT difference for adjacent sent probes only when both received a reply; exclude pairs containing a lost probe. RTT variation, not one-way RTP jitter.",
         "measurements": [
-            {"id": "P1", "capacity_mbps": 200, "received_bytes": 1125000000, "goodput_mbps": 150, "rtt_ms": 20, "probe_loss_percent": 0, "rtt_jitter_ms": 1, "receiver_window_bytes": 2000000},
-            {"id": "P2", "capacity_mbps": 200, "received_bytes": 262500000, "goodput_mbps": 35, "rtt_ms": 20, "probe_loss_percent": 2, "rtt_jitter_ms": 12, "receiver_window_bytes": 2000000},
-            {"id": "P3", "capacity_mbps": 200, "received_bytes": 300000000, "goodput_mbps": 40, "rtt_ms": 80, "probe_loss_percent": 0, "rtt_jitter_ms": 1, "receiver_window_bytes": 400000},
+            {"id": "P1", "capacity_mbps": 200, "received_bytes": 1125000000, "goodput_mbps": 150, "rtt_ms": 20, "probe_lost": 0, "probe_loss_percent": 0, "rtt_jitter_ms": 1, "receiver_window_bytes": 2000000},
+            {"id": "P2", "capacity_mbps": 200, "received_bytes": 262500000, "goodput_mbps": 35, "rtt_ms": 20, "probe_lost": 1, "probe_loss_percent": 1.67, "rtt_jitter_ms": 12, "receiver_window_bytes": 2000000},
+            {"id": "P3", "capacity_mbps": 200, "received_bytes": 300000000, "goodput_mbps": 40, "rtt_ms": 80, "probe_lost": 0, "probe_loss_percent": 0, "rtt_jitter_ms": 1, "receiver_window_bytes": 400000},
         ],
         "backup": {"capacity_mbps": 200, "demands_mbps": {"process_reporting": 120, "voice_and_operations": 40, "bulk_replication": 60}, "overhead_and_other_load_mbps": None},
         "limits": "Probe loss need not equal TCP loss. Congestion window, receiver CPU, disk, and competing load are unmeasured. A correlation suggests a check, not a unique cause.",
