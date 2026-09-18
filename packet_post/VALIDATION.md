@@ -25,12 +25,12 @@ No second-device configuration, tester identity, or checklist was supplied.
 
 | Gate | Status | Evidence and remaining work |
 | --- | --- | --- |
-| G0: Trial prepared | Pending | Start card, runbook, staff trial items, and worksheet prepared; final candidate inventory, named people, and participant prerequisites must be recorded |
-| G1: Operable and recoverable | Passed by owner assumption | Owner accepts the second-Mac test as complete; local save/layout regression checks passed. Physical input and accommodation observations were not supplied and are not claimed as directly verified |
+| G0: Trial prepared | Pending | Start card, runbook, staff items, worksheets, and frozen candidate inventory prepared; actual participants, prerequisites, and named facilitators/reviewers to be recorded at the weekend trial |
+| G1: Operable and recoverable | Passed | Owner accepts the second-Mac test by assumption; local save/layout/startup regression checks passed. Physical input and accommodation observations were not supplied and are not claimed as directly verified |
 | G2: Technically sound | Pending | Owner schedules independent networking review for September 19-20; decision and trial-item approval awaited |
 | G3: Usable with students | Pending | Owner schedules student trials for September 19-20; no participant observations received |
 | G4: Supports intended reasoning | Pending | No human-rated unseen transfer responses recorded |
-| G5: Classroom release prepared | Pending | Distribution candidate and support rehearsal are being prepared; final human gates and release decision remain open |
+| G5: Classroom release prepared | Pending | Offline preview bundle and synthetic support/recovery rehearsal passed; human gate results, candidate-specific remote CI, and final release decision remain open |
 
 Facilitator, independent networking reviewer, second-Mac tester, and
 participant names: **not supplied**; the owner has supplied the weekend
@@ -67,6 +67,54 @@ The latest observed remote CI run succeeded for earlier commit
 `9a97add89774c8e31d8e2f9c1877b0eb200384ea` on September 13. It does not
 cover this candidate or qualify the new renderer job. Candidate-specific
 remote CI is still pending; local changes have not been pushed.
+
+### Completed Engineering and Weekend Handoff
+
+The frozen software candidate is
+`86b7238d82e6972b831150d3cd2f50d801256f90`. Later documentation records these
+results without changing its packaged source. Three reproduced defects
+were fixed: failed text saves now keep the editor available for retry,
+the shared-power decision prompt is fully visible at the minimum grid
+size, and importing through a filesystem alias can start a new game.
+
+| Check actually completed on September 18 | Result |
+| --- | --- |
+| Full repository unittest suite after the final fix | 138 passed in 76.829 seconds |
+| Targeted game tests | 14 passed, including failed-save and alias-startup regressions |
+| Three-size renderer and actual local desktop window | All eight missions and 27 decisions passed; complete prompts and visible save errors checked; Metal/SDL 3.2.16 used |
+| Fresh TShark comparison | Both stored capture projections matched |
+| `verification/package_course.py --output work/packet-post-readiness/candidate-v2.tar.gz --journey` | 284 tracked files plus metadata passed all archive checks and both 36-phase real-tool course journeys |
+| Fresh environment with supplied exact wheels | Offline install passed with `--no-index --require-hashes`; six transitive/direct packages pinned with SHA256 |
+| Extracted-copy synthetic rehearsal | All missions rendered; separate processes resumed and exported a committed prediction; a closed save copied into a matching course copy retained its state and created a third distinct export |
+| Final student/staff ZIPs | Payload checksums, archive integrity, relative links, and startup from a path containing spaces verified |
+| Trial-material author screening | 17 new question/key pairs, independent route arithmetic, header budgets, UTC conversions, and 27 pending human-review rows checked |
+| Documentation | Markdown and local-reference checks passed |
+
+The archived candidate's game fingerprint is
+`73aede2b31bfd3e80662449d89f6e150a1b4621deff502f9de6c3f0ecd3b0b60`.
+The alias fix changes it from the prior game version. Existing saves must
+use their matching copy; the previous source archive remains locally at
+`work/packet-post-release.tar.gz`. No state file or fingerprint was migrated
+or reset. Core course content and fixture hashes are unchanged.
+
+The following local artifacts are ready for the owner-coordinated weekend
+work. They are intentionally outside Git and course source archives. The
+student ZIP contains the frozen course/game source, exact wheels, checksum
+inventory, installation instructions, and technical check record. It omits
+the newly authored pilot questions/keys and all participant data. The staff
+ZIP contains those separate questions/keys, blank observations, and review
+records. Keep it with the facilitator and expose only assigned questions.
+
+| Local artifact under `work/packet-post-readiness/` | SHA256 |
+| --- | --- |
+| `packet-post-weekend-preview.zip` | `f9fc0300dcd69acc373d116efa6e7650a6306592d54f8f8de456266b6402a153` |
+| `packet-post-weekend-staff.zip` | `28c66f5b55d82834cc7345f0dc70fb1f68f16a8b26f6e79ccb9c70c3ab27e29f` |
+
+Return the reviewer judgments and observed participant outcomes with their
+candidate version. Resolve material findings, recheck affected behavior,
+and record the exact accepted mission/device scope before classroom
+promotion. The readiness plan remains open until these results and the
+release decision are recorded; a scheduled trial is not a completed trial.
 
 The game remains optional, outside the required 360-minute course. It never
 awards course credit or changes course answers or reviews. Original incident
