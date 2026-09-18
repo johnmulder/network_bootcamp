@@ -35,17 +35,17 @@ class Scene:
                     fields=self.fields, cards=self.cards, board=self.board)
 
 
-def choice(key, label, options, *, multiple=False):
-    return dict(key=key, label=label, options=options, multiple=multiple)
+def choice(key, label, options, *, multiple=False, count=None):
+    return dict(key=key, label=label, options=options, multiple=multiple, count=count)
 
 
 def text_field(key, label, kind="text"):
     return dict(key=key, label=label, type=kind)
 
 
-def card(ident, source, label, *, category="Declared condition", point="unknown", parents=()):
+def card(ident, source, label, *, category="Declared condition", point="unknown", parents=(), projection=None):
     return dict(id=ident, source=source, label=label, category=category,
-                point=point, parents=list(parents))
+                point=point, parents=list(parents), projection=projection)
 
 
 def experiment(model, parameters):
@@ -103,6 +103,75 @@ def scenes() -> dict[str, Scene]:
         "successful application response separately. The receipt has not arrived yet.",
         [ROUTES, VRFS], [" [ lookup ] -> [? policy ] -> [? return ]", "                          -> [? service ]"],
         "Which observations are absent from a route table?")
+    result.update(parcel_scenes())
+    result.update(resilience_scenes())
+    return result
+
+
+def parcel_scenes():
+    result = {}
+    capture = card("transfer", "challenges/transfer.pcap", "Frames 1-6 of the transfer drill",
+                   category="Recorded observation", parents=("challenges/transfer.pcap",), projection="transfer")
+    for scenario, headers in (("plain", (20, 20)), ("tcp-options", (20, 32)), ("ip-options", (24, 32))):
+        parameters = dict(scenario=scenario, payload=1160)
+        model = experiment("transfer", parameters)
+        ident = "parcel." + scenario
+        result[ident] = Scene(ident, "The parcel that wouldn't fit: " + scenario,
+            f"Declared size model: path IP MTU 1200 bytes, IPv4 header {headers[0]} bytes, "
+            f"TCP header {headers[1]} bytes. Choose a parcel payload, predict if it fits, and give the largest possible payload.",
+            [choice("payload", "Load payload (bytes)", ["128", "1144", "1160", "1161", "1400"]),
+             choice("fits", "Will this packet fit?", ["yes", "no"]),
+             text_field("maximum", "Maximum payload, with bytes", "bytes")],
+            dict(payload="1160", fits="yes" if model["fits"] else "no", maximum=f"{model['maximum_payload']} bytes"),
+            "The whole IP packet must fit: payload plus IPv4 and TCP headers. Ethernet framing is outside this "
+            "IP-MTU calculation. A fit establishes only the size condition, not ICMP delivery or application recovery.",
+            [capture], ["      THE MTU MAIL SLOT", "", " [IPv4] + [TCP] + [payload]", "", "    | declared limit: 1200 |",
+                       "", "Select a parcel and predict.", "The slot is polite, not flexible."],
+            "Subtract both declared headers from the MTU. Compare your chosen payload plus those headers to 1200.",
+            "transfer", parameters)
+    result["parcel.receipt"] = Scene("parcel.receipt", "A handshake is not a delivery receipt",
+        "The saved drill completes a TCP handshake, then repeats a 1400-byte payload. The capture shows ICMP MTU 1200. What remains unknown?",
+        [choice("claim", "Select the bounded conclusion", ["TLS and the report transfer succeeded", "The sender received the ICMP and adapted", "Sender receipt, adaptation and application recovery remain unproven"])],
+        dict(claim="Sender receipt, adaptation and application recovery remain unproven"),
+        "Observed ICMP is not proof of sender receipt. The constructed port-443 exchange contains dummy payload, "
+        "not a verified TLS session. Request sender-side feedback and a successful large-transfer service observation.",
+        [capture], ["[SYN] -> [SYN ACK] -> [ACK]", "", " [large payload] -> [?]", " [ICMP seen]     -> [? sender]"],
+        "Separate what the capture saw from what the endpoint received and what the application completed.")
+    return result
+
+
+def resilience_scenes():
+    result = {}
+    failures = card("failures", "architecture/failures.jsonl", "Declared tabletop failure outcomes")
+    flows = card("flows", "architecture/traffic-flows.csv", "Intended service policy, not measured enforcement")
+    for ident, failure, twist in (("budget.state", "session-sync-stale", False),
+                                  ("budget.wan", "20-percent-loss", False),
+                                  ("budget.twist", "power-loss", True)):
+        parameters = dict(options=["state-sync", "monitoring"], failure=failure, twist=twist)
+        result[ident] = Scene(ident, "Two tokens and a teapot" + (": shared-power twist" if twist else ""),
+            f"Failure: {failure}. Spend exactly two fictional tokens on two improvements. "
+            + ("New condition: both transports share building power; current management uses the preferred path. " if twist else "")
+            + "Predict whether these choices alone establish successful service recovery, and explain your tradeoff.",
+            [choice("options", "Spend two tokens", ["state-sync", "backup-path", "monitoring", "management"], multiple=True, count=2),
+             choice("recovered", "Service recovery proven?", ["yes", "no"])],
+            dict(options="state-sync, monitoring", recovered="no"),
+            "The model reports dependencies targeted by your choices, not guaranteed repairs. Monitoring needs a "
+            "measured polling/alert delay; paths need capacity and independence; state sync needs validation. "
+            "No pair solves every requirement. Your written tradeoff remains for human review.",
+            [failures, card("wan", "architecture/wan.json", "WAN conditions and measurement gaps"), flows],
+            ["    THE RESILIENCE TEAPOT", "", "    (o) (o)  two brass tokens", "", " [state] [backup] [monitor] [mgmt]",
+             "", "No token grants certainty."],
+            "Choose two distinct improvements. State what they address and what they cannot establish. "
+            "A second transport does not fix shared power.", "resilience", parameters)
+    result["budget.policy"] = Scene("budget.policy", "The historian's invitation list",
+        "Compare F3 and F4. Who is intended to reach historian 10.0.30.50 over HTTPS? What does that table prove?",
+        [choice("source", "Intended permitted source", ["10.0.10.23", "10.0.20.40"]),
+         choice("status", "Evidence strength", ["Intended permission; enforcement and return path need checks", "Live enforcement and service success proven"])],
+        dict(source="10.0.20.40", status="Intended permission; enforcement and return path need checks"),
+        "F3 intends to permit the server; F4 intends to deny the user workstation. Do not erase segmentation "
+        "to earn availability points. A policy-intent table is not live-rule or successful-session evidence.",
+        [flows], [" [user]   --?-- [OT boundary]", " [server] --?-- [historian]", "", "Intent needs enforcement evidence."],
+        "Read the intended field for each source. A desired rule is not an observed rule decision.")
     return result
 
 
@@ -113,7 +182,21 @@ def missions() -> list[dict]:
         intro="In a separate worked example, destination 192.0.2.8 matches both 192.0.2.0/24 and "
               "192.0.2.8/32. The /32 is more specific. Our office chooses forwarding; it cannot promise "
               "a complete service path. Open evidence with E, then make your prediction.",
-        steps=["route.host", "route.remove", "route.vrf", "route.limits"], stamp="Return Address Included")]
+        steps=["route.host", "route.remove", "route.vrf", "route.limits"], stamp="Return Address Included"),
+        dict(id="parcel", title="The Parcel That Wouldn't Fit", character="The extremely polite MTU mail slot",
+             flavor="The slot regrets that politeness cannot increase its aperture.", duration="8-12 minutes",
+             lesson="challenges/02-the-transfer-that-stops.md",
+             intro="A completed handshake does not prove a large report transferred. For a separate worked example, "
+             "an IP MTU of 1000 and headers of 20 + 20 leave 960 bytes of payload. Now pack parcels against "
+             "the declared 1200-byte limit. Your parameter choices change the computed result.",
+             steps=["parcel.plain", "parcel.tcp-options", "parcel.ip-options", "parcel.receipt"], stamp="Mind the Headers"),
+        dict(id="resilience", title="Two Tokens and a Teapot", character="The quarterly improvement committee",
+             flavor="The teapot issues two tokens and declines all requests for a third.", duration="10-15 minutes",
+             lesson="challenges/04-resilience-budget.md",
+             intro="Keep useful services available without dropping their boundaries. Each improvement costs one "
+             "fictional token, not a real procurement price. Choose two, predict, and compare dependencies addressed "
+             "with residual risk. Several choices are defensible; your explanation matters.",
+             steps=["budget.policy", "budget.state", "budget.wan", "budget.twist"], stamp="Budgeted for Doubt")]
 
 
 def mission(ident):
@@ -122,7 +205,12 @@ def mission(ident):
 
 def evidence(item: dict) -> str:
     path = FIXTURES / item["source"]
-    if path.suffix == ".json":
+    if item.get("projection"):
+        projection = json.loads((Path(__file__).with_name("assets") / "observations.json").read_text())[item["projection"]]
+        if hashlib.sha256(path.read_bytes()).hexdigest() != projection["sha256"]:
+            raise ValueError("Decoded observation is stale; restore its matching source capture.")
+        body = json.dumps(projection, indent=2)
+    elif path.suffix == ".json":
         body = json.dumps(json.loads(path.read_text()), indent=2)
     else:
         body = path.read_text().strip()
@@ -135,6 +223,9 @@ def evaluate(scene: Scene, values: dict) -> dict:
     if not isinstance(values, dict) or set(values) != {f["key"] for f in scene.fields}:
         raise ValueError("Complete each displayed field before committing.")
     checks = {}
+    expected = dict(scene.expected)
+    parameters = dict(scene.parameters)
+    model = None
     for spec in scene.fields:
         key, response = spec["key"], values[spec["key"]]
         if spec.get("multiple"):
@@ -142,22 +233,32 @@ def evaluate(scene: Scene, values: dict) -> dict:
                 raise ValueError("Choose each eligible option once.")
             if any(v not in spec["options"] for v in response):
                 raise ValueError("Choose displayed options.")
+            if spec.get("count") and len(response) != spec["count"]:
+                raise ValueError(f"Choose exactly {spec['count']} distinct improvements.")
             response = ", ".join(response)
         elif not isinstance(response, str) or not response.strip() or len(response) > 1600:
             raise ValueError("Complete each field (up to 1600 characters).")
         if "options" in spec and not spec.get("multiple") and response not in spec["options"]:
             raise ValueError("Choose a displayed option.")
-        item = dict(id=f"post.{scene.id}.{key}", answer=scene.expected[key],
+        if scene.model == "transfer" and key == "payload":
+            parameters["payload"] = int(response)
+            model = experiment("transfer", parameters)
+            expected.update(payload=response, fits="yes" if model["fits"] else "no", maximum=f"{model['maximum_payload']} bytes")
+        if scene.model == "resilience" and key == "options":
+            parameters["options"] = values[key]
+            model = experiment("resilience", parameters)
+            expected[key] = response
+        item = dict(id=f"post.{scene.id}.{key}", answer=expected[key],
                     type="hops" if key == "hops" else spec.get("type", "text"),
                     explanation=scene.explanation)
         checks[key] = learning.evaluate(item, response)
         if not checks[key]["format_valid"]:
             raise ValueError(checks[key]["feedback"])
     result = dict(correct=all(c["correct"] for c in checks.values()), checks=checks,
-                  explanation=scene.explanation, expected=scene.expected,
+                  explanation=scene.explanation, expected=expected,
                   unknowns=["Policy enforcement", "Return path and application response"])
     if scene.model:
-        result["model"] = experiment(scene.model, scene.parameters)
+        result["model"] = model or experiment(scene.model, parameters)
         result["unknowns"] = result["model"]["unknowns"]
     return result
 
@@ -165,6 +266,7 @@ def evaluate(scene: Scene, values: dict) -> dict:
 def fingerprint() -> str:
     digest = hashlib.sha256()
     paths = [Path(__file__), Path(__file__).with_name("game.py"), ROOT / "learning.py"]
+    paths += sorted(Path(__file__).with_name("assets").glob("*.json"))
     paths += sorted((ROOT / "modules").glob("*/workbench/*.py"))
     paths += [FIXTURES / s for s in sorted({c["source"] for scene in scenes().values() for c in scene.cards})]
     for path in paths:

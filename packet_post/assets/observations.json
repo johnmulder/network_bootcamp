@@ -1,0 +1,100 @@
+{
+  "transfer": {
+    "source": "labs/fixtures/challenges/transfer.pcap",
+    "sha256": "fdcb74c3c04c253361fa3461cc19f8f46f00da9f3f8a12448d8dfea372b70356",
+    "decoder": "TShark (Wireshark) 4.4.1 (v4.4.1-0-g575b2bf4746e).",
+    "command": [
+      "tshark",
+      "-n",
+      "-r",
+      "labs/fixtures/challenges/transfer.pcap",
+      "-T",
+      "fields",
+      "-E",
+      "header=y",
+      "-E",
+      "separator=,",
+      "-E",
+      "quote=d",
+      "-e",
+      "frame.number",
+      "-e",
+      "ip.len",
+      "-e",
+      "ip.hdr_len",
+      "-e",
+      "tcp.hdr_len",
+      "-e",
+      "tcp.len",
+      "-e",
+      "icmp.type",
+      "-e",
+      "icmp.code",
+      "-e",
+      "icmp.mtu"
+    ],
+    "records": [
+      {
+        "frame.number": "1",
+        "ip.len": "44",
+        "ip.hdr_len": "20",
+        "tcp.hdr_len": "24",
+        "tcp.len": "0",
+        "icmp.type": "",
+        "icmp.code": "",
+        "icmp.mtu": ""
+      },
+      {
+        "frame.number": "2",
+        "ip.len": "44",
+        "ip.hdr_len": "20",
+        "tcp.hdr_len": "24",
+        "tcp.len": "0",
+        "icmp.type": "",
+        "icmp.code": "",
+        "icmp.mtu": ""
+      },
+      {
+        "frame.number": "3",
+        "ip.len": "40",
+        "ip.hdr_len": "20",
+        "tcp.hdr_len": "20",
+        "tcp.len": "0",
+        "icmp.type": "",
+        "icmp.code": "",
+        "icmp.mtu": ""
+      },
+      {
+        "frame.number": "4",
+        "ip.len": "1440",
+        "ip.hdr_len": "20",
+        "tcp.hdr_len": "20",
+        "tcp.len": "1400",
+        "icmp.type": "",
+        "icmp.code": "",
+        "icmp.mtu": ""
+      },
+      {
+        "frame.number": "5",
+        "ip.len": "56,1440",
+        "ip.hdr_len": "20,20",
+        "tcp.hdr_len": "",
+        "tcp.len": "",
+        "icmp.type": "3",
+        "icmp.code": "4",
+        "icmp.mtu": "1200"
+      },
+      {
+        "frame.number": "6",
+        "ip.len": "1440",
+        "ip.hdr_len": "20",
+        "tcp.hdr_len": "20",
+        "tcp.len": "1400",
+        "icmp.type": "",
+        "icmp.code": "",
+        "icmp.mtu": ""
+      }
+    ],
+    "limits": "Constructed transfer drill; observation point unknown. Port 443/dummy payload does not establish TLS. ICMP fields may include the quoted original IP packet. Captured ICMP does not prove sender receipt."
+  }
+}

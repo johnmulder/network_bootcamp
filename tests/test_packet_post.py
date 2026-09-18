@@ -12,6 +12,28 @@ from packet_post.game import Game, Save
 
 
 class PacketPostTests(unittest.TestCase):
+    def test_parcel_controls_change_real_bounded_result(self):
+        scene = content.scenes()["parcel.plain"]
+        fits = content.evaluate(scene, dict(payload="1160", fits="yes", maximum="1160 bytes"))
+        too_big = content.evaluate(scene, dict(payload="1161", fits="no", maximum="1160 bytes"))
+        self.assertTrue(fits["correct"])
+        self.assertTrue(too_big["correct"])
+        self.assertEqual(fits["model"]["packet_bytes"], 1200)
+        self.assertFalse(too_big["model"]["fits"])
+        self.assertEqual(content.scenes()["parcel.tcp-options"].expected["maximum"], "1148 bytes")
+        self.assertEqual(content.scenes()["parcel.ip-options"].expected["maximum"], "1144 bytes")
+
+    def test_budget_accepts_different_pairs_and_keeps_risks(self):
+        scene = content.scenes()["budget.state"]
+        first = content.evaluate(scene, dict(options=["state-sync", "monitoring"], recovered="no"))
+        second = content.evaluate(scene, dict(options=["backup-path", "management"], recovered="no"))
+        self.assertTrue(first["correct"] and second["correct"])
+        self.assertNotEqual(first["model"]["addressed_dependencies"], second["model"]["addressed_dependencies"])
+        with self.assertRaises(ValueError):
+            content.evaluate(scene, dict(options=["state-sync"], recovered="no"))
+        twist = content.evaluate(content.scenes()["budget.twist"], dict(options=["backup-path", "management"], recovered="no"))
+        self.assertTrue(any("share building power" in v for v in twist["model"]["residual_risk"]))
+
     def test_route_choices_and_boundaries(self):
         scenes = content.scenes()
         self.assertEqual(scenes["route.host"].expected, dict(prefix="10.0.20.40/32", hops="10.0.10.252"))

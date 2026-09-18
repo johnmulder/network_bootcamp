@@ -217,7 +217,9 @@ class UI:
         elif stage == "brief" and key in {"ENTER", "SPACE"}:
             self.perform(self.game.begin)
         elif stage == "feedback":
-            if key == "R":
+            if key == "V":
+                self.show("Prediction and bounded result", getattr(self, "feedback_text", "Result is loading."))
+            elif key == "R":
                 ok, _ = self.perform(self.game.retry)
                 if ok:
                     self.reset_form()
@@ -316,9 +318,17 @@ class UI:
             text = f"{summary} | {support}\n\n"
             text += "\n".join(f"{k}: {v}" for k, v in result["expected"].items())
             text += "\n\n" + result["explanation"]
+            model = result.get("model", {})
+            if "packet_bytes" in model:
+                text += f"\n\nMODEL: {model['ipv4_header']} + {model['tcp_header']} + {last['values']['payload']} "
+                text += f"= {model['packet_bytes']} IP bytes; MTU {model['mtu']}; fits: {model['fits']}."
+            if "addressed_dependencies" in model:
+                text += "\n\nTARGETED: " + " ".join(model["addressed_dependencies"])
+                text += "\nRESIDUAL: " + " ".join(model["residual_risk"])
             text += "\n\nUNKNOWN: " + "; ".join(result["unknowns"])
+            self.feedback_text = text
             draw_text(console, 3, 13, text, w - 6, h - 20)
-            draw_text(console, 3, h - 6, "Enter: next decision   R: supported retry" if result["correct"] else "R: revise with feedback   E: evidence", w - 6, 2, MINT)
+            draw_text(console, 3, h - 6, "V: full result   Enter: next   R: retry" if result["correct"] else "V: full result   R: revise   E: evidence", w - 6, 2, MINT)
             return
         wide = w >= 85 and stage != "debrief"
         x = 36 if wide else 3
