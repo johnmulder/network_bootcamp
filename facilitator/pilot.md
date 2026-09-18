@@ -3,6 +3,10 @@
 Status: ready to use; no learner pilot results have been recorded here.
 A technical walkthrough is not a substitute for observing learners.
 
+For optional Packet Post trials, use the
+[game-specific worksheet](packet-post-pilot.md) and its separate practice
+items. Game results do not close the curriculum trials below.
+
 Copy this worksheet under `work/` for each pilot. Use anonymous participant
 labels. Record beginner/experienced background and solo/pair mode; avoid
 collecting names or other unnecessary personal data.

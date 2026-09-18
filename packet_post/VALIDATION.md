@@ -14,20 +14,27 @@ human work and the technical release evidence.
 
 September 18, 2026: the student-readiness plan is being executed. This is
 still a software preview. No student trial, independent human review,
-second-device test, or accessibility qualification has been recorded.
+or direct second-device/accessibility observation has been recorded.
 Preparation and automated checks do not satisfy those human gates.
+
+The project owner states that student trials and independent networking
+review will take place this weekend (September 19-20). Those results remain
+pending. The owner directs that the second-Mac test be assumed complete;
+that acceptance is recorded as an owner assumption, not a test we observed.
+No second-device configuration, tester identity, or checklist was supplied.
 
 | Gate | Status | Evidence and remaining work |
 | --- | --- | --- |
-| G0: Trial prepared | Pending | Student start card and facilitator runbook prepared; trial material, candidate freeze, role assignment, and participant prerequisites must be recorded |
-| G1: Operable and recoverable | Pending | Reproduced save-error and clipped-prompt defects fixed with regression checks; physical input and a second Mac remain untested |
-| G2: Technically sound | Pending | Independent networking reviewer and approval of decisions/trial items required |
-| G3: Usable with students | Pending | No participants observed; campaign coverage and control-friction results required |
+| G0: Trial prepared | Pending | Start card, runbook, staff trial items, and worksheet prepared; final candidate inventory, named people, and participant prerequisites must be recorded |
+| G1: Operable and recoverable | Passed by owner assumption | Owner accepts the second-Mac test as complete; local save/layout regression checks passed. Physical input and accommodation observations were not supplied and are not claimed as directly verified |
+| G2: Technically sound | Pending | Owner schedules independent networking review for September 19-20; decision and trial-item approval awaited |
+| G3: Usable with students | Pending | Owner schedules student trials for September 19-20; no participant observations received |
 | G4: Supports intended reasoning | Pending | No human-rated unseen transfer responses recorded |
 | G5: Classroom release prepared | Pending | Distribution candidate and support rehearsal are being prepared; final human gates and release decision remain open |
 
 Facilitator, independent networking reviewer, second-Mac tester, and
-participant coordinator: **unassigned**. Target environment for the first
+participant names: **not supplied**; the owner has supplied the weekend
+schedule and second-Mac acceptance. Target environment for the first
 trial remains a provisioned Apple Silicon Mac with Python 3.13. Qualified
 student-facing mission set: **none yet**; all eight retain preview status.
 
@@ -36,6 +43,30 @@ The [student start card](README.md#student-start-card) and
 include prerequisites, course review gates, individual save IDs, error
 recovery, and the existing course as an accommodation route that must itself
 be checked with the student who needs it.
+
+Use the [prepared observation worksheet](../facilitator/packet-post-pilot.md)
+for actual sessions. The separate local staff packet under
+`work/packet-post-readiness/staff/` contains three new route/VRF items,
+two transfer items for each other mission, separate proposed answer keys,
+and all 27 authored decisions with empty independent-review fields.
+These are prepared materials awaiting review, not student results. Keep
+unassigned questions and keys outside the student distribution.
+
+| Mission | Actual observed completions | Rule/limit teach-backs | Participant/version references | Open finding |
+| --- | --- | --- | --- | --- |
+| Sorting | 0 | Pending | Pending | Awaiting weekend trial |
+| Parcel | 0 | Pending | Pending | Awaiting weekend trial |
+| Bridge | 0 | Pending | Pending | Awaiting weekend trial |
+| Resilience | 0 | Pending | Pending | Awaiting weekend trial |
+| Suspicious Crumbs | 0 | Pending | Pending | Require participant's current c05 review |
+| Handoff | 0 | Pending | Pending | Awaiting weekend trial |
+| Return Receipt | 0 | Pending | Pending | Require participant's current c06 and exit reviews |
+| Foundations | 0 | Pending | Pending | Awaiting weekend trial |
+
+The latest observed remote CI run succeeded for earlier commit
+`9a97add89774c8e31d8e2f9c1877b0eb200384ea` on September 13. It does not
+cover this candidate or qualify the new renderer job. Candidate-specific
+remote CI is still pending; local changes have not been pushed.
 
 The game remains optional, outside the required 360-minute course. It never
 awards course credit or changes course answers or reviews. Original incident
@@ -99,7 +130,8 @@ that these wheels support other interpreter/platform combinations. See the
 ## Human Validation Still Required
 
 Owner: facilitator, assisted by an independent technical reviewer and the
-developer. No participants have been recruited or observed for this game.
+developer. No participant observations have been supplied for this game.
+The owner's scheduled weekend work is recorded in the readiness gates above.
 Existing course pilot and review work in the
 [facilitator pilot worksheet](../facilitator/pilot.md) remains outstanding;
 game checks do not close it.
@@ -160,3 +192,41 @@ repeating it is familiar practice, not a fresh independent assessment.
 Intel Macs, Windows/Linux desktop rendering, screen-reader support, signed
 app bundles, and installed-app distribution have not been qualified.
 No network services, live captures, LLMs, or telemetry are used by play.
+
+## Decision Review Register
+
+Each decision below requires independent human review. The check focus is
+a review request, not a completed review. In the staff packet, the authored
+answers and explanations are separated from the blank independent-result
+column. Reviewers must calculate first, compare second, cite the source,
+and record disagreements and their resolution. No row is approved yet.
+
+| Decision | Source(s) | Check focus | Reveal boundary | Reviewer / result / resolution |
+| --- | --- | --- | --- | --- |
+| `route.host` | labs/fixtures/routing/route-candidates.csv | Host specificity and eligible hop | Ungated practice; scene 1; expected values only after commit | Pending / pending / pending |
+| `route.remove` | labs/fixtures/routing/route-candidates.csv | Remove only host route; retain both equal next hops | Ungated practice; scene 2; expected values only after commit | Pending / pending / pending |
+| `route.vrf` | labs/fixtures/routing/vrfs.json | CORP default versus OT no match | Ungated practice; scene 3; expected values only after commit | Pending / pending / pending |
+| `route.transfer` | packet_post/assets/practice-routes.csv | Nearby host mismatch and complete equal set | Ungated practice; scene 4; expected values only after commit | Pending / pending / pending |
+| `route.limits` | labs/fixtures/routing/route-candidates.csv, labs/fixtures/routing/vrfs.json | Route selection leaves policy/return/service unproved | Ungated practice; scene 5; expected values only after commit | Pending / pending / pending |
+| `parcel.plain` | labs/fixtures/challenges/transfer.pcap | 20+20 headers; 1160-byte limit | Ungated practice; scene 1; expected values only after commit | Pending / pending / pending |
+| `parcel.tcp-options` | labs/fixtures/challenges/transfer.pcap | 20+32 headers; 1148-byte limit | Ungated practice; scene 2; expected values only after commit | Pending / pending / pending |
+| `parcel.ip-options` | labs/fixtures/challenges/transfer.pcap | 24+32 headers; 1144-byte limit | Ungated practice; scene 3; expected values only after commit | Pending / pending / pending |
+| `parcel.receipt` | labs/fixtures/challenges/transfer.pcap | Observed ICMP is not sender receipt or verified TLS | Ungated practice; scene 4; expected values only after commit | Pending / pending / pending |
+| `bridge.predict` | labs/fixtures/routing/ospf.json | Remaining eligible neighbor is .3 | Ungated practice; scene 1; expected values only after commit | Pending / pending / pending |
+| `bridge.clock` | labs/fixtures/routing/route-events.jsonl | 80 ms logged interval is not service recovery | Ungated practice; scene 2; expected values only after commit | Pending / pending / pending |
+| `bridge.bgp` | labs/fixtures/routing/bgp.json | Accepted advertisements and local preference scope | Ungated practice; scene 3; expected values only after commit | Pending / pending / pending |
+| `budget.policy` | labs/fixtures/architecture/traffic-flows.csv | Intended F3/F4 permission versus enforcement | Ungated practice; scene 1; expected values only after commit | Pending / pending / pending |
+| `budget.state` | labs/fixtures/architecture/failures.jsonl, labs/fixtures/architecture/wan.json, labs/fixtures/architecture/traffic-flows.csv | Two distinct choices and state dependency | Ungated practice; scene 2; expected values only after commit | Pending / pending / pending |
+| `budget.wan` | labs/fixtures/architecture/failures.jsonl, labs/fixtures/architecture/wan.json, labs/fixtures/architecture/traffic-flows.csv | Path choices leave measured capacity/loss unknown | Ungated practice; scene 3; expected values only after commit | Pending / pending / pending |
+| `budget.twist` | labs/fixtures/architecture/failures.jsonl, labs/fixtures/architecture/wan.json, labs/fixtures/architecture/traffic-flows.csv | Shared power persists across transports | Ungated practice; scene 4; expected values only after commit | Pending / pending / pending |
+| `crumbs.pattern` | labs/fixtures/incident/flows.jsonl, labs/fixtures/incident/siem.jsonl | Pattern and derived source dependencies; requests recorded | c05.review; scene 1; expected values only after commit | Pending / pending / pending |
+| `crumbs.attribution` | labs/fixtures/incident/endpoint.jsonl, labs/fixtures/incident/auth.jsonl, labs/fixtures/incident/dns.jsonl | DNS attribution is not socket attribution; auth scope | c05.review; scene 2; expected values only after commit | Pending / pending / pending |
+| `crumbs.clock` | labs/fixtures/incident/auth.jsonl | Normalize -06:00 to UTC without causal-order claim | c05.review; scene 3; expected values only after commit | Pending / pending / pending |
+| `crumbs.boundary` | labs/fixtures/incident/firewall.jsonl, labs/fixtures/incident/proxy.jsonl, labs/fixtures/routing/vrfs.json | CORP source, one OT deny, proxy BYPASS scope | c05.review; scene 4; expected values only after commit | Pending / pending / pending |
+| `handoff.predict` | No case evidence yet | Record two hypotheses before case release | Ungated practice; scene 1; expected values only after commit | Pending / pending / pending |
+| `handoff.attachment` | packet_post/assets/handoff.json | P1 VLAN intent and neighbor resolution, no repaired-service proof | Ungated practice; scene 2; expected values only after commit | Pending / pending / pending |
+| `handoff.action` | packet_post/assets/handoff.json | Evidence-linked owner, approved change, success test and rollback | Ungated practice; scene 3; expected values only after commit | Pending / pending / pending |
+| `handoff.application` | packet_post/assets/handoff.json | P2 transport progress and remaining application failure | Ungated practice; scene 4; expected values only after commit | Pending / pending / pending |
+| `recovery.receipt` | labs/fixtures/challenges/recovery.json | Hypothetical RA scoped acceptance and RB unresolved service | c06.review, exit.review; scene 1; expected values only after commit | Pending / pending / pending |
+| `foundation.envelopes` | labs/fixtures/pcaps/foundations.pcap, labs/fixtures/network/dhcp.jsonl | Next-hop MAC versus final IP within capture scope | Ungated practice; scene 1; expected values only after commit | Pending / pending / pending |
+| `foundation.directory` | labs/fixtures/network/troubleshooting.json | NXDOMAIN response versus timeout; HTTP 503 after DNS/TCP | Ungated practice; scene 2; expected values only after commit | Pending / pending / pending |
