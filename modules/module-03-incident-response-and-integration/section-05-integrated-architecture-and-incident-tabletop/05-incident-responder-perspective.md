@@ -45,6 +45,13 @@ record it as unknown or explain a stated hypothetical; do not invent it.
 **Predict and explain:** Predict a proportionate containment decision without
 claiming unobserved credential theft.
 
+Use the fictional condition from the
+[Challenge 5 brief](../../../challenges/05-suspicious-is-not-proven.md): the
+OT process owner maintains supervisory alarm visibility during packaging.
+An action that could interrupt it needs that owner's decision. This is a
+scenario requirement, not a dependency established by the two logs below;
+do not assume the suspicious workstation controls production.
+
 Run from the repository root:
 
 ```sh

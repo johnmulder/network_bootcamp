@@ -50,12 +50,15 @@ Run from the repository root:
 
 ```sh
 column -s, -t labs/fixtures/architecture/traffic-flows.csv
+jq '.' labs/fixtures/incident/firewall.jsonl
 jq '.' labs/fixtures/architecture/failures.jsonl
 ```
 
 ## Expected Evidence and Worked Reasoning
 
-Review the temporary exception's owner, scope, and expiry; unrelated
+F2 intends to deny the external flow; firewall record 1 records an allow
+under TEMP-EGRESS-17. Request the exception's owner, scope, and expiry;
+those approval details are not supplied. Unrelated
 shared-power and failure risks remain separate findings. Architecture intent
 need not be wholly rejected.
 

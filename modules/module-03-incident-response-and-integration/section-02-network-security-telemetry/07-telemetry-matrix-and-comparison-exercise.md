@@ -50,6 +50,7 @@ Run from the repository root:
 ```sh
 tshark -n -r labs/fixtures/pcaps/incident.pcap -Y 'tcp || dns' -T fields -E header=y -e frame.number -e frame.time_relative -e ip.src -e ip.dst -e tcp.dstport -e tcp.flags -e tls.handshake.type -e dns.qry.name
 jq '.' labs/fixtures/incident/siem.jsonl
+jq '.' labs/fixtures/incident/endpoint.jsonl
 ```
 
 ## Expected Evidence and Worked Reasoning
