@@ -5,6 +5,62 @@ learning contract remains 2. Older sections retain historical checks; their
 counts describe those snapshots. No software check establishes learner
 attainment or an observed class duration.
 
+## Correctness Recheck — September 17, 2026
+
+Reviewed the curriculum implementation since `a138967`, including changed
+verification tools, the 104-guide evidence matrix, new fixture arithmetic,
+packet/frame citations, scenario boundaries, and rendered-source hashes.
+
+Four issues were corrected:
+
+- The telemetry comparison expected process ancestry but omitted the endpoint
+  records from its commands. It now supplies those records and maps them in
+  the evidence matrix.
+- The network-architect exercise asked for an intended-deny/observed-permit
+  comparison without supplying the firewall log. It now includes that log,
+  identifies F2 and TEMP-EGRESS-17, and labels approval details as unavailable.
+- The incident-responder exercise referred to an unstated monitoring
+  dependency. It now gives and cites Challenge 5's fictional operational
+  condition, separate from what the endpoint/authentication logs establish.
+- The performance example reported 2% loss from 60 probes without counts or
+  rounding rules. It now states one lost probe out of 60, 1.67% to two decimal
+  places, median reply RTT, and how lost probes are excluded from RTT-variation
+  pairs. A regression check verifies counts, loss rates, goodput, and the
+  backup-demand arithmetic.
+
+Primary-source spot-checks support the corrected
+[IPv6 on-link model](https://datatracker.ietf.org/doc/html/rfc5942#section-4),
+[VRRP virtual identity](https://www.rfc-editor.org/rfc/rfc9568.html#section-8.1.2),
+[RSTP distinctions](https://www.cisco.com/c/en/us/support/docs/lan-switching/spanning-tree-protocol/24062-146.html),
+[TLS handshake and PSK model](https://www.rfc-editor.org/rfc/rfc8446.html#section-2),
+and [TCP window/RTT calculation](https://www.rfc-editor.org/rfc/rfc6349.html#section-3.3.1).
+Direct decoding confirmed the public TLS Finished/HTTP frame citations
+and the original incident's ClientHello-only and partial port-445 observations.
+
+After the fixes, **all 124 tests passed**. Course verification, all 32 real-tool
+views, both A/B and B/A journeys, all 36 distinct reference commands, public
+capture assertions, diagram/source hashes, Markdown lint, and local-link checks
+passed. All 39 generated files and their manifest reproduced byte-for-byte in
+a fresh temporary directory. These remain technical checks with synthetic
+responses and scores; no live model, Zeek, or iperf3 trial was performed.
+
+The corrected archive at
+`work/implementation/network-bootcamp-3.1-correctness-20260917.tar.gz` passed
+the full package journey after extraction at a path containing spaces without
+Git metadata. It contains 267 tracked files plus release fingerprints, excludes
+learner work, and runs with LLM support disabled. This result record was added
+after the archive was built. Archive SHA-256:
+
+```text
+23b0b50f006383c0a9765b33a5dbe5d32a4631941506570e3e112e35abb11d6d
+```
+
+The fixture fingerprint changed, including for existing 3.1 sessions. Keep
+their matching course copies or start fresh sessions; the session protocol and
+learning contract did not change. Human pilots, a second human reviewer, and
+educational-effectiveness claims remain pending. This agent recheck does not
+satisfy those human gates.
+
 ## Curriculum 3.1 Readiness — September 16, 2026
 
 ### Implemented Changes
