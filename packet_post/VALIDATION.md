@@ -7,8 +7,35 @@ decisions. The requested software implementation is complete; observed
 learner trials and independent human review remain pending by the project
 owner's explicit decision. No learning-effectiveness claim, curriculum
 replacement, or independent attainment follows from these technical checks.
-The implementation plan has been retired; this record retains the pending
+The original implementation plan was retired; this record retains the pending
 human work and the technical release evidence.
+
+## Student Readiness Gates
+
+September 18, 2026: the student-readiness plan is being executed. This is
+still a software preview. No student trial, independent human review,
+second-device test, or accessibility qualification has been recorded.
+Preparation and automated checks do not satisfy those human gates.
+
+| Gate | Status | Evidence and remaining work |
+| --- | --- | --- |
+| G0: Trial prepared | Pending | Student start card and facilitator runbook prepared; trial material, candidate freeze, role assignment, and participant prerequisites must be recorded |
+| G1: Operable and recoverable | Pending | Reproduced save-error and clipped-prompt defects fixed with regression checks; physical input and a second Mac remain untested |
+| G2: Technically sound | Pending | Independent networking reviewer and approval of decisions/trial items required |
+| G3: Usable with students | Pending | No participants observed; campaign coverage and control-friction results required |
+| G4: Supports intended reasoning | Pending | No human-rated unseen transfer responses recorded |
+| G5: Classroom release prepared | Pending | Distribution candidate and support rehearsal are being prepared; final human gates and release decision remain open |
+
+Facilitator, independent networking reviewer, second-Mac tester, and
+participant coordinator: **unassigned**. Target environment for the first
+trial remains a provisioned Apple Silicon Mac with Python 3.13. Qualified
+student-facing mission set: **none yet**; all eight retain preview status.
+
+The [student start card](README.md#student-start-card) and
+[facilitator runbook](README.md#facilitator-runbook) are available. They
+include prerequisites, course review gates, individual save IDs, error
+recovery, and the existing course as an accommodation route that must itself
+be checked with the student who needs it.
 
 The game remains optional, outside the required 360-minute course. It never
 awards course credit or changes course answers or reviews. Original incident
