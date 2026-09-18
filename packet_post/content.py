@@ -501,5 +501,6 @@ def fingerprint() -> str:
     paths += sorted((ROOT / "modules").glob("*/workbench/*.py"))
     paths += sorted({source_path(c) for scene in scenes().values() for c in scene.cards})
     for path in paths:
+        path = path.resolve()
         digest.update(str(path.relative_to(ROOT)).encode() + b"\0" + path.read_bytes())
     return digest.hexdigest()

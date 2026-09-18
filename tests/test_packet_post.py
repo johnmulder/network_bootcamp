@@ -2,6 +2,9 @@
 
 import copy
 import json
+import os
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -13,6 +16,17 @@ from packet_post.view import UI, feedback_text
 
 
 class PacketPostTests(unittest.TestCase):
+    def test_startup_through_repository_alias_uses_canonical_fingerprint(self):
+        with tempfile.TemporaryDirectory() as temp:
+            alias = Path(temp) / "course alias"
+            alias.symlink_to(content.ROOT, target_is_directory=True)
+            result = subprocess.run(
+                [sys.executable, "-B", "-c", "from packet_post.game import Game; print(Game().state['content_sha256'])"],
+                cwd=temp, env=dict(os.environ, PYTHONPATH=str(alias)),
+                capture_output=True, text=True, timeout=30)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(result.stdout.strip(), content.fingerprint())
+
     def test_failed_ui_save_keeps_editor_and_reverts_unsaved_selection(self):
         with tempfile.TemporaryDirectory() as temp:
             with Save("failure", Path(temp)) as save:
