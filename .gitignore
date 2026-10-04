@@ -2,3 +2,5 @@
 __pycache__/
 PLAN.md
 
+# macOS Finder metadata
+.DS_Store
