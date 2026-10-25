@@ -12,25 +12,26 @@ human work and the technical release evidence.
 
 ## Student Readiness Gates
 
-September 18, 2026: the student-readiness plan is being executed. This is
-still a software preview. No student trial, independent human review,
+Updated October 25, 2026: student-readiness qualification remains open. This
+is still a software preview. No student trial, independent human review,
 or direct second-device/accessibility observation has been recorded.
 Preparation and automated checks do not satisfy those human gates.
 
-The project owner states that student trials and independent networking
-review will take place this weekend (September 19-20). Those results remain
-pending. The owner directs that the second-Mac test be assumed complete;
+On September 18, the project owner scheduled student trials and independent
+networking review for September 19–20. No results have been supplied; the
+schedule is not evidence of completion. The owner directed that the second-Mac
+test be assumed complete;
 that acceptance is recorded as an owner assumption, not a test we observed.
 No second-device configuration, tester identity, or checklist was supplied.
 
 | Gate | Status | Evidence and remaining work |
 | --- | --- | --- |
-| G0: Trial prepared | Pending | Start card, runbook, staff items, worksheets, and frozen candidate inventory prepared; actual participants, prerequisites, and named facilitators/reviewers to be recorded at the weekend trial |
+| G0: Trial prepared | Pending | Start card, runbook, staff items, worksheets, and frozen candidate inventory prepared; actual participants, prerequisites, and named facilitators/reviewers to be recorded at the actual trial |
 | G1: Operable and recoverable | Passed | Owner accepts the second-Mac test by assumption; local save/layout/startup regression checks passed. Physical input and accommodation observations were not supplied and are not claimed as directly verified |
-| G2: Technically sound | Pending | Owner schedules independent networking review for September 19-20; decision and trial-item approval awaited |
-| G3: Usable with students | Pending | Owner schedules student trials for September 19-20; no participant observations received |
+| G2: Technically sound | Pending | Independent networking decision and trial-item approval awaited; no reviewer results supplied |
+| G3: Usable with students | Pending | No participant observations received |
 | G4: Supports intended reasoning | Pending | No human-rated unseen transfer responses recorded |
-| G5: Classroom release prepared | Pending | Offline preview bundle and synthetic support/recovery rehearsal passed; human gate results, candidate-specific remote CI, and final release decision remain open |
+| G5: Classroom release prepared | Pending | Offline preview bundle and synthetic support/recovery rehearsal passed; candidate-specific remote CI passed October 25; human gate results and final release decision remain open |
 
 Facilitator, independent networking reviewer, second-Mac tester, and
 participant names: **not supplied**; the owner has supplied the weekend
@@ -54,19 +55,22 @@ unassigned questions and keys outside the student distribution.
 
 | Mission | Actual observed completions | Rule/limit teach-backs | Participant/version references | Open finding |
 | --- | --- | --- | --- | --- |
-| Sorting | 0 | Pending | Pending | Awaiting weekend trial |
-| Parcel | 0 | Pending | Pending | Awaiting weekend trial |
-| Bridge | 0 | Pending | Pending | Awaiting weekend trial |
-| Resilience | 0 | Pending | Pending | Awaiting weekend trial |
+| Sorting | 0 | Pending | Pending | Awaiting observed trial |
+| Parcel | 0 | Pending | Pending | Awaiting observed trial |
+| Bridge | 0 | Pending | Pending | Awaiting observed trial |
+| Resilience | 0 | Pending | Pending | Awaiting observed trial |
 | Suspicious Crumbs | 0 | Pending | Pending | Require participant's current c05 review |
-| Handoff | 0 | Pending | Pending | Awaiting weekend trial |
+| Handoff | 0 | Pending | Pending | Awaiting observed trial |
 | Return Receipt | 0 | Pending | Pending | Require participant's current c06 and exit reviews |
-| Foundations | 0 | Pending | Pending | Awaiting weekend trial |
+| Foundations | 0 | Pending | Pending | Awaiting observed trial |
 
-The latest observed remote CI run succeeded for earlier commit
-`9a97add89774c8e31d8e2f9c1877b0eb200384ea` on September 13. It does not
-cover this candidate or qualify the new renderer job. Candidate-specific
-remote CI is still pending; local changes have not been pushed.
+Candidate-specific remote CI passed on October 25 for frozen commit
+`86b7238d82e6972b831150d3cd2f50d801256f90`: [run 40226419674](https://github.com/johnmulder/network_bootcamp/actions/runs/40226419674)
+completed the contracts job (138 tests), macOS delivery/package journeys,
+and Packet Post renderer job successfully. The temporary verification branch
+was removed after the run; the candidate source and default branch were unchanged.
+This closes the pending remote-CI action and supplies technical evidence only;
+independent review, learner observations, and final classroom release remain open.
 
 ### Completed Engineering and Weekend Handoff
 

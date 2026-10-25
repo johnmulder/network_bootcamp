@@ -131,8 +131,10 @@ work/game-venv/bin/python -m packet_post
 
 Game progress is separate from course assessment. Original incident and
 recovery practice require current reviews from a supplied course session.
-The game is a software preview; observed learner benefit and independent
-human review remain [pending](packet_post/VALIDATION.md).
+The game is a software preview. The frozen `86b7238` candidate passed all
+three hosted verification jobs on October 25; observed learner benefit,
+independent human review, and the classroom release decision remain
+[pending](packet_post/VALIDATION.md).
 
 ## Optional LLM Support
 
